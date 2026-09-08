@@ -21,3 +21,16 @@ block_weights:
   areas: 0.25
   regiones: 0.25
   docencia: 0.25
+
+# Valor promedio anual de la UF en pesos, para homologar aranceles.
+#
+# `formato_valores` de la matricula distingue "Monto en Pesos" de "Monto en
+# UF": en 2024 son 145.862 y 7.638 filas respectivamente, con medianas de
+# 4.986.900 y 215. Promediarlas sin convertir destruye la variable.
+#
+# Son promedios anuales aproximados. Si falta el anio, esas filas quedan como
+# dato ausente en vez de mezclarse en otra unidad.
+uf_clp:
+  2023: 35500
+  2024: 37700
+  2025: 39200

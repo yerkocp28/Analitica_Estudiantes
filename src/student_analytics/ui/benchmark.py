@@ -15,8 +15,29 @@ from student_analytics.modeling.benchmark import compare_outcomes, fit_peers, ne
 
 UA_RED = "#E2211C"
 BLUE = "#2a78d6"
+GREY = "#b0b0b0"
+INK = "#6B6560"
 LABELS = {"misma_carrera": "Misma carrera y universidad", "misma_universidad": "Misma universidad",
           "sistema": "Cualquier institución del sistema"}
+
+# Ejes disponibles en el mapa de posicionamiento: etiqueta y formato de eje.
+# `retencion` se calcula con el filtro vigente; el resto viene del perfil.
+AXES = {
+    "retencion": ("Continuidad al año siguiente", "%"),
+    "cohorte_total": ("Inscripciones de ingreso", ","),
+    "sedes": ("Número de sedes", ","),
+    "tamano_por_sede": ("Inscripciones por sede", ","),
+    "arancel_mediano": ("Arancel anual mediano (CLP)", "~s"),
+    "matricula_mediana": ("Matrícula anual mediana (CLP)", "~s"),
+    "acreditacion_anios": ("Años de acreditación institucional", ","),
+    "carreras_acreditadas": ("Inscripciones en carreras acreditadas", "%"),
+    "duracion_media": ("Duración nominal media (semestres)", ".1f"),
+    "ingreso_no_regular": ("Ingreso por vías no regulares", "%"),
+    "ingreso_pace": ("Ingreso vía PACE", "%"),
+    "concentracion_areas": ("Concentración de áreas (HHI)", ".2f"),
+    "regiones_presencia": ("Regiones con presencia", ","),
+    "distancia": ("Distancia al perfil de la UA", ".2f"),
+}
 
 
 @st.cache_data(show_spinner=False)
@@ -39,6 +60,113 @@ def cached_model(profiles: pd.DataFrame, config: dict):
 
 def percent(value: float) -> str:
     return f"{value:.1%}" if np.isfinite(value) else "Sin datos"
+
+
+def short_name(name: str) -> str:
+    """Nombre compacto para rotular puntos sin tapar el grafico."""
+    text = str(name).title()
+    for viejo, nuevo in [("Universidad ", "U. "), ("Pontificia U. ", "P. U. "),
+                         ("U. De ", "U. "), (" De Chile", ""), (" De ", " de "),
+                         (" Del ", " del "), (" La ", " la "), (" Y ", " y ")]:
+        text = text.replace(viejo, nuevo)
+    return text if len(text) <= 26 else text[:25] + "…"
+
+
+def positioning_frame(model, nearest, data, year, metric, area, code, peer_ids):
+    """Une perfil, distancia y resultado para el mapa de posicionamiento."""
+    from student_analytics.ingestion.retention import summarize_retention
+
+    selected = data.loc[data.cohorte.eq(year)]
+    if area is not None:
+        selected = selected.loc[selected.area_conocimiento.eq(area)]
+    resultado = summarize_retention(selected, ["cod_inst"])
+    resultado["retencion"] = resultado[metric].div(resultado.n.where(resultado.n.gt(0)))
+
+    frame = model.universities.merge(
+        resultado[["cod_inst", "n", "retencion"]], on="cod_inst", how="left")
+    frame = frame.merge(nearest[["cod_inst", "distancia"]], on="cod_inst", how="left")
+    # La UA no aparece en `nearest` (se excluye a sí misma): su distancia es 0.
+    frame.loc[frame.cod_inst.eq(code), "distancia"] = 0.0
+    frame["rol"] = np.where(frame.cod_inst.eq(code), "Universidad Autónoma",
+                            np.where(frame.cod_inst.isin(peer_ids), "Par seleccionado", "Otras universidades"))
+    return frame
+
+
+def scatter(frame: pd.DataFrame, x: str, y: str, quadrants: bool = True):
+    """Dispersión con la UA destacada y medianas como líneas de referencia.
+
+    Mismo código de color que el mapa PCA: rojo la UA, azul los pares, gris el
+    resto. Sólo la UA y los pares llevan etiqueta directa; poner el nombre de
+    las 51 universidades haría el gráfico ilegible.
+    """
+    usable = frame.loc[frame[x].notna() & frame[y].notna()].copy()
+    if usable.empty:
+        return None, 0
+    usable["etiqueta"] = usable.nomb_inst.map(short_name)
+    x_title, x_fmt = AXES[x]
+    y_title, y_fmt = AXES[y]
+    orden = ["Universidad Autónoma", "Par seleccionado", "Otras universidades"]
+
+    # El eje x se ensancha por la derecha: las etiquetas van a la derecha del
+    # punto y sin este margen la ultima se sale de la lamina.
+    lo, hi = float(usable[x].min()), float(usable[x].max())
+    span = (hi - lo) or (abs(hi) or 1)
+    dominio_x = [lo - .04 * span, hi + .22 * span]
+
+    base = alt.Chart(usable).encode(
+        x=alt.X(f"{x}:Q", title=x_title, axis=alt.Axis(format=x_fmt),
+                scale=alt.Scale(domain=dominio_x, zero=False, nice=False, clamp=True)),
+        y=alt.Y(f"{y}:Q", title=y_title, axis=alt.Axis(format=y_fmt),
+                scale=alt.Scale(zero=False, nice=True)))
+    # Una sola leyenda. La forma repite la informacion del color a proposito
+    # -- asi la distincion no depende solo del tono -- pero su leyenda se
+    # oculta para no duplicar la del color. El tamanio jerarquiza: la UA y sus
+    # pares por delante de las otras 45.
+    puntos = base.mark_point(filled=True, stroke="#ffffff", strokeWidth=1.2).encode(
+        color=alt.Color("rol:N", title=None, sort=orden,
+                        scale=alt.Scale(domain=orden, range=[UA_RED, BLUE, GREY]),
+                        legend=alt.Legend(orient="top", symbolSize=110)),
+        shape=alt.Shape("rol:N", sort=orden, legend=None,
+                        scale=alt.Scale(domain=orden, range=["circle", "square", "triangle"])),
+        size=alt.Size("rol:N", sort=orden, legend=None,
+                      scale=alt.Scale(domain=orden, range=[240, 170, 70])),
+        opacity=alt.Opacity("rol:N", sort=orden, legend=None,
+                            scale=alt.Scale(domain=orden, range=[1, .95, .5])),
+        tooltip=[alt.Tooltip("nomb_inst:N", title="Universidad"),
+                 alt.Tooltip("rol:N", title="Rol"),
+                 alt.Tooltip(f"{x}:Q", title=x_title, format=x_fmt),
+                 alt.Tooltip(f"{y}:Q", title=y_title, format=y_fmt),
+                 alt.Tooltip("cohorte_total:Q", title="Inscripciones", format=",")])
+    capas = []
+    if quadrants:
+        medianas = pd.DataFrame({"vx": [usable[x].median()], "vy": [usable[y].median()]})
+        capas += [
+            alt.Chart(medianas).mark_rule(strokeDash=[4, 4], size=1, color=INK).encode(x="vx:Q"),
+            alt.Chart(medianas).mark_rule(strokeDash=[4, 4], size=1, color=INK).encode(y="vy:Q"),
+        ]
+    capas.append(puntos)
+    # La UA se vuelve a dibujar encima: con aranceles y retenciones parecidos
+    # su punto quedaba tapado por el de un par, y es el sujeto del grafico.
+    ua = usable.loc[usable.rol.eq("Universidad Autónoma")]
+    if not ua.empty:
+        capas.append(alt.Chart(ua).mark_point(
+            filled=True, shape="circle", size=240, color=UA_RED,
+            stroke="#ffffff", strokeWidth=2).encode(x=f"{x}:Q", y=f"{y}:Q"))
+    etiquetados = usable.loc[usable.rol.ne("Otras universidades")].copy()
+    if not etiquetados.empty:
+        # Nombres cortos y alternancia arriba/abajo: con seis instituciones en
+        # un rango estrecho, los rotulos completos se pisaban entre si.
+        etiquetados = etiquetados.sort_values(y).reset_index(drop=True)
+        # `dy` es propiedad de la marca, no canal de codificacion, asi que la
+        # alternancia se hace con dos capas en vez de una columna de desvio.
+        for resto, desvio in ((0, -11), (1, 13)):
+            grupo = etiquetados.loc[etiquetados.index % 2 == resto]
+            if grupo.empty:
+                continue
+            capas.append(alt.Chart(grupo).mark_text(
+                align="left", dx=11, dy=desvio, fontSize=10, fontWeight=600,
+                color=INK).encode(x=f"{x}:Q", y=f"{y}:Q", text="etiqueta:N"))
+    return alt.layer(*capas).properties(height=430), len(usable)
 
 
 def gap(a: float, b: float) -> str | None:
@@ -120,7 +248,9 @@ def render_benchmark(results_dir: Path) -> None:
     st.caption("pp = puntos porcentuales. Las referencias de pares y del sistema excluyen a la UA. "
                f"El ajuste por áreas cubre {stats['cobertura']:.1%} de las inscripciones UA del filtro; "
                "su brecha usa la retención UA de esas mismas áreas comunes.")
-    position, similar, evolution, methodology = st.tabs(["Posición de la UA", "Por qué son comparables", "Evolución y áreas", "Método y cobertura"])
+    position, mapa, similar, evolution, methodology = st.tabs(
+        ["Posición de la UA", "Mapa de posicionamiento", "Por qué son comparables",
+         "Evolución y áreas", "Método y cobertura"])
     with position:
         st.subheader("La UA frente a sus pares")
         finite = shown.loc[shown.retencion.notna()].copy()
@@ -156,6 +286,76 @@ def render_benchmark(results_dir: Path) -> None:
                      hide_index=True, width="stretch")
         st.download_button("Descargar benchmark con contexto", export.to_csv(index=False).encode("utf-8-sig"),
                            file_name=f"benchmark_ua_{year}_{metric}.csv", mime="text/csv")
+    with mapa:
+        st.subheader("¿Dónde se sitúa la UA entre las universidades chilenas?")
+        st.caption("Cada punto es una universidad. Las líneas punteadas marcan la mediana del sistema "
+                   "y dividen el gráfico en cuadrantes. Sólo la UA y sus pares llevan nombre.")
+        frame = positioning_frame(model, nearest, data, int(year), metric, area, code, peer_ids)
+        disponibles = [k for k in AXES if k in frame.columns and frame[k].notna().any()]
+        ex, ey = st.columns(2)
+        x_var = ex.selectbox("Eje horizontal", disponibles, index=disponibles.index("arancel_mediano")
+                             if "arancel_mediano" in disponibles else 0,
+                             format_func=lambda k: AXES[k][0], key="bench_x")
+        y_var = ey.selectbox("Eje vertical", disponibles, index=disponibles.index("retencion")
+                             if "retencion" in disponibles else 0,
+                             format_func=lambda k: AXES[k][0], key="bench_y")
+        grafico, n_puntos = scatter(frame, x_var, y_var)
+        if grafico is None:
+            st.info("No hay universidades con datos en ambas variables para este filtro.")
+        else:
+            st.altair_chart(grafico, width="stretch")
+            faltan = len(frame) - n_puntos
+            if faltan:
+                st.caption(f"{n_puntos} universidades con dato en ambos ejes; {faltan} quedan fuera por dato ausente.")
+
+        st.subheader("¿Las universidades parecidas obtienen resultados parecidos?")
+        st.caption("Distancia de perfil frente a continuidad. Si el parecido de perfil explicara el resultado, "
+                   "los puntos caerían sobre una pendiente; la dispersión indica cuánto queda sin explicar.")
+        rel, _ = scatter(frame, "distancia", "retencion", quadrants=False)
+        if rel is None:
+            st.info("Sin datos suficientes para relacionar perfil y resultado.")
+        else:
+            st.altair_chart(rel, width="stretch")
+            pares = frame.loc[frame.distancia.notna() & frame.retencion.notna() & frame.distancia.gt(0)]
+            if len(pares) > 5:
+                # La lectura se deriva del valor observado. Un texto fijo se
+                # vuelve falso en cuanto cambian los datos o el filtro.
+                r = float(np.corrcoef(pares.distancia, pares.retencion)[0, 1])
+                rs = float(pares.distancia.corr(pares.retencion, method="spearman"))
+                fuerza = ("prácticamente nula" if abs(r) < .2 else
+                          "débil" if abs(r) < .4 else
+                          "moderada" if abs(r) < .6 else "apreciable")
+                sentido = ("las universidades de perfil más distinto a la UA tienden a mostrar "
+                           "menor continuidad" if r < 0 else
+                           "las universidades de perfil más distinto a la UA tienden a mostrar "
+                           "mayor continuidad")
+                st.markdown(
+                    f"Correlación entre distancia de perfil y continuidad: **{r:+.2f}** "
+                    f"(Spearman {rs:+.2f}) sobre {len(pares)} universidades: relación **{fuerza}**. "
+                    + (f"Con ese signo, {sentido}. " if abs(r) >= .2 else
+                       "El perfil de ingreso, por sí solo, no anticipa el resultado. "))
+                st.caption("La distancia se mide desde la UA, así que esto describe su vecindario y no una "
+                           "regularidad del sistema. Tampoco implica causalidad: perfil y resultado pueden "
+                           "compartir causas que no están en el modelo, como selectividad de admisión o "
+                           "composición socioeconómica del estudiantado.")
+
+        st.subheader("Posición relativa de la UA")
+        filas = []
+        for clave in disponibles:
+            serie = frame[clave].dropna()
+            valor = frame.loc[frame.cod_inst.eq(code), clave]
+            if serie.empty or valor.empty or not np.isfinite(valor.iloc[0]):
+                continue
+            v = float(valor.iloc[0])
+            filas.append({"Variable": AXES[clave][0], "UA": v,
+                          "Mediana del sistema": float(serie.median()),
+                          "Percentil UA": round(100 * float((serie < v).mean()), 0),
+                          "Universidades con dato": int(serie.size)})
+        if filas:
+            st.dataframe(pd.DataFrame(filas).round(2), hide_index=True, width="stretch")
+            st.caption("El percentil indica qué porcentaje de universidades queda por debajo de la UA en cada "
+                       "variable. No es una puntuación: en arancel o duración, estar arriba no es mejor.")
+
     with similar:
         st.subheader("Similitud institucional explicada")
         st.markdown("La cercanía combina **tamaño de cohorte y sedes, mezcla de áreas, presencia regional, "

@@ -15,8 +15,29 @@ from student_analytics.ingestion.retention import summarize_retention
 
 SHARE_BLOCKS = {"areas": ["area"], "regiones": ["region"], "docencia": ["jornada", "modalidad"]}
 
+# Variables numericas descriptivas, para posicionar en graficos. NO entran en
+# la distancia ni en los clusters: profile_matrix solo toma log_cohorte,
+# log_sedes y las columnas con prefijo "::". Cambiar eso alteraria los pares.
+DESCRIPTIVE = {
+    "arancel_mediano": "Arancel anual (CLP)",
+    "matricula_mediana": "Matrícula anual (CLP)",
+    "acreditacion_anios": "Años de acreditación institucional",
+    "carreras_acreditadas": "Inscripciones en carreras acreditadas",
+    "duracion_media": "Duración nominal (semestres)",
+    "ingreso_no_regular": "Ingreso por vías no regulares",
+    "ingreso_pace": "Ingreso vía PACE",
+    "tamano_por_sede": "Inscripciones por sede",
+    "concentracion_areas": "Concentración de áreas (HHI)",
+    "regiones_presencia": "Regiones con presencia",
+}
 
-def build_profiles(cohort: pd.DataFrame, year: int) -> pd.DataFrame:
+
+def _numeric(series: pd.Series) -> pd.Series:
+    """Las bases usan coma decimal."""
+    return pd.to_numeric(series.astype(str).str.replace(",", ".", regex=False), errors="coerce")
+
+
+def build_profiles(cohort: pd.DataFrame, year: int, uf_clp: float | None = None) -> pd.DataFrame:
     """Agregados sin MRUN exportable, sobre todas las inscripciones de ingreso."""
     cohort = cohort.copy()
     cohort["cod_inst"] = cohort.cod_inst.astype(str)
@@ -26,6 +47,7 @@ def build_profiles(cohort: pd.DataFrame, year: int) -> pd.DataFrame:
                          sedes=("cod_sede", "nunique"))
     result["log_cohorte"] = np.log1p(result.cohorte_total)
     result["log_sedes"] = np.log1p(result.sedes)
+    _add_descriptive(cohort, result, uf_clp)
     for prefix, column in [("area", "area_conocimiento"), ("region", "region_sede"),
                            ("jornada", "jornada"), ("modalidad", "modalidad")]:
         values = cohort[column].astype("string").fillna("Sin información")
@@ -33,8 +55,58 @@ def build_profiles(cohort: pd.DataFrame, year: int) -> pd.DataFrame:
         shares = counts.div(result.cohorte_total, axis=0)
         result = result.join(shares.add_prefix(prefix + "::"))
         result[f"cobertura_{prefix}"] = values.ne("Sin información").groupby(cohort.cod_inst).mean()
+    # Derivadas de las propias distribuciones, una vez calculadas.
+    areas = [c for c in result if c.startswith("area::")]
+    regiones = [c for c in result if c.startswith("region::")]
+    if areas:
+        result["concentracion_areas"] = (result[areas] ** 2).sum(axis=1)
+    if regiones:
+        result["regiones_presencia"] = (result[regiones] > 0).sum(axis=1)
+    result["tamano_por_sede"] = result.cohorte_total / result.sedes.where(result.sedes.gt(0))
     result.insert(0, "cohorte", year)
     return result.reset_index()
+
+
+def _add_descriptive(cohort: pd.DataFrame, result: pd.DataFrame, uf_clp: float | None) -> None:
+    """Variables institucionales que ya vienen en la matricula publica.
+
+    Van como descriptivas y no como parte de la distancia: sirven para
+    posicionar en los graficos, no para elegir pares.
+    """
+    by = cohort.cod_inst
+
+    if "valor_arancel" in cohort:
+        # La unidad NO es constante: `formato_valores` distingue pesos de UF.
+        # Promediar ambas juntas mezcla ~215 con ~4.900.000 y destruye la
+        # variable. Se homologa a pesos con el valor anual de la UF.
+        arancel = _numeric(cohort.valor_arancel)
+        matricula = _numeric(cohort.get("valor_matricula", pd.Series(index=cohort.index)))
+        formato = cohort.get("formato_valores", pd.Series("", index=cohort.index)).astype("string")
+        en_uf = formato.str.contains("UF", case=False, na=False)
+        if uf_clp:
+            arancel = arancel.where(~en_uf, arancel * uf_clp)
+            matricula = matricula.where(~en_uf, matricula * uf_clp)
+        else:
+            # Sin factor de conversion se descartan, en vez de mezclar unidades.
+            arancel = arancel.where(~en_uf)
+            matricula = matricula.where(~en_uf)
+        result["arancel_mediano"] = arancel.groupby(by).median()
+        result["matricula_mediana"] = matricula.groupby(by).median()
+        result["cobertura_arancel"] = arancel.notna().groupby(by).mean()
+
+    if "acre_inst_anio" in cohort:
+        # Es un atributo de la institucion, constante dentro de cada una.
+        result["acreditacion_anios"] = _numeric(cohort.acre_inst_anio).groupby(by).max()
+    if "acreditada_carr" in cohort:
+        result["carreras_acreditadas"] = (
+            cohort.acreditada_carr.astype("string").str.upper().eq("ACREDITADA")
+            .groupby(by).mean())
+    if "dur_total_carr" in cohort:
+        result["duracion_media"] = _numeric(cohort.dur_total_carr).groupby(by).mean()
+    if "forma_ingreso" in cohort:
+        forma = cohort.forma_ingreso.astype("string").fillna("")
+        result["ingreso_no_regular"] = (~forma.str.startswith("1-")).groupby(by).mean()
+        result["ingreso_pace"] = forma.str.contains("PACE", case=False, na=False).groupby(by).mean()
 
 
 def profile_matrix(profiles: pd.DataFrame, weights: dict) -> tuple[np.ndarray, dict[str, list[str]]]:

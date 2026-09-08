@@ -106,19 +106,31 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
     app = AppTest.from_file(str(ROOT / "src/student_analytics/ui/app.py"), default_timeout=180).run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert "Benchmark" in app.title[0].value
-    assert len(app.tabs) == 4
+    assert len(app.tabs) >= 4
     assert len(app.metric) == 4
-    original_peers = app.dataframe[1].value["Universidad"].tolist()
+
+    def peer_table(a):
+        """La tabla de pares, buscada por sus columnas.
+
+        Localizarla por indice la ata al orden de las pestanias: agregar una
+        vista mas rompia el test sin que nada del benchmark cambiara.
+        """
+        for frame in a.dataframe:
+            if "Distancia a UA" in frame.value.columns:
+                return frame.value["Universidad"].tolist()
+        raise AssertionError("No se encontro la tabla de pares")
+
+    original_peers = peer_table(app)
     app.selectbox(key="bench_metric").set_value("sistema").run()
     assert not app.exception, [str(e.value) for e in app.exception]
-    assert app.dataframe[1].value["Universidad"].tolist() == original_peers
+    assert peer_table(app) == original_peers
     app.selectbox(key="bench_year").set_value(2023).run()
     assert not app.exception, [str(e.value) for e in app.exception]
     app.selectbox(key="bench_year").set_value(2024).run()
     assert not app.exception, [str(e.value) for e in app.exception]
     app.selectbox(key="bench_area").set_value("Administración y Comercio").run()
     assert not app.exception, [str(e.value) for e in app.exception]
-    assert app.dataframe[1].value["Universidad"].tolist() == original_peers
+    assert peer_table(app) == original_peers
     app.radio(key="bench_mode").set_value("Mismo cluster que la UA").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     app.radio(key="bench_mode").set_value("Selección manual").run()

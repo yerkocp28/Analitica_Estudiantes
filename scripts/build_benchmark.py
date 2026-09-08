@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 
 import pandas as pd
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -17,7 +18,13 @@ def main() -> None:
     retention = pd.read_parquet(ROOT / "data/results/retention_universities.parquet")
     base = ["mrun", "anio_ing_carr_ori", "nivel_global", "tipo_inst_1", "cod_inst", "nomb_inst",
             "nomb_sede", "cod_carrera", "nomb_carrera", "area_conocimiento"]
-    extra = ["cod_sede", "region_sede", "modalidad", "jornada"]
+    extra = ["cod_sede", "region_sede", "modalidad", "jornada",
+             # Descriptivas: ya vienen en la matricula publica y no cuestan
+             # una descarga adicional. No participan en la distancia.
+             "acre_inst_anio", "acreditada_carr", "formato_valores",
+             "valor_matricula", "valor_arancel", "dur_total_carr", "forma_ingreso"]
+    uf = (yaml.safe_load((ROOT / "config/benchmark.yml").read_text(encoding="utf-8"))
+          .get("uf_clp") or {})
     profiles, sources = [], []
     for year in sorted(retention.cohorte.unique()):
         matches = sorted((source / f"matricula_{year}").rglob("*.csv"))
@@ -30,7 +37,7 @@ def main() -> None:
         cohort = pd.concat([c.loc[c.anio_ing_carr_ori.eq(year) & c.nivel_global.eq("Pregrado")
                                   & c.tipo_inst_1.eq("Universidades")] for c in chunks])
         cohort = cohort.drop_duplicates(subset=base)
-        p = build_profiles(cohort, int(year))
+        p = build_profiles(cohort, int(year), uf_clp=uf.get(int(year)))
         expected = retention.loc[retention.cohorte.eq(year)].groupby("cod_inst")[["n", "sin_mrun"]].sum().sum(axis=1)
         actual = p.set_index("cod_inst").cohorte_total
         if not actual.sort_index().equals(expected.reindex(actual.index).sort_index()):
