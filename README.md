@@ -158,20 +158,38 @@ reales.
 
 El **mismo** pipeline, sin cambiar una línea de la lógica de features ni de
 evaluación — solo el adaptador de ingesta. 28.785 estudiantes reales en 32.593
-inscripciones (estudiante × módulo × presentación), validación temporal,
-prevalencia 44% en el conjunto de test (reprobar o retirarse):
+inscripciones (estudiante × módulo × presentación), validación temporal.
+
+**Cohorte fija**: 13.144 casos y prevalencia 32,9% en *todas* las semanas, así
+que lo único que cambia entre filas es la información disponible.
 
 | Semana | % del curso | AUC | Top 10% | Top 20% | Semanas restantes |
 |---|---|---|---|---|---|
-| 4 | 10% | 0,702 | 14,2% | 30,3% | 35 |
-| 8 | 21% | 0,751 | 17,9% | 34,8% | 31 |
-| 12 | 31% | 0,793 | 23,4% | 39,5% | 27 |
-| 16 | 41% | 0,819 | 24,9% | 42,7% | 23 |
-| 20 | 51% | 0,837 | 25,9% | 44,3% | 19 |
+| 4 | 10% | 0,697 | 15,5% | 33,6% | 35 |
+| 8 | 21% | 0,753 | 19,4% | 37,5% | 31 |
+| 12 | 31% | 0,801 | 26,4% | 43,6% | 27 |
+| 16 | 41% | 0,824 | 27,7% | 45,9% | 23 |
+| 20 | 51% | 0,840 | 27,7% | 46,5% | 19 |
 | 26 | 67% | 0,859 | 29,0% | 48,7% | 13 |
 
 **OULAD no tiene asistencia** (es educación a distancia) — justamente la variable
 que ULagos identificó como clave. Estos números son un **piso**, no un techo.
+
+### Por qué cohorte fija
+
+Excluir a quien ya se dio de baja es correcto (no es un caso a predecir), pero
+recalcular esa exclusión cada semana hace que la población cambie: en modo
+`rolling` el n va de 15.735 a 13.144 y la prevalencia de 44% a 33%. Entonces la
+mejora del AUC podría venir de más información **o** de una población distinta.
+
+Se midió con `--compare-population`: los deltas de AUC son ≤ 0,008 en todas las
+semanas, así que la pendiente **no** venía del cambio de población. Pero la
+prevalencia variable hacía las filas no comparables y el lift sí se movía (Top
+20% en la semana 4: 30,3% rolling vs 33,6% fija). Por eso `fixed` es el default.
+
+```bash
+python scripts/validate_lead_time.py --source oulad --compare-population
+```
 
 Un hallazgo del baseline: hasta la semana 12 el driver dominante es
 `prior_attempts` (intentos previos en el módulo), una variable de historial; desde

@@ -49,6 +49,11 @@ def main() -> int:
     ap.add_argument("--source", choices=["synthetic", "oulad"], default="synthetic")
     ap.add_argument("--data", type=str, default=None)
     ap.add_argument("--target", default="failed")
+    ap.add_argument("--population", choices=["fixed", "rolling"], default="fixed",
+                    help="fixed: misma cohorte en todas las semanas (comparacion "
+                         "honesta). rolling: elegibilidad recalculada cada semana.")
+    ap.add_argument("--compare-population", action="store_true",
+                    help="Corre ambos modos y muestra la diferencia")
     ap.add_argument("--out", type=str, default=None,
                     help="Guarda metricas y predicciones para la UI")
     args = ap.parse_args()
@@ -59,7 +64,7 @@ def main() -> int:
 
     metrics, preds = evaluate_lead_time(
         data, scoring_weeks=weeks, weeks_total=total,
-        target=args.target, eligibility=elig)
+        target=args.target, eligibility=elig, population=args.population)
 
     print("\n" + "=" * 78)
     print(f"PODER PREDICTIVO vs ANTICIPACION   fuente={args.source}   target={args.target}")
@@ -76,8 +81,40 @@ def main() -> int:
     print("=" * 78)
     print("Top 20% = de quienes efectivamente reprobaron, que fraccion queda dentro")
     print("del 20% priorizado esa semana. Baseline aleatorio = 20%.")
-    print(f"Prevalencia en test: {metrics['prevalence'].iloc[0]:.1%}   "
-          f"n_test={metrics['n_test'].iloc[0]:,}")
+    if args.population == "fixed":
+        print(f"Poblacion FIJA: {metrics['n_test'].iloc[0]:,} casos y prevalencia "
+              f"{metrics['prevalence'].iloc[0]:.1%} en todas las semanas, asi que lo "
+              f"unico\nque cambia entre filas es la informacion disponible.")
+    else:
+        print(f"Poblacion ROLLING: n y prevalencia varian por semana "
+              f"({metrics['n_test'].iloc[0]:,} -> {metrics['n_test'].iloc[-1]:,}; "
+              f"{metrics['prevalence'].iloc[0]:.1%} -> "
+              f"{metrics['prevalence'].iloc[-1]:.1%}).\nLa pendiente mezcla mas "
+              f"informacion con una poblacion distinta.")
+
+    if args.compare_population:
+        otro = "rolling" if args.population == "fixed" else "fixed"
+        m2, _ = evaluate_lead_time(
+            data, scoring_weeks=weeks, weeks_total=total,
+            target=args.target, eligibility=elig, population=otro)
+        comp = metrics[["week", "auc", "lift_20", "n_test", "prevalence"]].merge(
+            m2[["week", "auc", "lift_20", "n_test", "prevalence"]],
+            on="week", suffixes=(f"_{args.population}", f"_{otro}"))
+        print(f"\n{'-' * 78}\nCOMPARACION DE POBLACION\n{'-' * 78}")
+        print(f"{'Semana':>7} {'AUC fija':>9} {'AUC roll':>9} {'delta':>7} "
+              f"{'n fija':>8} {'n roll':>8} {'prev fija':>10} {'prev roll':>10}")
+        a, b = args.population, otro
+        fija, roll = (a, b) if a == "fixed" else (b, a)
+        for r in comp.itertuples():
+            auc_f = getattr(r, f"auc_{fija}")
+            auc_r = getattr(r, f"auc_{roll}")
+            print(f"{r.week:>7} {auc_f:>9.3f} {auc_r:>9.3f} {auc_r - auc_f:>+7.3f} "
+                  f"{getattr(r, f'n_test_{fija}'):>8,} "
+                  f"{getattr(r, f'n_test_{roll}'):>8,} "
+                  f"{getattr(r, f'prevalence_{fija}'):>9.1%} "
+                  f"{getattr(r, f'prevalence_{roll}'):>9.1%}")
+        print("Un delta positivo y creciente indica cuanto de la mejora aparente")
+        print("venia del cambio de poblacion y no de mas informacion.")
 
     if args.out:
         out = Path(args.out)

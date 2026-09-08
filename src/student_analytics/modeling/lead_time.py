@@ -70,6 +70,7 @@ def evaluate_lead_time(
     train_terms: list | None = None,
     test_terms: list | None = None,
     eligibility: callable | None = None,
+    population: str = "fixed",
 ) -> tuple[pd.DataFrame, dict[int, pd.DataFrame]]:
     """Entrena y evalua un baseline en cada semana de scoring.
 
@@ -78,12 +79,28 @@ def evaluate_lead_time(
     cohortes y produciria metricas optimistas que no se sostienen en
     produccion.
 
-    `eligibility` filtra quien es un caso predecible en cada semana; se usa
-    para excluir a quienes ya se dieron de baja antes del scoring.
+    `eligibility` filtra quien es un caso predecible; se usa para excluir a
+    quienes ya se dieron de baja antes del scoring.
+
+    `population` decide COMO se aplica ese filtro, y la eleccion cambia lo
+    que la curva de lead time significa:
+
+      "fixed"  (por defecto) — se fija una unica cohorte: quienes siguen
+          matriculados en la ULTIMA semana de scoring, y se evalua a esa
+          misma gente en todas las semanas. Es la comparacion honesta: el
+          unico factor que varia entre semanas es cuanta informacion hay.
+
+      "rolling" — se recalcula la elegibilidad en cada semana. Refleja mejor
+          a quien se le hace scoring en produccion, pero la poblacion cambia
+          semana a semana: los casos mas evidentes se van retirando, asi que
+          la mejora de AUC mezcla "mas informacion" con "poblacion distinta"
+          e infla la pendiente de la curva.
 
     Devuelve las metricas por semana y las predicciones de cada semana, para
     que la UI pueda mostrar el detalle sin reentrenar.
     """
+    if population not in ("fixed", "rolling"):
+        raise ValueError(f"population debe ser 'fixed' o 'rolling', no {population!r}")
     outcomes = data["outcomes"]
     terms = sorted(outcomes["term_id"].dropna().unique())
     if train_terms is None or test_terms is None:
@@ -93,12 +110,27 @@ def evaluate_lead_time(
         train_terms, test_terms = terms[:split], terms[split:]
     log.info("Validacion temporal: entrena %s, testea %s", train_terms, test_terms)
 
+    # Cohorte fija: se resuelve UNA vez, en la ultima semana de scoring, y se
+    # reutiliza en todas. Asi el n y la prevalencia son constantes y la curva
+    # aisla el efecto de la informacion acumulada.
+    cohorte_fija = None
+    if eligibility is not None and population == "fixed":
+        ancla = max(scoring_weeks)
+        cohorte_fija = eligibility(outcomes, ancla)
+        log.info("Cohorte fija anclada en la semana %s: %s casos (de %s)",
+                 ancla, f"{len(cohorte_fija):,}", f"{len(outcomes):,}")
+
     rows: list[dict] = []
     preds: dict[int, pd.DataFrame] = {}
 
     for week in scoring_weeks:
         feats = build_features_at_week(data, week)
-        elegibles = eligibility(outcomes, week) if eligibility else outcomes
+        if cohorte_fija is not None:
+            elegibles = cohorte_fija
+        elif eligibility is not None:
+            elegibles = eligibility(outcomes, week)
+        else:
+            elegibles = outcomes
         df = feats.merge(elegibles[KEYS + [target]], on=KEYS, how="inner")
 
         tr = df[df["term_id"].isin(train_terms)]

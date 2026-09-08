@@ -110,3 +110,39 @@ def test_mas_semanas_acumulan_mas_informacion(data):
     tarde = build_features_at_week(data, 20)
     assert tarde["n_grades"].sum() > temprano["n_grades"].sum()
     assert tarde["activity_mean"].notna().sum() >= temprano["activity_mean"].notna().sum()
+
+
+def test_poblacion_fija_mantiene_n_y_prevalencia_constantes(data):
+    """Con cohorte fija, lo unico que cambia entre semanas es la informacion.
+
+    Si el n o la prevalencia varian, la curva de lead time mezcla 'mas datos'
+    con 'poblacion distinta' y sus filas dejan de ser comparables.
+    """
+    from student_analytics.modeling.lead_time import evaluate_lead_time
+
+    m, _ = evaluate_lead_time(
+        data, scoring_weeks=[8, 16, 26], weeks_total=39,
+        eligibility=eligible_at_week, population="fixed")
+    assert m["n_test"].nunique() == 1, m["n_test"].tolist()
+    assert m["prevalence"].nunique() == 1, m["prevalence"].tolist()
+    # Y la curva debe seguir subiendo: mas semanas, mas poder predictivo.
+    assert m["auc"].is_monotonic_increasing
+
+
+def test_poblacion_rolling_encoge_semana_a_semana(data):
+    """El modo alternativo si deja variar la poblacion, a proposito."""
+    from student_analytics.modeling.lead_time import evaluate_lead_time
+
+    m, _ = evaluate_lead_time(
+        data, scoring_weeks=[8, 16, 26], weeks_total=39,
+        eligibility=eligible_at_week, population="rolling")
+    assert m["n_test"].is_monotonic_decreasing
+    assert m["n_test"].nunique() > 1
+
+
+def test_population_rechaza_valores_invalidos(data):
+    from student_analytics.modeling.lead_time import evaluate_lead_time
+
+    with pytest.raises(ValueError, match="population"):
+        evaluate_lead_time(data, scoring_weeks=[8], weeks_total=39,
+                           eligibility=eligible_at_week, population="cualquiera")
