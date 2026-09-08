@@ -88,7 +88,7 @@ class SyntheticDataset:
     enrollment: pd.DataFrame
     attendance_weekly: pd.DataFrame
     grades_weekly: pd.DataFrame
-    canvas_weekly: pd.DataFrame
+    activity_weekly: pd.DataFrame
     assignments_weekly: pd.DataFrame
     outcomes: pd.DataFrame
 
@@ -99,7 +99,7 @@ class SyntheticDataset:
             "enrollment": self.enrollment,
             "attendance_weekly": self.attendance_weekly,
             "grades_weekly": self.grades_weekly,
-            "canvas_weekly": self.canvas_weekly,
+            "activity_weekly": self.activity_weekly,
             "assignments_weekly": self.assignments_weekly,
             "outcomes": self.outcomes,
         }
@@ -384,11 +384,11 @@ class SyntheticGenerator:
         canvas["participations"] = rng.poisson(np.clip(activity, 0, None) * 6)
         canvas["days_active"] = np.minimum(
             rng.poisson(np.clip(activity, 0, None) * 3.2), 7)
-        canvas["canvas_adoption"] = panel["canvas_adoption"].to_numpy()
+        canvas["platform_adoption"] = panel["canvas_adoption"].to_numpy()
         # En cursos de baja adopcion, la senal Canvas no es interpretable.
         # Se marca para que el feature builder la trate como no disponible
         # en vez de como desenganche (doc maestro 73).
-        canvas["canvas_reliable"] = panel["canvas_adoption"].to_numpy() != "low"
+        canvas["activity_reliable"] = panel["canvas_adoption"].to_numpy() != "low"
 
         # --- Tareas -----------------------------------------------------
         # No todas las semanas tienen tareas.
@@ -405,7 +405,7 @@ class SyntheticGenerator:
         asg["late"] = late
         asg["missing"] = assigned - submitted
 
-        return {"attendance_weekly": att, "canvas_weekly": canvas,
+        return {"attendance_weekly": att, "activity_weekly": canvas,
                 "assignments_weekly": asg}
 
     def _weekly_grades(self, panel: pd.DataFrame, students: pd.DataFrame) -> pd.DataFrame:
@@ -591,7 +591,7 @@ class SyntheticGenerator:
             enrollment=enrollment,
             attendance_weekly=facts["attendance_weekly"],
             grades_weekly=grades,
-            canvas_weekly=facts["canvas_weekly"],
+            activity_weekly=facts["activity_weekly"],
             assignments_weekly=facts["assignments_weekly"],
             outcomes=outcomes,
         )

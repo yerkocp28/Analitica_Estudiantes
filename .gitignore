@@ -11,6 +11,8 @@ data/bronze/
 data/silver/
 data/gold/
 data/synthetic/
+data/external/
+data/results/
 *.parquet
 *.csv
 !docs/**/*.csv

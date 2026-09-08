@@ -13,6 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 modeling = ["scikit-learn>=1.4", "matplotlib>=3.8"]
+ui = ["streamlit>=1.40", "altair>=5.0"]
 dev = ["pytest>=8.0"]
 
 [build-system]

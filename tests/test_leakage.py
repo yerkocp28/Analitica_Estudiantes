@@ -10,18 +10,11 @@ Si algo cambia, el pipeline estaba mirando hacia adelante.
 """
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import numpy as np
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-
-from validate_lead_time import build_features_at_week  # noqa: E402
-
 from student_analytics.config import Settings, load_synthetic_config  # noqa: E402
+from student_analytics.features.builder import build_features_at_week  # noqa: E402
 from student_analytics.synthetic.generator import SyntheticGenerator  # noqa: E402
 
 
@@ -45,7 +38,7 @@ def _corromper_futuro(data: dict, week: int) -> dict:
     rng = np.random.default_rng(999)
     out = {k: v.copy() for k, v in data.items()}
 
-    for name in ("attendance_weekly", "canvas_weekly", "assignments_weekly"):
+    for name in ("attendance_weekly", "activity_weekly", "assignments_weekly"):
         df = out[name]
         futuro = df["week"] > week
         for col in df.columns:

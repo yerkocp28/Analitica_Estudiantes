@@ -45,7 +45,7 @@ def test_grano_unico_por_tabla(ds):
     assert ds.course_master["course_id"].is_unique
     assert not ds.outcomes.duplicated(KEYS).any()
     assert not ds.enrollment.duplicated(KEYS).any()
-    for name in ("attendance_weekly", "canvas_weekly", "assignments_weekly"):
+    for name in ("attendance_weekly", "activity_weekly", "assignments_weekly"):
         df = ds.tables()[name]
         assert not df.duplicated(KEYS + ["week"]).any(), f"grano duplicado en {name}"
 
@@ -234,12 +234,12 @@ def test_cursos_sin_registro_de_asistencia_vienen_nulos(ds):
     assert sin_registro["sessions_attended"].isna().all()
 
 
-def test_canvas_de_baja_adopcion_queda_marcado(ds):
-    can = ds.canvas_weekly
-    baja = can[can["canvas_adoption"] == "low"]
+def test_plataforma_de_baja_adopcion_queda_marcada(ds):
+    can = ds.activity_weekly
+    baja = can[can["platform_adoption"] == "low"]
     assert len(baja) > 0
-    assert not baja["canvas_reliable"].any()
-    assert can[can["canvas_adoption"] == "high"]["canvas_reliable"].all()
+    assert not baja["activity_reliable"].any()
+    assert can[can["platform_adoption"] == "high"]["activity_reliable"].all()
 
 
 def test_hay_notas_cargadas_con_atraso(ds):

@@ -16,10 +16,11 @@ La especificación completa está en
 |---|---|---|
 | 0 | Contextualización y especificación | Completo |
 | **1** | **Paquete, configuración, generador sintético, tests** | **Completo** |
+| **1b** | **Adaptador OULAD + baseline + cockpit Streamlit** | **Completo** |
 | 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
-| 4 | Modelo 1 — riesgo de reprobación | Pendiente |
-| 5 | Producto: cockpit y Student 360 | Pendiente |
+| 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
+| 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
 | 6 | Modelo 2 — desenganche académico | Pendiente |
 
 **Sin accesos a Banner/Canvas todavía.** Todo lo que existe corre sobre datos
@@ -51,13 +52,51 @@ su origen real esperado y su nivel de confianza (`confirmed` / `likely` /
 ```bash
 python -m venv .venv
 .venv\Scripts\activate           # Windows
-pip install -e ".[modeling,dev]"
+pip install -e ".[modeling,ui,dev]"
 
+# 1. Datos sintéticos (forma UA)
 python scripts/generate_synthetic.py                 # volumen de config (10.000)
 python scripts/generate_synthetic.py --students 500  # smoke test
-python scripts/validate_lead_time.py                 # curva poder vs anticipación
-pytest -q
+
+# 2. Datos reales de referencia (~45 MB comprimidos)
+python scripts/download_oulad.py
+
+# 3. Curva de poder predictivo vs anticipación, sobre cualquier fuente
+python scripts/validate_lead_time.py --source synthetic --out data/results
+python scripts/validate_lead_time.py --source oulad     --out data/results
+
+# 4. Cockpit
+streamlit run src/student_analytics/ui/app.py
+
+pytest -q                                            # 55 tests
 ```
+
+---
+
+## La herramienta de visualización
+
+`streamlit run src/student_analytics/ui/app.py` — tres vistas:
+
+**Cockpit de alerta temprana.** La pieza central no es el AUC sino la **curva de
+capacidad**: un deslizador que responde *si esta semana alcanzo a contactar al
+20% de mis estudiantes, ¿a qué fracción de los que van a reprobar llego?*. Es la
+métrica del benchmark ULagos y la única que se traduce en una decisión. Debajo,
+la lista priorizada con las señales que la generaron.
+
+**Estudiante 360.** Trayectoria del riesgo semana a semana por asignatura. Lo que
+importa no es el nivel sino la pendiente: un riesgo alto y estable es un caso
+distinto de uno que se está acelerando.
+
+**Desempeño del modelo.** Curva de lead time, AUC, Brier y la tabla completa.
+
+Se eligió **Streamlit** sobre Shiny for Python porque el documento maestro ya lo
+especifica en el stack (§96) y para un cockpit de tablas, filtros y drill-down es
+más directo. Shiny sería mejor con reactividad compleja o con un equipo que
+venga de R. Para la entrega final a las direcciones de carrera conviene evaluar
+**Power BI**: ya tiene autenticación institucional y gobernanza de acceso.
+
+Las bandas de riesgo usan una paleta de estado validada para daltonismo y van
+siempre con **icono + etiqueta**, nunca solo con color.
 
 ---
 
@@ -115,6 +154,31 @@ la señal que el generador inyectó, y que la dificultad del problema simulado e
 en el rango que reporta la literatura. El número que importa saldrá de datos
 reales.
 
+## Resultados sobre OULAD (datos reales)
+
+El **mismo** pipeline, sin cambiar una línea de la lógica de features ni de
+evaluación — solo el adaptador de ingesta. 28.785 estudiantes reales en 32.593
+inscripciones (estudiante × módulo × presentación), validación temporal,
+prevalencia 44% en el conjunto de test (reprobar o retirarse):
+
+| Semana | % del curso | AUC | Top 10% | Top 20% | Semanas restantes |
+|---|---|---|---|---|---|
+| 4 | 10% | 0,702 | 14,2% | 30,3% | 35 |
+| 8 | 21% | 0,751 | 17,9% | 34,8% | 31 |
+| 12 | 31% | 0,793 | 23,4% | 39,5% | 27 |
+| 16 | 41% | 0,819 | 24,9% | 42,7% | 23 |
+| 20 | 51% | 0,837 | 25,9% | 44,3% | 19 |
+| 26 | 67% | 0,859 | 29,0% | 48,7% | 13 |
+
+**OULAD no tiene asistencia** (es educación a distancia) — justamente la variable
+que ULagos identificó como clave. Estos números son un **piso**, no un techo.
+
+Un hallazgo del baseline: hasta la semana 12 el driver dominante es
+`prior_attempts` (intentos previos en el módulo), una variable de historial; desde
+la semana 16 pasa a ser `late` (entregas atrasadas), una señal de comportamiento.
+Es el mismo patrón de ULagos — al principio solo sirve la historia previa, y las
+señales conductuales toman el relevo cuando ya hay conducta que observar.
+
 ---
 
 ## Preguntas bloqueantes
@@ -148,14 +212,28 @@ Dirección Jurídica **antes** de que el modelo toque datos reales.
 ```
 config/          settings.yml, synthetic.yml, data_contracts.yml
 src/student_analytics/
-    config.py            carga y validación de YAML
+    config.py               carga y validacion de YAML
     logging_setup.py
     synthetic/
-        profiles.py      7 perfiles latentes de estudiante
-        generator.py     generador reproducible y auto-calibrado
+        profiles.py         7 perfiles latentes de estudiante
+        generator.py        generador reproducible y auto-calibrado
+    ingestion/
+        oulad.py            OULAD -> esquema canonico
+    features/
+        builder.py          features por semana, agnostico a la fuente
+    modeling/
+        lead_time.py        poder predictivo vs anticipacion
+    ui/
+        app.py              cockpit Streamlit
 scripts/
     generate_synthetic.py
-    validate_lead_time.py    diagnóstico: poder predictivo vs anticipación
-tests/           40 tests, incluida invarianza anti-leakage
+    download_oulad.py
+    validate_lead_time.py   --source synthetic | oulad
+tests/           55 tests: generador, leakage, OULAD, UI
 docs/            documentos base del proyecto
 ```
+
+El feature builder y el evaluador **no saben de que fuente vienen los datos**.
+Corren igual sobre el generador sintetico y sobre OULAD. Esa es la propiedad que
+debe hacer barata la migracion a Banner/Canvas: implementar un tercer adaptador
+en `ingestion/`, no reescribir el pipeline.
