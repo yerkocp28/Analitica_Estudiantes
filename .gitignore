@@ -4,6 +4,11 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 
+# Cache de Quarto: paquetes Typst descargados y available-fonts.json, que
+# lista las fuentes de ESTA maquina. Se regenera solo al renderizar.
+.quarto/
+_freeze/
+
 # Datos: nunca versionar. Sinteticos son reproducibles por seed;
 # reales no pueden salir de la universidad (Ley 21.719).
 data/raw/
