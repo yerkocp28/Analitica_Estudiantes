@@ -1,0 +1,29 @@
+# Configuracion general de la plataforma.
+project:
+  name: "Student Analytics UA"
+  institution: "Universidad Autonoma de Chile"
+  pilot_faculty: "Facultad de Administracion y Negocios"
+
+paths:
+  data_synthetic: "data/synthetic"
+  data_bronze: "data/bronze"
+  data_silver: "data/silver"
+  data_gold: "data/gold"
+
+academic:
+  # Escala de notas chilena.
+  grade_min: 1.0
+  grade_max: 7.0
+  grade_pass: 4.0
+  # Asistencia minima reglamentaria. SUPUESTO ABIERTO: confirmar con
+  # Direccion de Docencia. Si la UA reprueba por inasistencia, la
+  # asistencia es parte del mecanismo del target, no solo un predictor.
+  attendance_min_pass: 0.70
+  attendance_rule_enabled: true
+  weeks_per_term: 18
+  # Semanas en que se produce scoring (doc maestro 4.4).
+  scoring_weeks: [3, 5, 8, 12]
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"

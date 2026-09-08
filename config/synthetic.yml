@@ -1,0 +1,105 @@
+# Parametros del generador sintetico.
+#
+# IMPORTANTE: cada valor marcado [ANCLA] esta calibrado contra una
+# estadistica publica real del sistema chileno. Cada valor marcado
+# [SUPUESTO] es una estimacion a re-ajustar cuando lleguen datos UA.
+# Ningun numero de este archivo debe considerarse un hallazgo.
+
+seed: 20260908
+
+volume:
+  n_students: 10000        # doc maestro 18.1
+  n_terms: 6               # 6 semestres historicos
+  weeks_per_term: 18
+  courses_per_student_term: [4, 6]
+
+campus:                    # doc maestro 18.2
+  Providencia: 0.30
+  San Miguel: 0.30
+  Talca: 0.20
+  Temuco: 0.20
+
+careers:
+  - {code: "ICO", name: "Ingenieria Comercial",            n_courses: 14, weight: 0.30}
+  - {code: "CAU", name: "Contador Auditor",                n_courses: 12, weight: 0.22}
+  - {code: "IEC", name: "Ingenieria en Control de Gestion", n_courses: 12, weight: 0.16}
+  - {code: "ADM", name: "Administracion Publica",          n_courses: 10, weight: 0.12}
+  - {code: "ING", name: "Ingenieria Industrial",           n_courses: 14, weight: 0.12}
+  - {code: "TNS", name: "Tecnico en Administracion",       n_courses: 10, weight: 0.08}
+
+calibration:
+  # Estos valores son RESTRICCIONES, no decoracion: el generador resuelve
+  # numericamente sus parametros internos para satisfacerlos. Cambiar un
+  # ancla cambia los datos; no hay constantes magicas en el codigo.
+
+  # [ANCLA] SIES 2022: retencion de primer anio, universidades = 82.8%.
+  # Fuente: cned.cl/indices/retencion-primer-ano
+  retention_first_year: 0.828
+
+  # [SUPUESTO] Tasa de reprobacion por NOTA a nivel asignatura, promedio
+  # del sistema. Es el ancla binding: el intercepto del riesgo latente se
+  # resuelve por biseccion para alcanzarla. RE-AJUSTAR con datos Banner.
+  course_fail_rate: 0.20
+
+  # [SUPUESTO] Reprobacion por INASISTENCIA. Deliberadamente mucho menor
+  # que la reprobacion por nota: es una causal reglamentaria, no el modo
+  # habitual de reprobar. RE-AJUSTAR con el reglamento y datos reales.
+  attendance_fail_rate: 0.07
+
+  # [SUPUESTO] Spread relativo por dificultad. No son tasas absolutas:
+  # el generador las usa solo para ordenar los tiers, y el nivel global
+  # queda fijado por course_fail_rate.
+  difficulty_spread:
+    quantitative_core: 1.0    # Calculo, Estadistica, Algebra, Finanzas
+    disciplinary: 0.0
+    general: -0.6
+
+# Perfiles latentes de estudiante (doc maestro 18.3).
+# prevalence debe sumar 1.0 (validado en tests).
+profiles:
+  A_high_performer:      {prevalence: 0.20}
+  B_silent_high:         {prevalence: 0.10}
+  C_struggling_engaged:  {prevalence: 0.16}
+  D_academic_risk:       {prevalence: 0.14}
+  E_disengaging:         {prevalence: 0.12}
+  F_intermittent:        {prevalence: 0.16}
+  G_recovering:          {prevalence: 0.12}
+
+# Coeficientes del riesgo latente (doc maestro 18.4).
+# Los pesos fijan la IMPORTANCIA RELATIVA de cada senal. El nivel absoluto
+# lo fija `latent_sd` y el intercepto se resuelve contra
+# calibration.course_fail_rate. Asi se puede cambiar un peso sin alterar
+# la tasa global de reprobacion, que es lo que permite probar robustez.
+risk_model:
+  w_low_grade: 1.60
+  w_attendance_drop: 1.10
+  w_missing_assignments: 0.85
+  w_canvas_drop: 0.45
+  w_historical_failure: 0.70
+  w_course_difficulty: 0.60
+
+  # Ruido irreducible. Junto con latent_sd determina el techo de AUC
+  # alcanzable: mas ruido = problema mas dificil.
+  noise_sd: 2.05
+
+  # Desviacion estandar del riesgo latente total. Controla cuanta
+  # separacion hay entre estudiantes. Valores altos saturan el sigmoide y
+  # vuelven el problema trivial (perfiles que reprueban 100%); valores
+  # bajos lo vuelven puro azar. ~1.0 da un problema realista.
+  latent_sd: 1.05
+
+# Calidad de Canvas por curso (doc maestro 73).
+# Un curso cuyo docente no usa Canvas produce falsos "desenganchados".
+# Se modela desde el dia 1, no despues.
+canvas_adoption:
+  # Proporcion de cursos en cada nivel de adopcion docente.
+  high: 0.55      # uso intensivo: tareas, materiales, foros
+  medium: 0.30    # uso parcial
+  low: 0.15       # practicamente sin uso -> features Canvas no confiables
+  # Umbral bajo el cual las features Canvas se emiten como NULL explicito.
+  min_reliable_adoption: "medium"
+
+missingness:
+  # doc maestro 72: los datos reales llegan con huecos. Simularlos.
+  attendance_not_recorded_course_rate: 0.18   # cursos sin registro de asistencia
+  grade_late_entry_rate: 0.10                 # notas cargadas con atraso

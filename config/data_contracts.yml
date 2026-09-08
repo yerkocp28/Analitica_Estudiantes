@@ -1,0 +1,106 @@
+# Contrato de datos: cada campo sintetico declara su origen real esperado.
+#
+# Proposito: cuando lleguen los accesos a Banner/Canvas, migrar consiste en
+# implementar los extractores declarados en `source_real` y apuntar el
+# pipeline a bronze/ en vez de synthetic/. Ninguna logica aguas abajo
+# (marts, features, modelos) deberia cambiar.
+#
+# `status` indica el nivel de confianza sobre la disponibilidad real:
+#   confirmed  - documentado publicamente en el modelo de datos de la fuente
+#   likely     - estandar en instalaciones Banner/Canvas, falta confirmar en UA
+#   verify     - depende de modulos opcionales o practica local. PREGUNTAR.
+
+datasets:
+
+  student_master:
+    grain: student_id
+    source_real: banner
+    fields:
+      student_id:      {type: str,   source: "SPRIDEN.SPRIDEN_ID (seudonimizado)", status: confirmed}
+      cohort:          {type: int,   source: "SGBSTDN.SGBSTDN_TERM_CODE_ADMIT",    status: confirmed}
+      campus:          {type: str,   source: "SGBSTDN.SGBSTDN_CAMP_CODE",          status: confirmed}
+      career_code:     {type: str,   source: "SGBSTDN.SGBSTDN_PROGRAM_1",          status: confirmed}
+      admission_score: {type: float, source: "SARADAP / carga admision (PAES pond.)", status: verify}
+      hs_gpa:          {type: float, source: "SORTEST (NEM)",                      status: verify}
+      funding_type:    {type: str,   source: "RFRBASE / becas y gratuidad",        status: verify}
+
+  course_master:
+    grain: course_id
+    source_real: banner
+    fields:
+      course_id:       {type: str,   source: "SSBSECT.SSBSECT_CRN",                status: confirmed}
+      subject_code:    {type: str,   source: "SSBSECT.SSBSECT_SUBJ_CODE",          status: confirmed}
+      credits:         {type: float, source: "SSBSECT.SSBSECT_CREDIT_HRS",         status: confirmed}
+      difficulty_tier: {type: str,   source: "derivado: tasa historica reprobacion", status: confirmed}
+
+  enrollment:
+    grain: [student_id, course_id, term_id]
+    source_real: banner
+    fields:
+      status:          {type: str,   source: "SFRSTCR.SFRSTCR_RSTS_CODE",          status: confirmed}
+      # Los "cambios de asignaturas" que menciona la postulacion viven aqui:
+      # SFRSTCR guarda la fecha de cada cambio de estado de inscripcion.
+      registered_at:   {type: date,  source: "SFRSTCR.SFRSTCR_ADD_DATE",           status: confirmed}
+      dropped_at:      {type: date,  source: "SFRSTCR (RSTS de retiro)",           status: confirmed}
+
+  attendance_weekly:
+    grain: [student_id, course_id, week]
+    source_real: banner
+    # RIESGO ALTO. Banner tiene un modulo Attendance Tracking, pero es
+    # OPCIONAL. Si la UA no lo licencia/usa, solo existe
+    # SFRSTCR_LAST_ATTEND (ultima fecha de asistencia), que NO da grano
+    # semanal. Esta es la pregunta tecnica #1 del proyecto.
+    fields:
+      sessions_held:     {type: int, source: "Banner Attendance Tracking (SFRAATT)", status: verify}
+      sessions_attended: {type: int, source: "Banner Attendance Tracking (SFRAATT)", status: verify}
+      last_attend_date:  {type: date, source: "SFRSTCR.SFRSTCR_LAST_ATTEND",         status: likely}
+
+  grades_weekly:
+    grain: [student_id, course_id, week]
+    source_real: banner
+    fields:
+      assessment_grade: {type: float, source: "SHRTCKG / SHRTCKN (calificaciones)", status: confirmed}
+      # Notas PARCIALES con fecha son la variable que ULagos identifico
+      # como faltante y clave. Confirmar que existan fechadas, no solo
+      # la nota final del periodo.
+      graded_at:        {type: date,  source: "SHRTCKG (fecha de carga)",           status: verify}
+
+  canvas_weekly:
+    grain: [student_id, course_id, week]
+    source_real: canvas_data_2
+    # Esquema publico: developerdocs.instructure.com/services/dap/dataset
+    fields:
+      page_views:      {type: int,   source: "canvas_logs.web_logs",               status: confirmed}
+      participations:  {type: int,   source: "canvas.asset_user_accesses",         status: likely}
+      days_active:     {type: int,   source: "derivado de web_logs",               status: confirmed}
+      canvas_adoption: {type: str,   source: "derivado: intensidad de uso docente", status: confirmed}
+
+  assignments_weekly:
+    grain: [student_id, course_id, week]
+    source_real: canvas_data_2
+    fields:
+      assigned:        {type: int,   source: "canvas.assignments (due_at en semana)", status: confirmed}
+      submitted:       {type: int,   source: "canvas.submissions.submitted_at",       status: confirmed}
+      late:            {type: int,   source: "submissions.submitted_at > assignments.due_at", status: confirmed}
+      missing:         {type: int,   source: "canvas.submissions (sin entrega al cierre)",    status: confirmed}
+
+  outcomes:
+    grain: [student_id, course_id, term_id]
+    source_real: banner
+    fields:
+      final_grade:      {type: float, source: "SHRTCKG (nota final)",              status: confirmed}
+      final_attendance: {type: float, source: "Attendance Tracking agregado",      status: verify}
+      # Dos targets separados a proposito. Si la UA reprueba por
+      # inasistencia, mezclarlos hace que el modelo aprenda el reglamento
+      # en vez del fenomeno.
+      fail_by_grade:      {type: int, source: "derivado: final_grade < 4.0",       status: confirmed}
+      fail_by_attendance: {type: int, source: "derivado: regla reglamentaria",     status: verify}
+
+# Preguntas bloqueantes derivadas de este contrato (para la reunion con VRA/DTI).
+open_questions:
+  - "Usa la UA el modulo Banner Attendance Tracking? Hay asistencia por sesion con fecha, o solo SFRSTCR_LAST_ATTEND?"
+  - "Existen notas parciales fechadas en SHRTCKG, o solo la nota final del periodo?"
+  - "Existe Banner ODS / datawarehouse, o hay que consultar las tablas transaccionales?"
+  - "Contempla el reglamento UA reprobacion por inasistencia? Con que umbral?"
+  - "Que tenant de Canvas Data 2 esta habilitado y quien administra las credenciales DAP?"
+  - "Cuantos anios de historia hay en Canvas? (limita las cohortes entrenables)"
