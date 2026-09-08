@@ -235,16 +235,25 @@ def render_benchmark(results_dir: Path) -> None:
     with methodology:
         st.subheader("Calidad del agrupamiento")
         if model.k:
-            st.write(f"Alternativa seleccionada: **{model.algorithm}, {model.k} grupos**, silueta **{model.silhouette:.3f}**.")
+            grupo_ua = model.universities.loc[model.universities.cod_inst.eq(code), "grupo"].iloc[0]
+            peso_ua = float(model.universities.grupo.eq(grupo_ua).mean())
+            st.write(f"Alternativa seleccionada: **{model.algorithm}, {model.k} grupos**, "
+                     f"silueta **{model.silhouette:.3f}**. El grupo de la UA reúne el "
+                     f"**{peso_ua:.0%}** de las universidades incluidas.")
             if model.silhouette < .25:
                 st.warning("La separación entre grupos es débil (silueta < 0,25, umbral orientativo). "
                            "Interpreta el cluster como exploratorio y revisa las distancias de los pares.")
         else:
-            st.warning("Ninguna partición cumple los requisitos de tamaño. Se mantienen disponibles los vecinos por perfil y la selección manual.")
+            st.warning("Ninguna partición cumple los requisitos de tamaño y concentración. "
+                       "Se mantienen disponibles los vecinos por perfil y la selección manual.")
         st.dataframe(model.diagnostics.round(3), hide_index=True, width="stretch")
         st.caption(f"Se prueban K-means, mezcla gaussiana diagonal y clustering jerárquico Ward con k={config['k_values']}. "
-                   f"Se descartan soluciones con grupos menores que {config['minimum_cluster']}; "
-                   "entre las admisibles se elige la mayor silueta. Los números de cluster son etiquetas, no posiciones en un ranking.")
+                   f"Se descartan soluciones con grupos menores que {config['minimum_cluster']} y aquellas donde un solo "
+                   f"grupo concentra más del {config['maximum_group_share']:.0%} de las universidades; entre las admisibles "
+                   "se elige la mayor silueta. Los números de cluster son etiquetas, no posiciones en un ranking.")
+        st.caption("Por qué el límite de concentración: la silueta premia las particiones que aíslan unas pocas "
+                   "instituciones atípicas y dejan al resto en un único grupo. Esa solución separa bien pero no sirve "
+                   "para comparar, porque el grupo de la UA terminaría conteniendo casi todas las universidades.")
         others = [y for y in years if y != year]
         if others:
             previous = min(others, key=lambda y: abs(y - year))
@@ -277,6 +286,10 @@ def render_benchmark(results_dir: Path) -> None:
                     "Las distribuciones usan raíz cuadrada de las proporciones; cada bloque se normaliza por su "
                     "varianza total y recibe un peso de 25%. Las universidades pesan igual al ajustar los clusters. "
                     "Cambiar estas variables o pesos puede cambiar los pares.")
+        st.markdown("**Selección de la partición.** Se exige un tamaño mínimo de grupo y que ninguno concentre "
+                    f"más del {config['maximum_group_share']:.0%} de las universidades. Solo entre las soluciones "
+                    "que cumplen ambas condiciones se compara la silueta. Los vecinos más cercanos por perfil no "
+                    "dependen de esta elección: se calculan sobre la distancia, no sobre los clusters.")
         st.markdown("**Denominadores.** Son inscripciones de ingreso a carrera de pregrado universitario, "
                     "no necesariamente personas que ingresan por primera vez a educación superior. Una persona puede "
                     "contar en varias carreras. Se eliminan duplicados de las columnas canónicas. La retención excluye "

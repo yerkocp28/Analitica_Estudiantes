@@ -105,13 +105,23 @@ streamlit run src/student_analytics/ui/app.py
 
 El agrupamiento usa cuatro bloques con igual peso: tamaño de cohorte/sedes,
 distribución por áreas, distribución regional y jornada/modalidad. Compara
-K-means, mezcla gaussiana diagonal y jerárquico Ward, con 2–6 grupos y control
-de tamaño mínimo. La aplicación presenta diagnóstico de silueta, estabilidad
+K-means, mezcla gaussiana diagonal y jerárquico Ward, con 2–6 grupos, tamaño
+mínimo de grupo y un **límite de concentración**: se descartan las particiones
+donde un solo grupo reúne más del 50% de las universidades.
+
+Ese límite no es cosmético. Sin él la silueta elige siempre k=2, que aísla
+cuatro instituciones atípicas y deja al 92% restante —la UA incluida— en un
+único grupo: silueta 0,33 frente a ~0,11 del resto, porque separar atípicos
+produce cortes limpios. Con el límite la selección pasa a Ward con 5–6 grupos y
+el de la UA reúne 9 universidades (18%), que es lo que hace usable el modo
+«mismo cluster». La silueta mide separación, no utilidad. La aplicación presenta diagnóstico de silueta, estabilidad
 entre cohortes, distancias por bloque, distribuciones originales y mapa PCA.
 Los filtros del resultado no modifican los pares identificados por perfil.
 
 La comparación muestra brechas frente a pares y frente al resto del sistema,
-excluyendo a la UA de ambas referencias. Incluye una referencia estandarizada
+excluyendo a la UA de ambas referencias. La sección de retención aplica el mismo
+criterio: la brecha de cada universidad se calcula contra el sistema sin ella
+misma, para que una institución grande no atenúe su propia referencia. Incluye una referencia estandarizada
 con la mezcla de áreas de la UA y cobertura explícita de áreas comunes. Se pueden
 descargar la tabla CSV y la ficha metodológica JSON. Los perfiles no incluyen
 selectividad, recursos, investigación o acreditación; la similitud es parcial,

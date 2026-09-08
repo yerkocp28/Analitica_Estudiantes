@@ -7,6 +7,14 @@ import streamlit as st
 
 from student_analytics.ingestion.retention import summarize_retention
 
+# Paleta categorica validada, en su orden fijo (el mismo del cockpit). El orden
+# es el mecanismo de separacion para daltonismo, no una eleccion estetica.
+CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
+               "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+# Techo de series en el grafico de lineas. Mas alla de ocho hay que ciclar
+# colores, y con 51 universidades la leyenda deja de ser legible.
+MAX_SERIES = 8
+
 
 @st.cache_data
 def load_retention(path: str, modified: float) -> pd.DataFrame:
@@ -42,7 +50,13 @@ def render_retention(results_dir: Path) -> None:
     summary = summarize_retention(filtered, ["cod_inst", "nomb_inst"])
     national_n = int(summary.n.sum())
     numerator = metric.removeprefix("retencion_")
-    benchmark = summary[numerator].sum() / national_n if national_n else float("nan")
+    national_num = summary[numerator].sum()
+    benchmark = national_num / national_n if national_n else float("nan")
+    # Cada universidad se compara contra el sistema SIN ella misma. Incluirla
+    # en su propia referencia atenua la brecha, y mas cuanto mas grande es la
+    # institucion. Es el mismo criterio que usa la seccion de benchmark.
+    rest_n = national_n - summary.n
+    summary["referencia_resto"] = (national_num - summary[numerator]).div(rest_n.where(rest_n.gt(0)))
     eligible = summary[summary.n.ge(minimum)]
     options = sorted(eligible.nomb_inst.unique())
     selected = st.multiselect("Universidades a comparar", options, default=options,
@@ -51,19 +65,21 @@ def render_retention(results_dir: Path) -> None:
     c1, c2, c3 = st.columns(3)
     c1.metric("Universidades seleccionadas", len(shown))
     c2.metric("Inscripciones con seguimiento", f"{int(shown.n.sum()):,}")
-    c3.metric("Referencia nacional del área", f"{benchmark:.1%}")
+    c3.metric("Referencia nacional" + (" del área" if area != "Todas" else ""), f"{benchmark:.1%}")
     st.caption(f"Cohorte {year} → matrícula {year + 1}. Referencia ponderada por inscripciones; "
-               "incluye todas las universidades del área, sin aplicar selección ni mínimo de tamaño.")
+               f"incluye todas las universidades{' del área' if area != 'Todas' else ''}, sin aplicar "
+               "selección ni mínimo de tamaño. La brecha de cada universidad se calcula contra el sistema "
+               "excluyéndola a ella misma.")
     if shown.empty:
         st.info("Selecciona universidades o reduce el mínimo de inscripciones.")
         return
-    shown["brecha_pp"] = 100 * (shown[metric] - benchmark)
+    shown["brecha_pp"] = 100 * (shown[metric] - shown["referencia_resto"])
     chart = alt.Chart(shown).mark_bar(color="#2a78d6").encode(
         y=alt.Y("nomb_inst:N", sort="-x", title=None),
         x=alt.X(f"{metric}:Q", title=labels[metric], scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format="%")),
         tooltip=[alt.Tooltip("nomb_inst:N", title="Universidad"), alt.Tooltip("n:Q", title="Inscripciones"),
                  alt.Tooltip(f"{metric}:Q", title="Retención", format=".1%"),
-                 alt.Tooltip("brecha_pp:Q", title="Brecha nacional (pp)", format="+.1f")])
+                 alt.Tooltip("brecha_pp:Q", title="Brecha vs resto del sistema (pp)", format="+.1f")])
     rule = alt.Chart(pd.DataFrame({"referencia": [benchmark]})).mark_rule(
         color="#555555", strokeDash=[5, 4]).encode(x="referencia:Q")
     st.altair_chart((chart + rule).properties(height=max(230, len(shown) * 23)), width="stretch")
@@ -72,7 +88,8 @@ def render_retention(results_dir: Path) -> None:
     for col in labels:
         display[col] *= 100
     display = display.rename(columns={"nomb_inst": "Universidad", "n": "Inscripciones",
-        **{k: f"{v} (%)" for k, v in labels.items()}, "brecha_pp": "Brecha (pp)", "sin_mrun": "Sin MRUN"})
+        **{k: f"{v} (%)" for k, v in labels.items()},
+        "brecha_pp": "Brecha vs resto (pp)", "sin_mrun": "Sin MRUN"})
     display = display.round(1)
     st.dataframe(display, hide_index=True, width="stretch")
     st.download_button("Descargar comparación (CSV)", display.to_csv(index=False).encode("utf-8-sig"),
@@ -80,18 +97,30 @@ def render_retention(results_dir: Path) -> None:
     st.subheader("Comparación entre cohortes")
     trend = summarize_retention(history[history.nomb_inst.isin(selected)], ["cohorte", "cod_inst", "nomb_inst"])
     trend = trend[trend.n.ge(minimum)]
-    st.altair_chart(alt.Chart(trend).mark_line(point=True).encode(
+    # Con muchas universidades seleccionadas el gráfico se vuelve ilegible, así
+    # que se muestran las de mayor volumen y se dice cuántas quedaron fuera.
+    universes = trend.groupby("nomb_inst").n.sum().sort_values(ascending=False)
+    visible = universes.head(MAX_SERIES).index
+    omitted = len(universes) - len(visible)
+    trend_shown = trend[trend.nomb_inst.isin(visible)]
+    st.altair_chart(alt.Chart(trend_shown).mark_line(size=2, point=alt.OverlayMarkDef(size=70)).encode(
         x=alt.X("cohorte:O", title="Cohorte de ingreso"),
         y=alt.Y(f"{metric}:Q", title=labels[metric], axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color("nomb_inst:N", title="Universidad"),
+        color=alt.Color("nomb_inst:N", title="Universidad", scale=alt.Scale(range=CATEGORICAL)),
         tooltip=["nomb_inst", "cohorte", "n", alt.Tooltip(f"{metric}:Q", format=".1%")]), width="stretch")
+    if omitted > 0:
+        st.caption(f"Se grafican las {len(visible)} universidades con más inscripciones de la selección; "
+                   f"quedan {omitted} fuera del gráfico. La tabla de arriba incluye a todas. "
+                   "Reduce la selección para ver otras en la comparación entre cohortes.")
+    if trend_shown.cohorte.nunique() < 3:
+        st.caption("Con dos cohortes esto describe un cambio entre dos puntos, no una tendencia.")
     st.subheader("Detalle por sede y carrera")
     institution = st.selectbox("Universidad para explorar", sorted(shown.nomb_inst.unique()))
     detail = summarize_retention(filtered[filtered.nomb_inst.eq(institution)], ["nomb_sede", "nomb_carrera"])
-    detail = detail.rename(columns={"nomb_sede": "Sede", "nomb_carrera": "Carrera", "n": "Inscripciones"})
-    detail["Retención (%)"] = 100 * detail[metric]
-    detail["Retención (%)"] = detail["Retención (%)"].round(1)
-    st.dataframe(detail[["Sede", "Carrera", "Inscripciones", "Retención (%)", "sin_mrun"]],
+    detail = detail.rename(columns={"nomb_sede": "Sede", "nomb_carrera": "Carrera",
+                                    "n": "Inscripciones", "sin_mrun": "Sin MRUN"})
+    detail["Retención (%)"] = (100 * detail[metric]).round(1)
+    st.dataframe(detail[["Sede", "Carrera", "Inscripciones", "Retención (%)", "Sin MRUN"]],
                  hide_index=True, width="stretch")
     with st.expander("Cómo interpretar estos resultados", expanded=True):
         st.markdown(

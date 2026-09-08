@@ -5,6 +5,17 @@ minimum_cluster: 3
 k_values: [2, 3, 4, 5, 6]
 random_seed: 42
 nearest_peers: 5
+
+# Proporcion maxima de universidades que puede concentrar un solo grupo.
+#
+# Sin este limite la silueta elige siempre k=2: separa cuatro instituciones
+# atipicas y deja al 92% restante -- la UA incluida -- en un unico grupo. Esa
+# particion tiene buena silueta (0,33 frente a ~0,11 del resto) porque aislar
+# atipicos produce cortes limpios, pero como grupo de comparacion no dice
+# nada: "mismo cluster que la UA" devolveria casi todas las universidades.
+#
+# La silueta mide separacion, no utilidad. Este umbral aporta lo segundo.
+maximum_group_share: 0.5
 block_weights:
   escala: 0.25
   areas: 0.25

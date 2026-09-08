@@ -90,7 +90,12 @@ class PeerModel:
 
 
 def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
-    """Compara tres algoritmos y selecciona silueta con tamaño mínimo de grupo."""
+    """Compara tres algoritmos; exige tamaño mínimo y concentración máxima.
+
+    La silueta por sí sola elige siempre la partición que aísla atípicos, que
+    es limpia pero inútil para comparar. El límite de concentración descarta
+    esas soluciones antes de mirar la silueta.
+    """
     p = profiles.loc[profiles.cohorte_total.ge(config["minimum_cohort"])].copy()
     p = p.sort_values("cod_inst").reset_index(drop=True)
     if len(p) < 2 * config["minimum_cluster"]:
@@ -113,11 +118,17 @@ def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
             counts = np.bincount(labels)
             distinct = len(np.unique(labels))
             score = silhouette_score(x, labels) if 1 < distinct < len(p) else float("nan")
+            # El grupo mayor no puede concentrar mas que `maximum_group_share`.
+            # Sin esa condicion gana siempre k=2, que aisla unos pocos atipicos
+            # y deja al resto en un solo grupo: buena silueta, cero utilidad
+            # como grupo de comparacion.
+            share = counts.max() / len(p)
             valid = (distinct == k and counts.min() >= config["minimum_cluster"]
+                     and share <= config["maximum_group_share"]
                      and np.isfinite(score) and getattr(model, "converged_", True))
             diagnostics.append({"algoritmo": name, "k": k, "silueta": score,
                                 "grupo_minimo": int(counts.min()), "grupo_maximo": int(counts.max()),
-                                "admisible": bool(valid)})
+                                "concentracion": float(share), "admisible": bool(valid)})
             if valid:
                 candidates[(name, k)] = labels
     table = pd.DataFrame(diagnostics).sort_values(["admisible", "silueta", "k"], ascending=[False, False, True])
