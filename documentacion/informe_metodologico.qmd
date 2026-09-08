@@ -67,10 +67,12 @@ Los tres resultados principales:
    el área de Administración y Comercio la cohorte 2024 retuvo **84,1%** en la
    misma carrera. Entre sedes hay una brecha de **14 puntos**.
 
-2. **El expediente completo de admisión predice poco.** Con 135.050 ingresantes
-   universitarios y validación temporal, un modelo que usa únicamente NEM,
-   ranking, notas de enseñanza media, todos los puntajes PAES, dependencia del
-   colegio, sexo y año de egreso alcanza **AUC 0,615**.
+2. **Todo el expediente escolar previo predice poco.** Con 135.050 ingresantes
+   universitarios y validación temporal, un modelo con NEM, ranking, notas de
+   enseñanza media, los cinco puntajes PAES, dependencia del colegio,
+   **asistencia mensual de 4° medio, decil de ingreso oficial, condición de
+   prioritario y tipo de financiamiento** alcanza **AUC 0,636**. Solo la ficha
+   de admisión llega a 0,617; todo el resto suma 0,019.
 
 3. **Los datos de comportamiento superan a ese expediente antes del primer mes.**
    Sobre datos reales de la Open University, un baseline conductual alcanza
@@ -132,6 +134,9 @@ proyecto es la continuación operativa de esa recomendación.
 |---|---|---|---|
 | [Matrícula en Educación Superior](https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/) 2023, 2024, 2025 | Individual (MRUN) | Datos abiertos de gobierno | Retención real UA; población de los modelos |
 | [Pruebas de admisión (PAES)](https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Variables previas al ingreso |
+| [Asistencia anual por estudiante](https://datosabiertos.mineduc.cl/asistencia-anual-por-estudiante/) 2022, 2023 | Individual (MRUN + RBD), tasa mensual | Datos abiertos de gobierno | Asistencia de enseñanza media y su pendiente |
+| [Alumnos SEP](https://datosabiertos.mineduc.cl/alumnos-preferentes-prioritarios-y-beneficiarios-sep/) 2022, 2023 | Individual (MRUN + RBD) | Datos abiertos de gobierno | Vulnerabilidad individual: prioritario / preferente |
+| [Asignaciones de Becas y Créditos](https://datosabiertos.mineduc.cl/asignaciones-de-becas-y-creditos-en-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Quintil, decil DFE, gratuidad, FSCU, beca de arancel |
 | [OULAD](https://analyse.kmi.open.ac.uk/open_dataset) | Estudiante × módulo × semana | CC-BY 4.0 | Validar la metodología con datos reales de comportamiento |
 | [Canvas Data 2 — esquema](https://developerdocs.instructure.com/services/dap/dataset) | Documentación | Pública | Nombres reales de tablas y columnas |
 | [Banner ODS Handbook](https://tech.wayne.edu/depdocs/banner-ods-handbook-8-4.pdf) | Documentación | Publicada por Wayne State University | Nombres reales de tablas Banner |
@@ -164,9 +169,17 @@ origen, comuna), y por tanto candidatas legítimas a features:
 |---|---|---|
 | [JUNAEB — IVE](http://junaebabierta.junaeb.cl/catalogo-de-datos/indicadores-de-vulnerabilidad/) | RBD | Índice de vulnerabilidad del colegio (0–100) |
 | Agencia de Calidad — SIMCE | RBD | Rendimiento histórico del establecimiento |
-| Mineduc — Rendimiento Escolar | RBD | Notas y asistencia agregadas del colegio |
+| [Rendimiento por estudiante](https://datosabiertos.mineduc.cl/rendimiento-por-estudiante-2/) | MRUN + RBD | Notas y promoción año a año en enseñanza media |
+| [Titulados en Educación Superior](https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/) | MRUN | Titulación efectiva: el desenlace de largo plazo |
+| [Postulaciones a Becas y Créditos](https://datosabiertos.mineduc.cl/postulaciones-a-becas-y-creditos-en-educacion-superior/) | MRUN | Datos FUAS: composición del hogar, ingresos declarados |
 | Matrícula ES (calculado) | RBD | Persistencia en educación superior de los egresados de ese colegio |
 | CASEN | comuna | Contexto socioeconómico |
+
+El catálogo completo de `datosabiertos.mineduc.cl` tiene **48 conjuntos de
+datos**. La prioridad de incorporación debería guiarse por el resultado de la
+ablación (§ @sec-resultados): las variables previas al ingreso ya mostraron
+rendimientos decrecientes, así que conviene invertir el esfuerzo en los datos
+institucionales antes que en más fuentes públicas.
 
 Ver § @sec-limitaciones para la razón por la que su incorporación requiere
 cuidado.
@@ -180,9 +193,13 @@ acreditación; no aportan al modelamiento.
 
 ---
 
-# Estadísticas descriptivas {#sec-descriptivas}
+# Estadísticas descriptivas por fuente {#sec-descriptivas}
 
-## Bases de Mineduc
+Una subsección por fuente, con su grano, su cobertura y las variables que el
+proyecto efectivamente usa. Todas las cifras provienen de `documentacion/datos/`,
+que `scripts/descriptive_stats.py` regenera desde las bases originales.
+
+## Matrícula en Educación Superior (Mineduc / SIES)
 
 ```{python}
 #| label: tbl-mineduc-volumen
@@ -215,6 +232,76 @@ if c is not None:
     c.columns = ["Carrera", "Matriculados 2024"]
 c
 ```
+
+## Pruebas de admisión PAES (Mineduc / DEMRE)
+
+**Grano:** una fila por inscrito, con `MRUN` y `RBD` del establecimiento de
+egreso. 130 columnas. Proceso de admisión 2024.
+
+En esta base **el valor 0 significa "no rindió esa prueba", no "obtuvo cero"**.
+Tratarlo como puntaje desplaza todas las medias hacia abajo y arruina cualquier
+modelo; en el pipeline se convierte explícitamente a valor ausente.
+
+```{python}
+#| label: tbl-paes-desc
+#| tbl-cap: "Puntajes y expediente escolar — PAES 2024 (excluyendo a quienes no rindieron)"
+d = leer("paes_descriptivas")
+if d is not None:
+    d["rindio"] = d["rindio"].map("{:.1%}".format)
+    d.columns = ["Variable", "% que rindió", "Media", "DE", "p25", "p50", "p75"]
+d
+```
+
+La cobertura es informativa por sí misma: casi todos rinden Competencia Lectora
+y Matemática M1, pero **solo el 43% rinde Matemática M2** y la mitad rinde
+Historia. Un modelo que use M2 como predictor lo estará imputando para más de la
+mitad de los casos.
+
+```{python}
+#| label: tbl-paes-dep
+#| tbl-cap: "Dependencia del establecimiento de egreso"
+d = leer("paes_dependencia")
+if d is not None:
+    d["proporcion"] = d["proporcion"].map("{:.1%}".format)
+    d.columns = ["Dependencia", "n", "Proporción"]
+d
+```
+
+## Trayectoria escolar previa al ingreso
+
+Tres bases adicionales de Mineduc, unidas por `MRUN` al año anterior al ingreso
+de cada cohorte:
+
+| Base | Grano | Variables usadas |
+|---|---|---|
+| Asistencia anual por estudiante | MRUN + RBD, **tasa mensual marzo–diciembre** | Asistencia anual, pendiente, mínimo, último trimestre |
+| Alumnos SEP | MRUN + RBD | Prioritario, preferente |
+| Asignaciones de Becas y Créditos | MRUN | Quintil, decil DFE, gratuidad, FSCU, beca de arancel |
+
+La variable más interesante no es el nivel de asistencia sino su **pendiente**:
+un estudiante que baja de 95% en marzo a 70% en noviembre de 4° medio ya se
+estaba desenganchando antes de matricularse. Es el mismo fenómeno que el
+proyecto busca detectar dentro del semestre.
+
+```{python}
+#| label: tbl-trayectoria
+#| tbl-cap: "Trayectoria escolar — cohorte de ingreso 2024"
+d = leer("descriptivas_trayectoria_escolar")
+if d is not None:
+    d["cobertura"] = d["cobertura"].map("{:.1%}".format)
+    d.columns = ["Variable", "Cobertura", "Media", "DE", "p25", "p50", "p75"]
+d
+```
+
+::: {.callout-warning}
+## El CAE no está en estas bases
+
+La base de Asignaciones cubre gratuidad, becas de arancel y el Fondo Solidario de
+Crédito Universitario. **El CAE lo administra la Comisión Ingresa y se publica
+por separado.** Incluir una variable `cae` construida desde esta base daría una
+columna constante en cero y llevaría a concluir que "el CAE no predice" cuando
+nunca estuvo en los datos.
+:::
 
 ## OULAD
 
@@ -481,6 +568,44 @@ lados:
 **El AUC con validación temporal (0,615) es idéntico al del split aleatorio
 (0,615).** El piso es estable y el resultado se sostiene sobre cohortes futuras.
 
+## Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?
+
+La pregunta que corresponde antes de incorporar variables socioeconómicas a un
+modelo que prioriza estudiantes no es "¿predicen?" sino **"¿cuánto añaden por
+encima de lo que ya tenemos?"**. Población: solo universidades, validación
+temporal 2023 → 2024.
+
+```{python}
+#| label: tbl-ablacion
+#| tbl-cap: "Valor incremental de cada bloque de variables previas al ingreso"
+a = leer("ablacion_piso")
+if a is not None:
+    t = a[["modelo", "n_features", "auc", "delta_vs_base", "captura_20"]].copy()
+    t["auc"] = t["auc"].map("{:.3f}".format)
+    t["delta_vs_base"] = t["delta_vs_base"].map("{:+.3f}".format)
+    t["captura_20"] = t["captura_20"].map("{:.1%}".format)
+    t.columns = ["Modelo", "N° features", "AUC", "Δ vs base", "Top 20%"]
+t
+```
+
+Tres lecturas:
+
+**La asistencia de enseñanza media aporta +0,005.** Esto no contradice a ULagos:
+lo que ese informe mostró es que la asistencia importa *dentro* de la
+institución y del período en curso. Como rasgo que se arrastra a través de una
+transición institucional, casi no transfiere — de hecho, **usada sola alcanza
+AUC 0,543**, apenas sobre el azar.
+
+**Las variables socioeconómicas aportan +0,014.** Es poco, y ese "poco" resuelve
+empíricamente el dilema ético: excluirlas del scoring cuesta casi nada en
+desempeño. La decisión de usarlas o no deja de ser un intercambio entre equidad y
+precisión.
+
+**Todo junto llega a 0,636.** Con el expediente escolar íntegro —asistencia
+mensual, decil de ingreso oficial, condición de prioritario, tipo de
+financiamiento— el piso sigue por debajo de lo que un baseline conductual
+alcanza en la semana 4.
+
 ## Curva de anticipación sobre OULAD
 
 ```{python}
@@ -523,14 +648,19 @@ Poniendo los dos resultados reales uno junto al otro:
 
 | Modelo | Datos | n | AUC |
 |---|---|---|---|
-| Expediente completo de admisión | PAES + Matrícula, validación temporal | 135.050 | **0,615** |
-| Comportamiento, semana 4 | OULAD, 10% del curso, **sin asistencia** | 13.144 | **0,697** |
+| Ficha de admisión | PAES + Matrícula, validación temporal | 135.050 | 0,617 |
+| **Expediente escolar completo** | + asistencia mensual, decil DFE, SEP, financiamiento | 135.050 | **0,636** |
+| **Comportamiento, semana 4** | OULAD, 10% del curso, **sin asistencia** | 13.144 | **0,697** |
 | Comportamiento, semana 12 | OULAD, 31% del curso, sin asistencia | 13.144 | 0,801 |
 
-> Toda la ficha de admisión junta —NEM, ranking, cinco pruebas PAES, dependencia
-> del colegio— alcanza AUC 0,615. Un baseline conductual la supera con el 10% del
-> curso transcurrido y sin siquiera disponer de asistencia, que es justamente la
-> variable que el informe ULagos identificó como clave.
+> Todo lo que el Estado de Chile sabe de un estudiante antes de que pise la
+> universidad —NEM, ranking, cinco pruebas PAES, dependencia del colegio,
+> asistencia mensual de 4° medio, decil de ingreso oficial, condición de
+> prioritario, tipo de financiamiento— alcanza **AUC 0,636**.
+>
+> Un baseline conductual lo supera con el **10% del curso transcurrido**, y sin
+> siquiera disponer de asistencia — justamente la variable que el informe ULagos
+> identificó como clave.
 
 Ese es el caso para solicitar acceso a Banner y Canvas: **el valor no está en lo
 que ya se sabe del estudiante al matricularse.**
@@ -557,11 +687,17 @@ socioeconómico**. Un modelo que marque en rojo a estudiantes de colegios
 vulnerables *antes de observar conducta alguna* no detecta riesgo: reproduce
 desigualdad.
 
-La recomendación no es excluirlas por precaución, sino someterlas a una prueba de
-**valor incremental por encima de las features conductuales**. El resultado de
-§ @sec-argumento predice que aportarán poco. Si el análisis de ablación lo
-confirma, se descartan por razones estadísticas y el modelo queda además
-éticamente más limpio — una sola decisión resuelve ambos problemas.
+La recomendación fue someterlas a una prueba de **valor incremental**, y esa
+prueba ya se corrió (§ @sec-resultados): las variables socioeconómicas —quintil,
+decil DFE, prioritario, financiamiento— aportan **+0,014 de AUC** sobre la ficha
+de admisión.
+
+Eso convierte una discusión ética en una decisión barata: **excluirlas del
+scoring cuesta casi nada en desempeño**. La recomendación operativa es usarlas
+para el análisis de equidad y para dimensionar la focalización, y mantenerlas
+fuera del modelo que prioriza estudiantes. La decisión final es de la
+universidad, no técnica, y conviene plantearla en el mismo taller donde se
+prioricen los casos de uso.
 
 ## Preguntas bloqueantes para la universidad
 

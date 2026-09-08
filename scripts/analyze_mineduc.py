@@ -254,13 +254,19 @@ def piso_predictivo(m24: pd.DataFrame, m25: pd.DataFrame) -> None:
     df["desertor"] = (~df["retenido"]).astype(int)
     print(f"  No retenidos en la misma carrera al 2025: {df['desertor'].mean():.1%}")
 
-    feats = SCORE_COLS + ["sexo_f", "dep_municipal", "dep_particular_sub",
-                          "dep_particular_pag", "anios_desde_egreso"]
+    feats = SCORE_COLS + ["sexo_f", "dep_publico", "dep_particular_sub",
+                          "dep_particular_pag", "dep_adm_delegada",
+                          "anios_desde_egreso"]
     df["sexo_f"] = (df["COD_SEXO"] == "2").astype(int)
     dep = pd.to_numeric(df["DEPENDENCIA"], errors="coerce")
-    df["dep_municipal"] = (dep == 1).astype(int)
-    df["dep_particular_sub"] = (dep == 2).astype(int)
-    df["dep_particular_pag"] = (dep == 3).astype(int)
+    # Codigos oficiales del diccionario de la base (ER_Alumnos_PAES):
+    # 1 Corp. Municipal, 2 Municipal, 3 Part. Subvencionado,
+    # 4 Part. Pagado, 5 Corp. de Adm. Delegada, 6 Servicio Local.
+    # Las tres formas de administracion publica (1, 2 y 6) se agrupan.
+    df["dep_publico"] = dep.isin([1, 2, 6]).astype(int)
+    df["dep_particular_sub"] = (dep == 3).astype(int)
+    df["dep_particular_pag"] = (dep == 4).astype(int)
+    df["dep_adm_delegada"] = (dep == 5).astype(int)
     df["anios_desde_egreso"] = 2024 - pd.to_numeric(df["ANYO_DE_EGRESO"], errors="coerce")
 
     def _ajustar(sub: pd.DataFrame, etiqueta: str) -> tuple[float, pd.Series | None]:
@@ -371,11 +377,149 @@ def _construir_cohorte(mat: pd.DataFrame, mat_sig: pd.DataFrame,
 
     df["sexo_f"] = (df["COD_SEXO"] == "2").astype(int) if "COD_SEXO" in df else 0
     dep = pd.to_numeric(df.get("DEPENDENCIA"), errors="coerce")
-    df["dep_municipal"] = (dep == 1).astype(int)
-    df["dep_particular_sub"] = (dep == 2).astype(int)
-    df["dep_particular_pag"] = (dep == 3).astype(int)
+    # Codigos oficiales del diccionario de la base (ER_Alumnos_PAES):
+    # 1 Corp. Municipal, 2 Municipal, 3 Part. Subvencionado,
+    # 4 Part. Pagado, 5 Corp. de Adm. Delegada, 6 Servicio Local.
+    # Las tres formas de administracion publica (1, 2 y 6) se agrupan.
+    df["dep_publico"] = dep.isin([1, 2, 6]).astype(int)
+    df["dep_particular_sub"] = (dep == 3).astype(int)
+    df["dep_particular_pag"] = (dep == 4).astype(int)
+    df["dep_adm_delegada"] = (dep == 5).astype(int)
     df["anios_desde_egreso"] = year - pd.to_numeric(
         df.get("ANYO_DE_EGRESO"), errors="coerce")
+    return df
+
+
+# ----------------------------------------------------------------------
+# 3b. Trayectoria escolar previa al ingreso
+# ----------------------------------------------------------------------
+# Tasas de asistencia mensuales, de marzo a diciembre.
+MESES_ASIS = [f"tasa_asistencia_{m}" for m in range(3, 13)]
+
+FEATS_ASISTENCIA = ["asis_em_anual", "asis_em_pendiente", "asis_em_min",
+                    "asis_em_ultimo_trimestre"]
+FEATS_SOCIO = ["quintil_ingreso", "decil_dfe", "gratuidad", "fscu",
+               "beca_arancel", "prioritario", "preferente"]
+
+
+def cargar_asistencia_escolar(year: int) -> pd.DataFrame | None:
+    """Asistencia de ensenanza media del anio `year`, por MRUN.
+
+    Deriva cuatro features del panel mensual. La mas interesante no es el
+    nivel sino la PENDIENTE: un estudiante que baja de 95% en marzo a 70%
+    en noviembre ya se estaba desenganchando antes de matricularse. Es el
+    mismo fenomeno que el proyecto quiere detectar dentro del semestre.
+    """
+    try:
+        path = _find(f"asistencia_{year}", "*.csv")
+    except FileNotFoundError:
+        log.warning("Asistencia escolar %s no descargada", year)
+        return None
+    cols = ["mrun", "tasa_asistencia_anual"] + MESES_ASIS
+    log.info("Leyendo asistencia escolar %s (%.0f MB)", year, path.stat().st_size / 1e6)
+    df = pd.read_csv(path, sep=";", encoding="utf-8", usecols=cols,
+                     dtype={"mrun": "float64"}, low_memory=False)
+
+    for c in ["tasa_asistencia_anual"] + MESES_ASIS:
+        df[c] = _decimal_comma(df[c])
+
+    mensual = df[MESES_ASIS]
+    # Pendiente por minimos cuadrados sobre los meses observados. Un valor
+    # negativo grande = deterioro sostenido durante el anio escolar.
+    x = np.arange(len(MESES_ASIS), dtype=float)
+    m = mensual.to_numpy(dtype=float)
+    obs = ~np.isnan(m)
+    n_obs = obs.sum(axis=1)
+    xs = np.where(obs, x, np.nan)
+    mx = np.nanmean(xs, axis=1)
+    my = np.nanmean(np.where(obs, m, np.nan), axis=1)
+    cov = np.nansum((xs - mx[:, None]) * (m - my[:, None]), axis=1)
+    var = np.nansum((xs - mx[:, None]) ** 2, axis=1)
+    pendiente = np.where((n_obs >= 3) & (var > 0), cov / np.where(var == 0, 1, var), np.nan)
+
+    out = pd.DataFrame({
+        "mrun": df["mrun"],
+        "asis_em_anual": df["tasa_asistencia_anual"],
+        "asis_em_pendiente": pendiente,
+        "asis_em_min": mensual.min(axis=1),
+        # Ultimos tres meses del anio escolar: lo mas cercano al ingreso.
+        "asis_em_ultimo_trimestre": mensual[MESES_ASIS[-3:]].mean(axis=1),
+    })
+    # Un estudiante puede aparecer en varias filas (cambio de colegio).
+    out = out.dropna(subset=["mrun"]).groupby("mrun", as_index=False).mean()
+    log.info("  %s estudiantes con asistencia escolar", f"{len(out):,}")
+    return out
+
+
+def cargar_socioeconomico(year_sep: int, year_becas: int) -> pd.DataFrame | None:
+    """Vulnerabilidad SEP y nivel socioeconomico oficial, por MRUN."""
+    partes = []
+    try:
+        p_sep = _find(f"sep_{year_sep}", "*.csv")
+        sep = pd.read_csv(p_sep, sep=";", encoding="utf-8",
+                          usecols=["MRUN", "PRIORITARIO_ALU", "PREFERENTE_ALU"],
+                          dtype=str, low_memory=False)
+        sep["mrun"] = pd.to_numeric(sep["MRUN"], errors="coerce")
+        sep["prioritario"] = pd.to_numeric(sep["PRIORITARIO_ALU"], errors="coerce")
+        sep["preferente"] = pd.to_numeric(sep["PREFERENTE_ALU"], errors="coerce")
+        sep = (sep.dropna(subset=["mrun"])[["mrun", "prioritario", "preferente"]]
+               .groupby("mrun", as_index=False).max())
+        log.info("  SEP %s: %s estudiantes", year_sep, f"{len(sep):,}")
+        partes.append(sep)
+    except FileNotFoundError:
+        log.warning("SEP %s no descargado", year_sep)
+
+    try:
+        p_bec = _find(f"becas_{year_becas}", "*.csv")
+        bec = pd.read_csv(p_bec, sep=";", encoding="utf-8", dtype=str, low_memory=False)
+        bec["mrun"] = pd.to_numeric(bec["MRUN"], errors="coerce")
+        bec["quintil_ingreso"] = pd.to_numeric(bec.get("QUINTIL_INGRESO"), errors="coerce")
+        bec["decil_dfe"] = pd.to_numeric(bec.get("DECIL_DFE"), errors="coerce")
+        # Esta base cubre gratuidad, becas de arancel y el Fondo Solidario.
+        # El CAE NO aparece: lo administra la Comision Ingresa y se publica
+        # aparte. Una columna `cae` aqui seria constante en cero y llevaria
+        # a concluir que "el CAE no predice" cuando nunca estuvo en los datos.
+        ben = bec.get("BENEFICIO_BECA_FSCU", pd.Series(dtype=str)).fillna("")
+        bec["gratuidad"] = ben.eq("GRATUIDAD").astype(int)
+        bec["fscu"] = ben.eq("FSCU").astype(int)
+        bec["beca_arancel"] = (~ben.isin(["GRATUIDAD", "FSCU", ""])).astype(int)
+        bec = (bec.dropna(subset=["mrun"])
+               [["mrun", "quintil_ingreso", "decil_dfe", "gratuidad", "fscu",
+                 "beca_arancel"]]
+               .groupby("mrun", as_index=False).max())
+        log.info("  Becas %s: %s estudiantes", year_becas, f"{len(bec):,}")
+        partes.append(bec)
+    except FileNotFoundError:
+        log.warning("Becas %s no descargado", year_becas)
+
+    if not partes:
+        return None
+    out = partes[0]
+    for extra in partes[1:]:
+        out = out.merge(extra, on="mrun", how="outer")
+    return out
+
+
+def _enriquecer(df: pd.DataFrame, asis: pd.DataFrame | None,
+                socio: pd.DataFrame | None) -> pd.DataFrame:
+    """Agrega las features escolares, dejando NaN donde no hay match."""
+    if asis is not None:
+        df = df.merge(asis, on="mrun", how="left")
+    for c in FEATS_ASISTENCIA:
+        if c not in df.columns:
+            df[c] = np.nan
+    if socio is not None:
+        df = df.merge(socio, on="mrun", how="left")
+    for c in FEATS_SOCIO:
+        if c not in df.columns:
+            df[c] = np.nan
+    # gratuidad/cae/prioritario ausentes = no tiene el beneficio, que es
+    # informacion real; los deciles ausentes si son desconocidos.
+    # Ausencia en estas bases significa "no tiene el beneficio" o "no fue
+    # clasificado", que es informacion real. Los deciles ausentes, en
+    # cambio, si son desconocidos y se imputan con la mediana de train.
+    for c in ("gratuidad", "fscu", "beca_arancel", "prioritario", "preferente"):
+        df[c] = df[c].fillna(0)
     return df
 
 
@@ -406,16 +550,33 @@ def piso_temporal(m25: pd.DataFrame) -> None:
     tr = _construir_cohorte(m23, m24, paes23, 2023)
     te = _construir_cohorte(m24, m25, paes24, 2024)
     del m23
+
+    # Trayectoria escolar del anio ANTERIOR al ingreso de cada cohorte.
+    log.info("Cargando trayectoria escolar previa al ingreso")
+    tr = _enriquecer(tr, cargar_asistencia_escolar(2022),
+                     cargar_socioeconomico(2022, 2023))
+    te = _enriquecer(te, cargar_asistencia_escolar(2023),
+                     cargar_socioeconomico(2023, 2024))
+
     print(f"\n  Cohorte 2023 (entrena): n={len(tr):,}  desertan {tr['desertor'].mean():.1%}")
     print(f"  Cohorte 2024 (testea):  n={len(te):,}  desertan {te['desertor'].mean():.1%}")
+    print(f"\n  Cobertura de las fuentes nuevas en la cohorte de test:")
+    for c, etiq in [("asis_em_anual", "asistencia de ensenanza media"),
+                    ("decil_dfe", "decil de ingreso (DFE)"),
+                    ("quintil_ingreso", "quintil de ingreso")]:
+        print(f"    {etiq:34s} {te[c].notna().mean():6.1%}")
+    print(f"    {'prioritario (SEP)':34s} {te['prioritario'].mean():6.1%}")
+    print(f"    {'gratuidad':34s} {te['gratuidad'].mean():6.1%}")
 
-    feats = SCORE_COLS + ["sexo_f", "dep_municipal", "dep_particular_sub",
-                          "dep_particular_pag", "anios_desde_egreso"]
+    BASE_FEATS = SCORE_COLS + ["sexo_f", "dep_publico", "dep_particular_sub",
+                               "dep_particular_pag", "dep_adm_delegada",
+                               "anios_desde_egreso"]
 
-    def _evaluar(a: pd.DataFrame, b: pd.DataFrame, etiqueta: str) -> float:
+    def _evaluar(a: pd.DataFrame, b: pd.DataFrame, feats: list[str],
+                 etiqueta: str, verboso: bool = True) -> tuple[float, dict]:
         if len(a) < 5000 or len(b) < 5000:
             print(f"\n  {etiqueta}: muestra insuficiente")
-            return float("nan")
+            return float("nan"), {}
         # La mediana se toma de TRAIN. Usar la del conjunto completo seria
         # dejar que el test influya en la imputacion.
         med = a[feats].median()
@@ -427,25 +588,56 @@ def piso_temporal(m25: pd.DataFrame) -> None:
             LogisticRegression(max_iter=3000, class_weight="balanced"))
         model.fit(Xa, ya)
         p = model.predict_proba(Xb)[:, 1]
-        auc = roc_auc_score(yb, p)
+        auc = float(roc_auc_score(yb, p))
 
         def captura(pct: float) -> float:
             k = max(1, int(round(len(p) * pct)))
             return float(yb[np.argsort(-p)[:k]].sum() / yb.sum())
 
-        print(f"\n  {etiqueta}")
-        print(f"    entrena n={len(ya):,}  testea n={len(yb):,}  "
-              f"prevalencia test={yb.mean():.1%}")
-        print(f"    AUC = {auc:.3f}")
-        for pct in (0.05, 0.10, 0.20, 0.50):
-            print(f"    top {pct:4.0%} -> captura {captura(pct):5.1%}"
-                  f"   ({captura(pct) / pct:.2f}x sobre azar)")
-        return float(auc)
+        caps = {f"captura_{int(pct*100):02d}": captura(pct)
+                for pct in (0.05, 0.10, 0.20, 0.50)}
+        if verboso:
+            print(f"\n  {etiqueta}")
+            print(f"    entrena n={len(ya):,}  testea n={len(yb):,}  "
+                  f"prevalencia test={yb.mean():.1%}")
+            print(f"    AUC = {auc:.3f}")
+            for pct in (0.05, 0.10, 0.20, 0.50):
+                print(f"    top {pct:4.0%} -> captura {captura(pct):5.1%}"
+                      f"   ({captura(pct) / pct:.2f}x sobre azar)")
+        return auc, caps
 
-    auc_sis = _evaluar(tr, te, "TODO EL SISTEMA")
-    auc_u = _evaluar(tr[tr["tipo_inst_1"] == "Universidades"],
-                     te[te["tipo_inst_1"] == "Universidades"],
-                     "SOLO UNIVERSIDADES  <- el comparable para la UA")
+    auc_sis, _ = _evaluar(tr, te, BASE_FEATS, "TODO EL SISTEMA (solo ficha de admision)")
+    tru = tr[tr["tipo_inst_1"] == "Universidades"]
+    teu = te[te["tipo_inst_1"] == "Universidades"]
+    auc_u, _ = _evaluar(tru, teu, BASE_FEATS,
+                        "SOLO UNIVERSIDADES  <- el comparable para la UA")
+
+    # --- Ablacion: cuanto aporta cada bloque nuevo --------------------
+    print("\n" + "=" * 78)
+    print("4. ABLACION — cuanto sube el piso al agregar trayectoria escolar")
+    print("=" * 78)
+    print("  Poblacion: solo universidades, validacion temporal 2023 -> 2024.")
+
+    bloques = {
+        "A. Ficha de admision (base)": BASE_FEATS,
+        "B. Base + asistencia de ens. media": BASE_FEATS + FEATS_ASISTENCIA,
+        "C. Base + socioeconomico": BASE_FEATS + FEATS_SOCIO,
+        "D. Base + ambos": BASE_FEATS + FEATS_ASISTENCIA + FEATS_SOCIO,
+        "E. Solo asistencia de ens. media": FEATS_ASISTENCIA,
+    }
+    filas = []
+    print(f"\n  {'Modelo':40s} {'AUC':>7} {'delta':>8} {'Top 20%':>9}")
+    print("  " + "-" * 68)
+    base_auc = None
+    for etiqueta, feats in bloques.items():
+        auc, caps = _evaluar(tru, teu, feats, etiqueta, verboso=False)
+        if base_auc is None:
+            base_auc = auc
+        delta = auc - base_auc
+        print(f"  {etiqueta:40s} {auc:>7.3f} {delta:>+8.3f} "
+              f"{caps.get('captura_20', float('nan')):>8.1%}")
+        filas.append({"modelo": etiqueta, "n_features": len(feats), "auc": auc,
+                      "delta_vs_base": delta, **caps})
 
     OUT.mkdir(parents=True, exist_ok=True)
     pd.DataFrame([
@@ -453,10 +645,32 @@ def piso_temporal(m25: pd.DataFrame) -> None:
         {"validacion": "temporal_2023_2024", "poblacion": "universidades", "auc": auc_u},
     ]).to_parquet(OUT / "piso_preingreso_temporal.parquet", index=False)
 
+    doc = REPO_ROOT / "documentacion" / "datos"
+    doc.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(filas).to_csv(doc / "ablacion_piso.csv", index=False, encoding="utf-8")
+
+    # Cobertura y descriptivas de las fuentes nuevas, para el informe.
+    desc = []
+    for c in FEATS_ASISTENCIA + ["quintil_ingreso", "decil_dfe"]:
+        s = te[c]
+        desc.append({"variable": c, "cobertura": round(float(s.notna().mean()), 4),
+                     "media": round(float(s.mean()), 4) if s.notna().any() else None,
+                     "sd": round(float(s.std()), 4) if s.notna().any() else None,
+                     "p25": round(float(s.quantile(0.25)), 4) if s.notna().any() else None,
+                     "p50": round(float(s.quantile(0.50)), 4) if s.notna().any() else None,
+                     "p75": round(float(s.quantile(0.75)), 4) if s.notna().any() else None})
+    for c in ("prioritario", "preferente", "gratuidad", "fscu", "beca_arancel"):
+        desc.append({"variable": c, "cobertura": 1.0,
+                     "media": round(float(te[c].mean()), 4),
+                     "sd": None, "p25": None, "p50": None, "p75": None})
+    pd.DataFrame(desc).to_csv(doc / "descriptivas_trayectoria_escolar.csv",
+                              index=False, encoding="utf-8")
+
     print("\n  " + "-" * 74)
     print("  Ninguna persona ni ningun anio aparece en train y test a la vez.")
-    print("  Si este AUC se parece al del split aleatorio, el piso es estable")
-    print("  y el argumento se sostiene sobre cohortes futuras.")
+    print("  El delta de cada bloque es su valor incremental sobre la ficha de")
+    print("  admision, que es la prueba que corresponde antes de incorporar")
+    print("  variables socioeconomicas a un modelo que prioriza estudiantes.")
 
 
 def main() -> int:

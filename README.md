@@ -19,6 +19,7 @@ La especificación completa está en
 | **1b** | **Adaptador OULAD + baseline + cockpit Streamlit** | **Completo** |
 | **1c** | **Datos abiertos Mineduc/SIES: retención real UA + piso predictivo** | **Completo** |
 | **1d** | **Informe metodológico reproducible (Quarto)** | **Completo** |
+| **1e** | **Trayectoria escolar previa al ingreso + ablación del piso** | **Completo** |
 | 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
@@ -40,7 +41,7 @@ Cuatro fuentes, cuatro problemas distintos:
 |---|---|---|
 | Esquemas públicos de Canvas Data 2 y Banner ODS | Que el pipeline reciba las **columnas reales** | No trae datos |
 | **OULAD** (Open University, 28.785 estudiantes reales) | ¿Funciona la predicción temprana? ¿Cuán temprano? | Sin asistencia, sin escala 1–7, sin sedes |
-| **Mineduc / SIES abiertos** (individual, vía MRUN) | Retención real de la UA; piso predictivo nacional | No se puede unir al RUT de Banner |
+| **Mineduc / SIES abiertos** (6 bases, individual vía MRUN) | Retención real de la UA; piso predictivo nacional | No se puede unir al RUT de Banner |
 | **Generador sintético** (este repo) | Forma UA completa: sedes, carreras, asistencia, notas 1.0–7.0 | No valida nada por sí solo |
 
 El objetivo de esta fase no es tener un modelo. Es tener un pipeline cuyo
@@ -66,9 +67,9 @@ python scripts/generate_synthetic.py --students 500  # smoke test
 # 2. Datos reales de referencia (~45 MB comprimidos)
 python scripts/download_oulad.py
 
-# 2b. Bases abiertas de Mineduc/SIES (~1,3 GB); retencion real y piso predictivo
+# 2b. Bases abiertas de Mineduc/SIES (~2,5 GB comprimidos, 11 bases)
 python scripts/download_mineduc.py
-python scripts/analyze_mineduc.py
+python scripts/analyze_mineduc.py      # retención UA + piso + ablación
 
 # 3. Curva de poder predictivo vs anticipación, sobre cualquier fuente
 python scripts/validate_lead_time.py --source synthetic --out data/results
@@ -253,8 +254,34 @@ media, puntajes PAES, dependencia del colegio, sexo y año de egreso:
 
 | Población | n | Prevalencia | AUC | Top 20% |
 |---|---|---|---|---|
-| Todo el sistema | 184.279 | 18,3% | 0,626 | 31,8% (1,59×) |
-| **Solo universidades** | 135.050 | 16,4% | **0,615** | 31,5% (1,58×) |
+| Todo el sistema | 184.279 | 18,3% | 0,623 | 31,5% (1,57×) |
+| **Solo universidades** | 135.050 | 16,4% | **0,617** | 31,6% (1,58×) |
+
+### ¿Y si agregamos todo el expediente escolar?
+
+Se incorporaron tres bases más de Mineduc: **asistencia mensual de enseñanza
+media** (marzo–diciembre, individual), **condición SEP** (prioritario/preferente)
+y **asignaciones de becas y créditos** (quintil, decil DFE, gratuidad, FSCU).
+Ablación con validación temporal, solo universidades:
+
+| Modelo | AUC | Δ vs base | Top 20% |
+|---|---|---|---|
+| A. Ficha de admisión (base) | 0,617 | — | 31,6% |
+| B. + asistencia de enseñanza media | 0,622 | +0,005 | 32,2% |
+| C. + socioeconómico | 0,631 | +0,014 | 33,2% |
+| **D. + ambos** | **0,636** | **+0,019** | 33,8% |
+| E. Solo asistencia de enseñanza media | 0,543 | −0,073 | 26,9% |
+
+Tres lecturas:
+
+1. **La asistencia escolar casi no transfiere.** Sola alcanza AUC 0,543, apenas
+   sobre el azar. No contradice a ULagos: la asistencia importa *dentro* de la
+   institución y del período en curso, no como rasgo que cruza una transición
+   institucional.
+2. **Las variables socioeconómicas aportan +0,014.** Ese "poco" resuelve el
+   dilema ético empíricamente: excluirlas del scoring cuesta casi nada.
+3. **Todo junto llega a 0,636** — sigue por debajo de lo que un baseline
+   conductual alcanza en la semana 4.
 
 Con **validación temporal** (cohorte 2023 entrena, n=129.512 → cohorte 2024
 testea, n=135.050) el AUC de universidades es **0,615**: idéntico al del split
@@ -263,10 +290,13 @@ aleatorio. El piso es estable y se sostiene sobre cohortes futuras.
 **Esto replica el hallazgo de ULagos con 135.000 estudiantes en vez de dos
 cohortes**, y es el argumento central del proyecto:
 
-> Toda la ficha de admisión junta alcanza **AUC 0,615**. El baseline sobre
-> comportamiento en OULAD llega a **0,697 en la semana 4** — con el 10% del
-> curso transcurrido y **sin asistencia**. Los datos de comportamiento
-> intrasemestral superan a la ficha de admisión completa antes del primer mes.
+> Todo lo que el Estado de Chile sabe de un estudiante antes de que pise la
+> universidad —NEM, ranking, cinco pruebas PAES, dependencia del colegio,
+> asistencia mensual de 4° medio, decil de ingreso oficial, condición de
+> prioritario, tipo de financiamiento— alcanza **AUC 0,636**.
+>
+> El baseline conductual sobre OULAD llega a **0,697 en la semana 4**, con el
+> 10% del curso transcurrido y **sin asistencia**.
 
 Ese es el caso para pedir acceso a Banner y Canvas: el valor no está en lo que
 ya se sabe del estudiante al matricularse.

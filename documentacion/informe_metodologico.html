@@ -2241,11 +2241,13 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
   <li><a href="#fuentes-identificadas-y-no-utilizadas-todavía" id="toc-fuentes-identificadas-y-no-utilizadas-todavía" class="nav-link" data-scroll-target="#fuentes-identificadas-y-no-utilizadas-todavía"><span class="header-section-number">3.3</span> Fuentes identificadas y no utilizadas todavía</a></li>
   <li><a href="#fuentes-de-contexto-solo-agregadas" id="toc-fuentes-de-contexto-solo-agregadas" class="nav-link" data-scroll-target="#fuentes-de-contexto-solo-agregadas"><span class="header-section-number">3.4</span> Fuentes de contexto (solo agregadas)</a></li>
   </ul></li>
-  <li><a href="#sec-descriptivas" id="toc-sec-descriptivas" class="nav-link" data-scroll-target="#sec-descriptivas"><span class="header-section-number">4</span> Estadísticas descriptivas</a>
+  <li><a href="#sec-descriptivas" id="toc-sec-descriptivas" class="nav-link" data-scroll-target="#sec-descriptivas"><span class="header-section-number">4</span> Estadísticas descriptivas por fuente</a>
   <ul class="collapse">
-  <li><a href="#bases-de-mineduc" id="toc-bases-de-mineduc" class="nav-link" data-scroll-target="#bases-de-mineduc"><span class="header-section-number">4.1</span> Bases de Mineduc</a></li>
-  <li><a href="#oulad" id="toc-oulad" class="nav-link" data-scroll-target="#oulad"><span class="header-section-number">4.2</span> OULAD</a></li>
-  <li><a href="#datos-sintéticos" id="toc-datos-sintéticos" class="nav-link" data-scroll-target="#datos-sintéticos"><span class="header-section-number">4.3</span> Datos sintéticos</a></li>
+  <li><a href="#matrícula-en-educación-superior-mineduc-sies" id="toc-matrícula-en-educación-superior-mineduc-sies" class="nav-link" data-scroll-target="#matrícula-en-educación-superior-mineduc-sies"><span class="header-section-number">4.1</span> Matrícula en Educación Superior (Mineduc / SIES)</a></li>
+  <li><a href="#pruebas-de-admisión-paes-mineduc-demre" id="toc-pruebas-de-admisión-paes-mineduc-demre" class="nav-link" data-scroll-target="#pruebas-de-admisión-paes-mineduc-demre"><span class="header-section-number">4.2</span> Pruebas de admisión PAES (Mineduc / DEMRE)</a></li>
+  <li><a href="#trayectoria-escolar-previa-al-ingreso" id="toc-trayectoria-escolar-previa-al-ingreso" class="nav-link" data-scroll-target="#trayectoria-escolar-previa-al-ingreso"><span class="header-section-number">4.3</span> Trayectoria escolar previa al ingreso</a></li>
+  <li><a href="#oulad" id="toc-oulad" class="nav-link" data-scroll-target="#oulad"><span class="header-section-number">4.4</span> OULAD</a></li>
+  <li><a href="#datos-sintéticos" id="toc-datos-sintéticos" class="nav-link" data-scroll-target="#datos-sintéticos"><span class="header-section-number">4.5</span> Datos sintéticos</a></li>
   </ul></li>
   <li><a href="#sec-metodologia" id="toc-sec-metodologia" class="nav-link" data-scroll-target="#sec-metodologia"><span class="header-section-number">5</span> Metodología</a>
   <ul class="collapse">
@@ -2262,8 +2264,9 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
   <ul class="collapse">
   <li><a href="#sec-retencion" id="toc-sec-retencion" class="nav-link" data-scroll-target="#sec-retencion"><span class="header-section-number">6.1</span> Retención real de la Universidad Autónoma</a></li>
   <li><a href="#piso-predictivo-de-las-variables-previas-al-ingreso" id="toc-piso-predictivo-de-las-variables-previas-al-ingreso" class="nav-link" data-scroll-target="#piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.2</span> Piso predictivo de las variables previas al ingreso</a></li>
-  <li><a href="#curva-de-anticipación-sobre-oulad" id="toc-curva-de-anticipación-sobre-oulad" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.3</span> Curva de anticipación sobre OULAD</a></li>
-  <li><a href="#curva-de-anticipación-sobre-datos-sintéticos" id="toc-curva-de-anticipación-sobre-datos-sintéticos" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.4</span> Curva de anticipación sobre datos sintéticos</a></li>
+  <li><a href="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" id="toc-ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="nav-link" data-scroll-target="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.3</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</a></li>
+  <li><a href="#curva-de-anticipación-sobre-oulad" id="toc-curva-de-anticipación-sobre-oulad" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.4</span> Curva de anticipación sobre OULAD</a></li>
+  <li><a href="#curva-de-anticipación-sobre-datos-sintéticos" id="toc-curva-de-anticipación-sobre-datos-sintéticos" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.5</span> Curva de anticipación sobre datos sintéticos</a></li>
   </ul></li>
   <li><a href="#sec-argumento" id="toc-sec-argumento" class="nav-link" data-scroll-target="#sec-argumento"><span class="header-section-number">7</span> El argumento central</a></li>
   <li><a href="#sec-limitaciones" id="toc-sec-limitaciones" class="nav-link" data-scroll-target="#sec-limitaciones"><span class="header-section-number">8</span> Limitaciones y supuestos abiertos</a>
@@ -2333,7 +2336,7 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
 <p>Los tres resultados principales:</p>
 <ol type="1">
 <li><p><strong>La retención real de la Universidad Autónoma se puede calcular hoy</strong>, desde datos abiertos, cruzando las bases de matrícula por el identificador MRUN. En el área de Administración y Comercio la cohorte 2024 retuvo <strong>84,1%</strong> en la misma carrera. Entre sedes hay una brecha de <strong>14 puntos</strong>.</p></li>
-<li><p><strong>El expediente completo de admisión predice poco.</strong> Con 135.050 ingresantes universitarios y validación temporal, un modelo que usa únicamente NEM, ranking, notas de enseñanza media, todos los puntajes PAES, dependencia del colegio, sexo y año de egreso alcanza <strong>AUC 0,615</strong>.</p></li>
+<li><p><strong>Todo el expediente escolar previo predice poco.</strong> Con 135.050 ingresantes universitarios y validación temporal, un modelo con NEM, ranking, notas de enseñanza media, los cinco puntajes PAES, dependencia del colegio, <strong>asistencia mensual de 4° medio, decil de ingreso oficial, condición de prioritario y tipo de financiamiento</strong> alcanza <strong>AUC 0,636</strong>. Solo la ficha de admisión llega a 0,617; todo el resto suma 0,019.</p></li>
 <li><p><strong>Los datos de comportamiento superan a ese expediente antes del primer mes.</strong> Sobre datos reales de la Open University, un baseline conductual alcanza <strong>AUC 0,697 en la semana 4</strong> — con el 10% del curso transcurrido y sin registro de asistencia.</p></li>
 </ol>
 <p>De ahí se sigue el argumento del proyecto: el valor no está en lo que ya se sabe del estudiante al matricularse, sino en lo que ocurre durante el semestre.</p>
@@ -2448,24 +2451,42 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
 <td>Variables previas al ingreso</td>
 </tr>
 <tr class="odd">
+<td><a href="https://datosabiertos.mineduc.cl/asistencia-anual-por-estudiante/">Asistencia anual por estudiante</a> 2022, 2023</td>
+<td>Individual (MRUN + RBD), tasa mensual</td>
+<td>Datos abiertos de gobierno</td>
+<td>Asistencia de enseñanza media y su pendiente</td>
+</tr>
+<tr class="even">
+<td><a href="https://datosabiertos.mineduc.cl/alumnos-preferentes-prioritarios-y-beneficiarios-sep/">Alumnos SEP</a> 2022, 2023</td>
+<td>Individual (MRUN + RBD)</td>
+<td>Datos abiertos de gobierno</td>
+<td>Vulnerabilidad individual: prioritario / preferente</td>
+</tr>
+<tr class="odd">
+<td><a href="https://datosabiertos.mineduc.cl/asignaciones-de-becas-y-creditos-en-educacion-superior/">Asignaciones de Becas y Créditos</a> 2023, 2024</td>
+<td>Individual (MRUN)</td>
+<td>Datos abiertos de gobierno</td>
+<td>Quintil, decil DFE, gratuidad, FSCU, beca de arancel</td>
+</tr>
+<tr class="even">
 <td><a href="https://analyse.kmi.open.ac.uk/open_dataset">OULAD</a></td>
 <td>Estudiante × módulo × semana</td>
 <td>CC-BY 4.0</td>
 <td>Validar la metodología con datos reales de comportamiento</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="https://developerdocs.instructure.com/services/dap/dataset">Canvas Data 2 — esquema</a></td>
 <td>Documentación</td>
 <td>Pública</td>
 <td>Nombres reales de tablas y columnas</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="https://tech.wayne.edu/depdocs/banner-ods-handbook-8-4.pdf">Banner ODS Handbook</a></td>
 <td>Documentación</td>
 <td>Publicada por Wayne State University</td>
 <td>Nombres reales de tablas Banner</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Generador sintético</td>
 <td>Estudiante × asignatura × semana</td>
 <td>Propio</td>
@@ -2515,9 +2536,19 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
 <td>Rendimiento histórico del establecimiento</td>
 </tr>
 <tr class="odd">
-<td>Mineduc — Rendimiento Escolar</td>
-<td>RBD</td>
-<td>Notas y asistencia agregadas del colegio</td>
+<td><a href="https://datosabiertos.mineduc.cl/rendimiento-por-estudiante-2/">Rendimiento por estudiante</a></td>
+<td>MRUN + RBD</td>
+<td>Notas y promoción año a año en enseñanza media</td>
+</tr>
+<tr class="even">
+<td><a href="https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/">Titulados en Educación Superior</a></td>
+<td>MRUN</td>
+<td>Titulación efectiva: el desenlace de largo plazo</td>
+</tr>
+<tr class="odd">
+<td><a href="https://datosabiertos.mineduc.cl/postulaciones-a-becas-y-creditos-en-educacion-superior/">Postulaciones a Becas y Créditos</a></td>
+<td>MRUN</td>
+<td>Datos FUAS: composición del hogar, ingresos declarados</td>
 </tr>
 <tr class="even">
 <td>Matrícula ES (calculado)</td>
@@ -2531,6 +2562,7 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
 </tr>
 </tbody>
 </table>
+<p>El catálogo completo de <code>datosabiertos.mineduc.cl</code> tiene <strong>48 conjuntos de datos</strong>. La prioridad de incorporación debería guiarse por el resultado de la ablación (§ <a href="#sec-resultados" class="quarto-xref">Sección 6</a>): las variables previas al ingreso ya mostraron rendimientos decrecientes, así que conviene invertir el esfuerzo en los datos institucionales antes que en más fuentes públicas.</p>
 <p>Ver § <a href="#sec-limitaciones" class="quarto-xref">Sección 8</a> para la razón por la que su incorporación requiere cuidado.</p>
 </section>
 <section id="fuentes-de-contexto-solo-agregadas" class="level2" data-number="3.4">
@@ -2540,9 +2572,10 @@ var requirejs,require,define;(function(global,setTimeout){var req,s,head,baseEle
 </section>
 </section>
 <section id="sec-descriptivas" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Estadísticas descriptivas</h1>
-<section id="bases-de-mineduc" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="bases-de-mineduc"><span class="header-section-number">4.1</span> Bases de Mineduc</h2>
+<h1 data-number="4"><span class="header-section-number">4</span> Estadísticas descriptivas por fuente</h1>
+<p>Una subsección por fuente, con su grano, su cobertura y las variables que el proyecto efectivamente usa. Todas las cifras provienen de <code>documentacion/datos/</code>, que <code>scripts/descriptive_stats.py</code> regenera desde las bases originales.</p>
+<section id="matrícula-en-educación-superior-mineduc-sies" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="matrícula-en-educación-superior-mineduc-sies"><span class="header-section-number">4.1</span> Matrícula en Educación Superior (Mineduc / SIES)</h2>
 <div class="cell" data-execution_count="2">
 <div id="tbl-mineduc-volumen" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="2">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2643,10 +2676,395 @@ Tabla 2: Matriculados 2024 de la UA en el área Administración y Comercio
 </div>
 </div>
 </section>
-<section id="oulad" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="oulad"><span class="header-section-number">4.2</span> OULAD</h2>
-<div id="cell-oulad-resumen" class="cell" data-execution_count="5">
-<div id="oulad-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="5">
+<section id="pruebas-de-admisión-paes-mineduc-demre" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="pruebas-de-admisión-paes-mineduc-demre"><span class="header-section-number">4.2</span> Pruebas de admisión PAES (Mineduc / DEMRE)</h2>
+<p><strong>Grano:</strong> una fila por inscrito, con <code>MRUN</code> y <code>RBD</code> del establecimiento de egreso. 130 columnas. Proceso de admisión 2024.</p>
+<p>En esta base <strong>el valor 0 significa “no rindió esa prueba”, no “obtuvo cero”</strong>. Tratarlo como puntaje desplaza todas las medias hacia abajo y arruina cualquier modelo; en el pipeline se convierte explícitamente a valor ausente.</p>
+<div class="cell" data-execution_count="5">
+<div id="tbl-paes-desc" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="5">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-paes-desc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 3: Puntajes y expediente escolar — PAES 2024 (excluyendo a quienes no rindieron)
+</figcaption>
+<div aria-describedby="tbl-paes-desc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Variable</th>
+<th data-quarto-table-cell-role="th">% que rindió</th>
+<th data-quarto-table-cell-role="th">Media</th>
+<th data-quarto-table-cell-role="th">DE</th>
+<th data-quarto-table-cell-role="th">p25</th>
+<th data-quarto-table-cell-role="th">p50</th>
+<th data-quarto-table-cell-role="th">p75</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Promedio de notas de ensenanza media</td>
+<td>98.3%</td>
+<td>6.0</td>
+<td>0.5</td>
+<td>5.5</td>
+<td>6.0</td>
+<td>6.3</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Puntaje NEM</td>
+<td>98.3%</td>
+<td>698.8</td>
+<td>151.6</td>
+<td>587.0</td>
+<td>700.0</td>
+<td>816.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Puntaje ranking</td>
+<td>98.3%</td>
+<td>716.0</td>
+<td>165.0</td>
+<td>592.0</td>
+<td>718.0</td>
+<td>849.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>PAES Competencia Lectora</td>
+<td>88.4%</td>
+<td>613.9</td>
+<td>132.8</td>
+<td>510.0</td>
+<td>607.0</td>
+<td>707.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>PAES Matematica M1</td>
+<td>87.4%</td>
+<td>603.7</td>
+<td>140.9</td>
+<td>505.0</td>
+<td>576.0</td>
+<td>679.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>PAES Matematica M2</td>
+<td>42.7%</td>
+<td>419.9</td>
+<td>111.8</td>
+<td>348.0</td>
+<td>395.0</td>
+<td>459.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>PAES Historia y Cs. Sociales</td>
+<td>49.3%</td>
+<td>501.3</td>
+<td>128.2</td>
+<td>402.0</td>
+<td>484.0</td>
+<td>587.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>PAES Ciencias</td>
+<td>61.9%</td>
+<td>494.5</td>
+<td>107.8</td>
+<td>418.0</td>
+<td>478.0</td>
+<td>546.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>La cobertura es informativa por sí misma: casi todos rinden Competencia Lectora y Matemática M1, pero <strong>solo el 43% rinde Matemática M2</strong> y la mitad rinde Historia. Un modelo que use M2 como predictor lo estará imputando para más de la mitad de los casos.</p>
+<div class="cell" data-execution_count="6">
+<div id="tbl-paes-dep" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="6">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-paes-dep-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 4: Dependencia del establecimiento de egreso
+</figcaption>
+<div aria-describedby="tbl-paes-dep-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Dependencia</th>
+<th data-quarto-table-cell-role="th">n</th>
+<th data-quarto-table-cell-role="th">Proporción</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Particular Subvencionado</td>
+<td>164257</td>
+<td>53.1%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Municipal</td>
+<td>55629</td>
+<td>18.0%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Particular Pagado</td>
+<td>32448</td>
+<td>10.5%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Corporacion Municipal</td>
+<td>28545</td>
+<td>9.2%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Servicio Local de Educacion</td>
+<td>13084</td>
+<td>4.2%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>Corp. de Administracion Delegada</td>
+<td>10455</td>
+<td>3.4%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>NaN</td>
+<td>4932</td>
+<td>1.6%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="trayectoria-escolar-previa-al-ingreso" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="trayectoria-escolar-previa-al-ingreso"><span class="header-section-number">4.3</span> Trayectoria escolar previa al ingreso</h2>
+<p>Tres bases adicionales de Mineduc, unidas por <code>MRUN</code> al año anterior al ingreso de cada cohorte:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Base</th>
+<th>Grano</th>
+<th>Variables usadas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Asistencia anual por estudiante</td>
+<td>MRUN + RBD, <strong>tasa mensual marzo–diciembre</strong></td>
+<td>Asistencia anual, pendiente, mínimo, último trimestre</td>
+</tr>
+<tr class="even">
+<td>Alumnos SEP</td>
+<td>MRUN + RBD</td>
+<td>Prioritario, preferente</td>
+</tr>
+<tr class="odd">
+<td>Asignaciones de Becas y Créditos</td>
+<td>MRUN</td>
+<td>Quintil, decil DFE, gratuidad, FSCU, beca de arancel</td>
+</tr>
+</tbody>
+</table>
+<p>La variable más interesante no es el nivel de asistencia sino su <strong>pendiente</strong>: un estudiante que baja de 95% en marzo a 70% en noviembre de 4° medio ya se estaba desenganchando antes de matricularse. Es el mismo fenómeno que el proyecto busca detectar dentro del semestre.</p>
+<div class="cell" data-execution_count="7">
+<div id="tbl-trayectoria" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="7">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-trayectoria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 5: Trayectoria escolar — cohorte de ingreso 2024
+</figcaption>
+<div aria-describedby="tbl-trayectoria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Variable</th>
+<th data-quarto-table-cell-role="th">Cobertura</th>
+<th data-quarto-table-cell-role="th">Media</th>
+<th data-quarto-table-cell-role="th">DE</th>
+<th data-quarto-table-cell-role="th">p25</th>
+<th data-quarto-table-cell-role="th">p50</th>
+<th data-quarto-table-cell-role="th">p75</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>asis_em_anual</td>
+<td>54.6%</td>
+<td>0.8807</td>
+<td>0.1131</td>
+<td>0.8435</td>
+<td>0.9091</td>
+<td>0.9548</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>asis_em_pendiente</td>
+<td>54.6%</td>
+<td>-0.0092</td>
+<td>0.0274</td>
+<td>-0.0166</td>
+<td>-0.0026</td>
+<td>0.0041</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>asis_em_min</td>
+<td>54.6%</td>
+<td>0.6315</td>
+<td>0.2849</td>
+<td>0.5238</td>
+<td>0.7143</td>
+<td>0.8421</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>asis_em_ultimo_trimestre</td>
+<td>54.6%</td>
+<td>0.8541</td>
+<td>0.1952</td>
+<td>0.8036</td>
+<td>0.9286</td>
+<td>1.0000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>quintil_ingreso</td>
+<td>70.4%</td>
+<td>2.2641</td>
+<td>0.7019</td>
+<td>2.0000</td>
+<td>2.0000</td>
+<td>3.0000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>decil_dfe</td>
+<td>70.4%</td>
+<td>4.2747</td>
+<td>1.2974</td>
+<td>4.0000</td>
+<td>4.0000</td>
+<td>5.0000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>prioritario</td>
+<td>100.0%</td>
+<td>0.3852</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>preferente</td>
+<td>100.0%</td>
+<td>0.2291</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>gratuidad</td>
+<td>100.0%</td>
+<td>0.6190</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>fscu</td>
+<td>100.0%</td>
+<td>0.0115</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>beca_arancel</td>
+<td>100.0%</td>
+<td>0.1143</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Advertencia</span>El CAE no está en estas bases
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La base de Asignaciones cubre gratuidad, becas de arancel y el Fondo Solidario de Crédito Universitario. <strong>El CAE lo administra la Comisión Ingresa y se publica por separado.</strong> Incluir una variable <code>cae</code> construida desde esta base daría una columna constante en cero y llevaría a concluir que “el CAE no predice” cuando nunca estuvo en los datos.</p>
+</div>
+</div>
+</section>
+<section id="oulad" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="oulad"><span class="header-section-number">4.4</span> OULAD</h2>
+<div id="cell-oulad-resumen" class="cell" data-execution_count="8">
+<div id="oulad-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="8">
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
@@ -2683,14 +3101,14 @@ Tabla 2: Matriculados 2024 de la UA en el área Administración y Comercio
 </table>
 </div>
 </div>
-<div class="cell" data-execution_count="6">
-<div id="tbl-oulad-resultado" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="6">
+<div class="cell" data-execution_count="9">
+<div id="tbl-oulad-resultado" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="9">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-oulad-resultado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 3: Distribución del resultado final en OULAD
+Tabla 6: Distribución del resultado final en OULAD
 </figcaption>
 <div aria-describedby="tbl-oulad-resultado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 
 
@@ -2751,10 +3169,10 @@ Nota
 </div>
 </div>
 </section>
-<section id="datos-sintéticos" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="datos-sintéticos"><span class="header-section-number">4.3</span> Datos sintéticos</h2>
-<div id="cell-sint-resumen" class="cell" data-execution_count="7">
-<div id="sint-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="7">
+<section id="datos-sintéticos" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="datos-sintéticos"><span class="header-section-number">4.5</span> Datos sintéticos</h2>
+<div id="cell-sint-resumen" class="cell" data-execution_count="10">
+<div id="sint-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="10">
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
@@ -2811,14 +3229,14 @@ Nota
 </table>
 </div>
 </div>
-<div class="cell" data-execution_count="8">
-<div id="tbl-sint-perfil" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="8">
+<div class="cell" data-execution_count="11">
+<div id="tbl-sint-perfil" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="11">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sint-perfil-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 4: Reprobación por perfil latente de estudiante
+Tabla 7: Reprobación por perfil latente de estudiante
 </figcaption>
 <div aria-describedby="tbl-sint-perfil-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="8">
+<div class="cell-output cell-output-display" data-execution_count="11">
 <div>
 
 
@@ -2883,14 +3301,14 @@ Tabla 4: Reprobación por perfil latente de estudiante
 </figure>
 </div>
 </div>
-<div class="cell" data-execution_count="9">
-<div id="tbl-sint-dificultad" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="9">
+<div class="cell" data-execution_count="12">
+<div id="tbl-sint-dificultad" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="12">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sint-dificultad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 5: Reprobación por nivel de dificultad de la asignatura
+Tabla 8: Reprobación por nivel de dificultad de la asignatura
 </figcaption>
 <div aria-describedby="tbl-sint-dificultad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="9">
+<div class="cell-output cell-output-display" data-execution_count="12">
 <div>
 
 
@@ -2931,14 +3349,14 @@ Tabla 5: Reprobación por nivel de dificultad de la asignatura
 </figure>
 </div>
 </div>
-<div class="cell" data-execution_count="10">
-<div id="tbl-sint-sede" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="10">
+<div class="cell" data-execution_count="13">
+<div id="tbl-sint-sede" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="13">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sint-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 6: Distribución sintética por sede
+Tabla 9: Distribución sintética por sede
 </figcaption>
 <div aria-describedby="tbl-sint-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="10">
+<div class="cell-output cell-output-display" data-execution_count="13">
 <div>
 
 
@@ -3038,14 +3456,14 @@ Tabla 6: Distribución sintética por sede
 <section id="sec-retencion" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="sec-retencion"><span class="header-section-number">6.1</span> Retención real de la Universidad Autónoma</h2>
 <p>Calculada cruzando Matrícula 2024 con Matrícula 2025 por MRUN. Cohorte de ingreso 2024.</p>
-<div class="cell" data-execution_count="11">
-<div id="tbl-retencion-resumen" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="11">
+<div class="cell" data-execution_count="14">
+<div id="tbl-retencion-resumen" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="14">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-retencion-resumen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 7: Retención al segundo año, cohorte 2024
+Tabla 10: Retención al segundo año, cohorte 2024
 </figcaption>
 <div aria-describedby="tbl-retencion-resumen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="11">
+<div class="cell-output cell-output-display" data-execution_count="14">
 <div>
 
 
@@ -3090,14 +3508,14 @@ Tabla 7: Retención al segundo año, cohorte 2024
 </figure>
 </div>
 </div>
-<div class="cell" data-execution_count="12">
-<div id="tbl-retencion-sede" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="12">
+<div class="cell" data-execution_count="15">
+<div id="tbl-retencion-sede" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="15">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-retencion-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 8: Retención por sede — área Administración y Comercio, cohorte 2024
+Tabla 11: Retención por sede — área Administración y Comercio, cohorte 2024
 </figcaption>
 <div aria-describedby="tbl-retencion-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="12">
+<div class="cell-output cell-output-display" data-execution_count="15">
 <div>
 
 
@@ -3149,14 +3567,14 @@ Tabla 8: Retención por sede — área Administración y Comercio, cohorte 2024
 </figure>
 </div>
 </div>
-<div class="cell" data-execution_count="13">
-<div id="tbl-retencion-carrera" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="13">
+<div class="cell" data-execution_count="16">
+<div id="tbl-retencion-carrera" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="16">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-retencion-carrera-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 9: Retención por carrera — área Administración y Comercio
+Tabla 12: Retención por carrera — área Administración y Comercio
 </figcaption>
 <div aria-describedby="tbl-retencion-carrera-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="16">
 <div>
 
 
@@ -3218,14 +3636,14 @@ Tabla 9: Retención por carrera — área Administración y Comercio
 <section id="piso-predictivo-de-las-variables-previas-al-ingreso" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.2</span> Piso predictivo de las variables previas al ingreso</h2>
 <p>Modelo: regresión logística sobre NEM, ranking, promedio de notas de enseñanza media, puntajes PAES (Competencia Lectora, Matemática M1 y M2, Historia, Ciencias), dependencia del establecimiento, sexo y años desde el egreso. Objetivo: no continuar en la misma carrera al año siguiente.</p>
-<div class="cell" data-execution_count="14">
-<div id="tbl-piso" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="14">
+<div class="cell" data-execution_count="17">
+<div id="tbl-piso" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="17">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-piso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 10: Piso predictivo — comparación de esquemas de validación
+Tabla 13: Piso predictivo — comparación de esquemas de validación
 </figcaption>
 <div aria-describedby="tbl-piso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="14">
+<div class="cell-output cell-output-display" data-execution_count="17">
 <div>
 
 
@@ -3243,25 +3661,25 @@ Tabla 10: Piso predictivo — comparación de esquemas de validación
 <th data-quarto-table-cell-role="th">0</th>
 <td>Split aleatorio (una cohorte)</td>
 <td>sistema</td>
-<td>0.626</td>
+<td>0.628</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>Split aleatorio (una cohorte)</td>
 <td>solo_universidades</td>
-<td>0.615</td>
+<td>0.616</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>Temporal (2023 entrena → 2024 testea)</td>
 <td>sistema</td>
-<td>0.622</td>
+<td>0.623</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>Temporal (2023 entrena → 2024 testea)</td>
 <td>universidades</td>
-<td>0.615</td>
+<td>0.617</td>
 </tr>
 </tbody>
 </table>
@@ -3306,16 +3724,96 @@ Tabla 10: Piso predictivo — comparación de esquemas de validación
 </table>
 <p><strong>El AUC con validación temporal (0,615) es idéntico al del split aleatorio (0,615).</strong> El piso es estable y el resultado se sostiene sobre cohortes futuras.</p>
 </section>
-<section id="curva-de-anticipación-sobre-oulad" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.3</span> Curva de anticipación sobre OULAD</h2>
-<div class="cell" data-execution_count="15">
-<div id="tbl-oulad-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="15">
+<section id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.3</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</h2>
+<p>La pregunta que corresponde antes de incorporar variables socioeconómicas a un modelo que prioriza estudiantes no es “¿predicen?” sino <strong>“¿cuánto añaden por encima de lo que ya tenemos?”</strong>. Población: solo universidades, validación temporal 2023 → 2024.</p>
+<div class="cell" data-execution_count="18">
+<div id="tbl-ablacion" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="18">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ablacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 14: Valor incremental de cada bloque de variables previas al ingreso
+</figcaption>
+<div aria-describedby="tbl-ablacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="18">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Modelo</th>
+<th data-quarto-table-cell-role="th">N° features</th>
+<th data-quarto-table-cell-role="th">AUC</th>
+<th data-quarto-table-cell-role="th">Δ vs base</th>
+<th data-quarto-table-cell-role="th">Top 20%</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>A. Ficha de admision (base)</td>
+<td>14</td>
+<td>0.617</td>
+<td>+0.000</td>
+<td>31.6%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>B. Base + asistencia de ens. media</td>
+<td>18</td>
+<td>0.622</td>
+<td>+0.005</td>
+<td>32.2%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>C. Base + socioeconomico</td>
+<td>21</td>
+<td>0.631</td>
+<td>+0.014</td>
+<td>33.2%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>D. Base + ambos</td>
+<td>25</td>
+<td>0.636</td>
+<td>+0.019</td>
+<td>33.8%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>E. Solo asistencia de ens. media</td>
+<td>4</td>
+<td>0.543</td>
+<td>-0.073</td>
+<td>26.9%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Tres lecturas:</p>
+<p><strong>La asistencia de enseñanza media aporta +0,005.</strong> Esto no contradice a ULagos: lo que ese informe mostró es que la asistencia importa <em>dentro</em> de la institución y del período en curso. Como rasgo que se arrastra a través de una transición institucional, casi no transfiere — de hecho, <strong>usada sola alcanza AUC 0,543</strong>, apenas sobre el azar.</p>
+<p><strong>Las variables socioeconómicas aportan +0,014.</strong> Es poco, y ese “poco” resuelve empíricamente el dilema ético: excluirlas del scoring cuesta casi nada en desempeño. La decisión de usarlas o no deja de ser un intercambio entre equidad y precisión.</p>
+<p><strong>Todo junto llega a 0,636.</strong> Con el expediente escolar íntegro —asistencia mensual, decil de ingreso oficial, condición de prioritario, tipo de financiamiento— el piso sigue por debajo de lo que un baseline conductual alcanza en la semana 4.</p>
+</section>
+<section id="curva-de-anticipación-sobre-oulad" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.4</span> Curva de anticipación sobre OULAD</h2>
+<div class="cell" data-execution_count="19">
+<div id="tbl-oulad-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="19">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-oulad-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 11: Poder predictivo vs anticipación — OULAD, cohorte fija
+Tabla 15: Poder predictivo vs anticipación — OULAD, cohorte fija
 </figcaption>
 <div aria-describedby="tbl-oulad-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="15">
+<div class="cell-output cell-output-display" data-execution_count="19">
 <div>
 
 
@@ -3389,16 +3887,16 @@ Tabla 11: Poder predictivo vs anticipación — OULAD, cohorte fija
 </div>
 </div>
 </section>
-<section id="curva-de-anticipación-sobre-datos-sintéticos" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.4</span> Curva de anticipación sobre datos sintéticos</h2>
-<div class="cell" data-execution_count="16">
-<div id="tbl-sint-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="16">
+<section id="curva-de-anticipación-sobre-datos-sintéticos" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.5</span> Curva de anticipación sobre datos sintéticos</h2>
+<div class="cell" data-execution_count="20">
+<div id="tbl-sint-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="20">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sint-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 12: Poder predictivo vs anticipación — datos sintéticos
+Tabla 16: Poder predictivo vs anticipación — datos sintéticos
 </figcaption>
 <div aria-describedby="tbl-sint-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="16">
+<div class="cell-output cell-output-display" data-execution_count="20">
 <div>
 
 
@@ -3479,18 +3977,24 @@ Tabla 12: Poder predictivo vs anticipación — datos sintéticos
 </thead>
 <tbody>
 <tr class="odd">
-<td>Expediente completo de admisión</td>
+<td>Ficha de admisión</td>
 <td>PAES + Matrícula, validación temporal</td>
 <td>135.050</td>
-<td><strong>0,615</strong></td>
+<td>0,617</td>
 </tr>
 <tr class="even">
-<td>Comportamiento, semana 4</td>
+<td><strong>Expediente escolar completo</strong></td>
+<td>+ asistencia mensual, decil DFE, SEP, financiamiento</td>
+<td>135.050</td>
+<td><strong>0,636</strong></td>
+</tr>
+<tr class="odd">
+<td><strong>Comportamiento, semana 4</strong></td>
 <td>OULAD, 10% del curso, <strong>sin asistencia</strong></td>
 <td>13.144</td>
 <td><strong>0,697</strong></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Comportamiento, semana 12</td>
 <td>OULAD, 31% del curso, sin asistencia</td>
 <td>13.144</td>
@@ -3499,7 +4003,8 @@ Tabla 12: Poder predictivo vs anticipación — datos sintéticos
 </tbody>
 </table>
 <blockquote class="blockquote">
-<p>Toda la ficha de admisión junta —NEM, ranking, cinco pruebas PAES, dependencia del colegio— alcanza AUC 0,615. Un baseline conductual la supera con el 10% del curso transcurrido y sin siquiera disponer de asistencia, que es justamente la variable que el informe ULagos identificó como clave.</p>
+<p>Todo lo que el Estado de Chile sabe de un estudiante antes de que pise la universidad —NEM, ranking, cinco pruebas PAES, dependencia del colegio, asistencia mensual de 4° medio, decil de ingreso oficial, condición de prioritario, tipo de financiamiento— alcanza <strong>AUC 0,636</strong>.</p>
+<p>Un baseline conductual lo supera con el <strong>10% del curso transcurrido</strong>, y sin siquiera disponer de asistencia — justamente la variable que el informe ULagos identificó como clave.</p>
 </blockquote>
 <p>Ese es el caso para solicitar acceso a Banner y Canvas: <strong>el valor no está en lo que ya se sabe del estudiante al matricularse.</strong></p>
 <hr>
@@ -3518,7 +4023,8 @@ Tabla 12: Poder predictivo vs anticipación — datos sintéticos
 <section id="sobre-el-sesgo" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="sobre-el-sesgo"><span class="header-section-number">8.2</span> Sobre el sesgo</h2>
 <p>Las fuentes unibles por RBD (IVE, SIMCE, dependencia) son <strong>proxies de nivel socioeconómico</strong>. Un modelo que marque en rojo a estudiantes de colegios vulnerables <em>antes de observar conducta alguna</em> no detecta riesgo: reproduce desigualdad.</p>
-<p>La recomendación no es excluirlas por precaución, sino someterlas a una prueba de <strong>valor incremental por encima de las features conductuales</strong>. El resultado de § <a href="#sec-argumento" class="quarto-xref">Sección 7</a> predice que aportarán poco. Si el análisis de ablación lo confirma, se descartan por razones estadísticas y el modelo queda además éticamente más limpio — una sola decisión resuelve ambos problemas.</p>
+<p>La recomendación fue someterlas a una prueba de <strong>valor incremental</strong>, y esa prueba ya se corrió (§ <a href="#sec-resultados" class="quarto-xref">Sección 6</a>): las variables socioeconómicas —quintil, decil DFE, prioritario, financiamiento— aportan <strong>+0,014 de AUC</strong> sobre la ficha de admisión.</p>
+<p>Eso convierte una discusión ética en una decisión barata: <strong>excluirlas del scoring cuesta casi nada en desempeño</strong>. La recomendación operativa es usarlas para el análisis de equidad y para dimensionar la focalización, y mantenerlas fuera del modelo que prioriza estudiantes. La decisión final es de la universidad, no técnica, y conviene plantearla en el mismo taller donde se prioricen los casos de uso.</p>
 </section>
 <section id="preguntas-bloqueantes-para-la-universidad" class="level2" data-number="8.3">
 <h2 data-number="8.3" class="anchored" data-anchor-id="preguntas-bloqueantes-para-la-universidad"><span class="header-section-number">8.3</span> Preguntas bloqueantes para la universidad</h2>
@@ -3559,8 +4065,8 @@ Tabla 12: Poder predictivo vs anticipación — datos sintéticos
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render documentacion/informe_metodologico.qmd</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
 <p>El generador sintético es determinista dado su semilla (<code>config/synthetic.yml: seed</code>). La suite de pruebas incluye una verificación de reproducibilidad que falla si dos ejecuciones con la misma semilla difieren.</p>
-<div id="cell-entorno" class="cell" data-execution_count="17">
-<div id="entorno" class="cell-output cell-output-display cell-output-markdown" data-execution_count="17">
+<div id="cell-entorno" class="cell" data-execution_count="21">
+<div id="entorno" class="cell-output cell-output-display cell-output-markdown" data-execution_count="21">
 <table class="caption-top table table-sm table-striped small">
 <tbody>
 <tr class="odd">
@@ -3577,7 +4083,7 @@ Tabla 12: Poder predictivo vs anticipación — datos sintéticos
 </tr>
 <tr class="even">
 <td>Generado</td>
-<td>2026-09-08 15:09</td>
+<td>2026-09-08 16:02</td>
 </tr>
 </tbody>
 </table>

@@ -47,6 +47,29 @@ FILES = {
     "paes_2023_puntajes": (f"{BASE}/2023/05/Prueba-de-Acceso-a-la-Educacion"
                            "-Superior-2023-Inscritos-Puntajes-1.rar"),
     "paes_2024_puntajes": f"{BASE}/2025/10/PAES-2024-Inscritos-Puntajes.rar",
+
+    # --- Trayectoria escolar previa al ingreso -------------------------
+    # Para cada cohorte se toma el ANIO ANTERIOR al ingreso, que es su
+    # ultimo anio de ensenanza media: cohorte 2023 -> escolar 2022,
+    # cohorte 2024 -> escolar 2023. Asi ninguna variable es posterior a la
+    # matricula que se quiere predecir.
+    #
+    # Asistencia por estudiante: trae tasa MENSUAL de marzo a diciembre.
+    # Es la variable que el informe ULagos identifico como clave y que no
+    # existia en el modelo de piso.
+    "asistencia_2022": f"{BASE}/2026/02/Asistencia-anual-2022.rar",
+    "asistencia_2023": f"{BASE}/2026/02/Asistencia-anual-2023.rar",
+
+    # Condicion de prioritario/preferente: vulnerabilidad INDIVIDUAL, mas
+    # precisa que el IVE del establecimiento, que es un promedio.
+    "sep_2022": f"{BASE}/2022/12/Alumnos-SEP-2022.rar",
+    "sep_2023": f"{BASE}/2023/12/Alumnos-SEP-2023.rar",
+
+    # Quintil y decil de ingreso oficiales del Departamento de
+    # Financiamiento Estudiantil, mas el tipo de beneficio. Se asigna al
+    # matricularse, antes de que empiece el semestre.
+    "becas_2023": f"{BASE}/2023/12/Asignaciones-de-Becas-y-Creditos-2023.rar",
+    "becas_2024": f"{BASE}/2025/01/Asignaciones-de-Becas-y-Creditos-2024.rar",
 }
 
 SEVENZIP = Path(r"C:\Program Files\7-Zip\7z.exe")

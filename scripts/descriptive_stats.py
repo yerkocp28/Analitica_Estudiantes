@@ -147,6 +147,58 @@ def stats_mineduc(meta: dict) -> None:
           .sort_values("matriculados_2024", ascending=False))
 
 
+def stats_paes(meta: dict) -> None:
+    """Descriptivas de los puntajes PAES y del expediente escolar."""
+    from analyze_mineduc import PAES_COLS, SCORE_COLS, _decimal_comma, _find  # noqa
+
+    try:
+        path = _find("paes_2024_puntajes", "*.csv")
+    except FileNotFoundError:
+        log.warning("Sin PAES; se omite")
+        return
+    log.info("PAES 2024")
+    df = pd.read_csv(path, sep=";", encoding="utf-8-sig",
+                     usecols=[c for c in PAES_COLS], dtype=str, low_memory=False)
+    for c in SCORE_COLS:
+        df[c] = _decimal_comma(df[c])
+        df.loc[df[c] <= 0, c] = None   # 0 = no rindio esa prueba
+
+    filas = []
+    etiquetas = {
+        "PROMEDIO_NOTAS": "Promedio de notas de ensenanza media",
+        "PTJE_NEM": "Puntaje NEM", "PTJE_RANKING": "Puntaje ranking",
+        "CLEC_MAX": "PAES Competencia Lectora", "MATE1_MAX": "PAES Matematica M1",
+        "MATE2_MAX": "PAES Matematica M2", "HCSOC_MAX": "PAES Historia y Cs. Sociales",
+        "CIEN_MAX": "PAES Ciencias",
+    }
+    for c, etiq in etiquetas.items():
+        s = df[c]
+        filas.append({
+            "variable": etiq, "rindio": round(float(s.notna().mean()), 4),
+            "media": round(float(s.mean()), 1), "sd": round(float(s.std()), 1),
+            "p25": round(float(s.quantile(.25)), 1),
+            "p50": round(float(s.quantile(.50)), 1),
+            "p75": round(float(s.quantile(.75)), 1),
+        })
+    _save("paes_descriptivas", pd.DataFrame(filas))
+
+    dep = pd.to_numeric(df["DEPENDENCIA"], errors="coerce").map(
+        {1: "Corporacion Municipal", 2: "Municipal",
+         3: "Particular Subvencionado", 4: "Particular Pagado",
+         5: "Corp. de Administracion Delegada",
+         6: "Servicio Local de Educacion"})
+    d = dep.value_counts(dropna=False).reset_index()
+    d.columns = ["dependencia", "n"]
+    d["proporcion"] = (d["n"] / d["n"].sum()).round(4)
+    _save("paes_dependencia", d)
+
+    meta["paes"] = {
+        "inscritos_2024": int(len(df)),
+        "rindio_lectora": round(float(df["CLEC_MAX"].notna().mean()), 4),
+        "rindio_m1": round(float(df["MATE1_MAX"].notna().mean()), 4),
+    }
+
+
 def stats_resultados(meta: dict) -> None:
     log.info("Resultados de modelos")
     for src in ("synthetic", "oulad"):
@@ -157,6 +209,8 @@ def stats_resultados(meta: dict) -> None:
         p = RESULTS / f"{f}.parquet"
         if p.exists():
             _save(f, pd.read_parquet(p))
+    # ablacion_piso.csv y descriptivas_trayectoria_escolar.csv los produce
+    # analyze_mineduc.py directamente en documentacion/datos/.
 
 
 def main() -> int:
@@ -164,6 +218,7 @@ def main() -> int:
     stats_sinteticos(meta)
     stats_oulad(meta)
     stats_mineduc(meta)
+    stats_paes(meta)
     stats_resultados(meta)
 
     OUT.mkdir(parents=True, exist_ok=True)

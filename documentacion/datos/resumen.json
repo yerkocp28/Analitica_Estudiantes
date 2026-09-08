@@ -36,5 +36,10 @@
       "CASA CENTRAL (TEMUCO)",
       "SEDE TALCA"
     ]
+  },
+  "paes": {
+    "inscritos_2024": 309350,
+    "rindio_lectora": 0.8842,
+    "rindio_m1": 0.874
   }
 }
