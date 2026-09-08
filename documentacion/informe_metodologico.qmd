@@ -7,13 +7,19 @@ lang: es
 format:
   html:
     toc: true
+    toc-title: "Contenidos"
     toc-depth: 3
     toc-location: left
     number-sections: true
     theme: cosmo
+    css: estilos.css
+    include-before-body: encabezado.html
+    include-after-body: pie.html
     code-fold: true
     code-summary: "Ver código"
     df-print: kable
+    fig-cap-location: top
+    tbl-cap-location: top
     embed-resources: true
 execute:
   echo: false

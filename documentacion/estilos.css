@@ -1,0 +1,172 @@
+/* Identidad visual del informe metodologico.
+ *
+ * Los dos colores salen del logo institucional, muestreados del PNG:
+ *   rojo del escudo  #E2211C  (82% de los pixeles opacos)
+ *   carbon del texto #3D3935
+ *
+ * Contraste verificado sobre blanco: rojo 4.70:1 y carbon 11.44:1, ambos
+ * cumplen WCAG AA para texto normal. El rojo sobre carbon da 2.43:1, asi
+ * que esa combinacion no se usa en ninguna parte.
+ *
+ * El rojo se reserva para acentos de identidad -- filetes, numeracion de
+ * secciones, enlaces. No se usa para codificar datos: en las tablas de
+ * resultados el color no significa nada, y ponerlo ahi haria pensar que si.
+ */
+
+:root {
+  --ua-rojo: #E2211C;
+  --ua-rojo-tenue: #FBEAE9;
+  --ua-carbon: #3D3935;
+  --ua-gris: #6B6560;
+  --ua-linea: #E3E0DC;
+}
+
+/* ------------------------------------------------------------------ */
+/* Encabezado institucional                                            */
+/* ------------------------------------------------------------------ */
+.ua-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0 0 1.1rem;
+  margin: 0 0 2rem;
+  border-bottom: 3px solid var(--ua-rojo);
+}
+
+.ua-header img {
+  height: 62px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.ua-header .ua-titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ua-header .ua-unidad {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ua-carbon);
+}
+
+.ua-header .ua-proyecto {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ua-gris);
+}
+
+/* En pantallas angostas el logo pasa arriba y el texto debajo. */
+@media (max-width: 560px) {
+  .ua-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .ua-header img { height: 52px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Bloque de titulo                                                    */
+/* ------------------------------------------------------------------ */
+#title-block-header .title {
+  color: var(--ua-carbon);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+#title-block-header .subtitle {
+  color: var(--ua-gris);
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------------------ */
+/* Jerarquia de secciones                                              */
+/* ------------------------------------------------------------------ */
+h1, h2, h3, h4 { color: var(--ua-carbon); }
+
+/* Solo los titulos de primer nivel llevan filete: si lo llevaran todos,
+   el acento dejaria de marcar jerarquia. */
+h1:not(.title) {
+  border-bottom: 2px solid var(--ua-linea);
+  padding-bottom: 0.35rem;
+  margin-top: 2.5rem;
+}
+
+/* La numeracion en rojo hace de hilo conductor sin recargar el texto. */
+h1 .header-section-number,
+h2 .header-section-number {
+  color: var(--ua-rojo);
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ */
+/* Enlaces y navegacion                                                */
+/* ------------------------------------------------------------------ */
+a, a:visited { color: var(--ua-rojo); text-decoration: none; }
+a:hover, a:focus { text-decoration: underline; }
+
+#TOC .active,
+nav[role="doc-toc"] a.active {
+  color: var(--ua-rojo) !important;
+  border-left-color: var(--ua-rojo) !important;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tablas                                                              */
+/* ------------------------------------------------------------------ */
+table { font-variant-numeric: tabular-nums; }
+
+.table > thead,
+table > thead {
+  border-bottom: 2px solid var(--ua-carbon);
+}
+
+table > thead th {
+  font-weight: 600;
+  color: var(--ua-carbon);
+}
+
+.figure-caption, caption, .quarto-float-caption {
+  color: var(--ua-gris);
+  font-size: 0.88rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Citas y bloques destacados                                          */
+/* ------------------------------------------------------------------ */
+blockquote {
+  border-left: 3px solid var(--ua-rojo);
+  background: var(--ua-rojo-tenue);
+  padding: 0.85rem 1.1rem;
+  margin: 1.5rem 0;
+  color: var(--ua-carbon);
+}
+
+blockquote p:last-child { margin-bottom: 0; }
+
+/* Los callout conservan su color semantico de Quarto (rojo = importante,
+   amarillo = advertencia). No se tinen de rojo institucional: ahi el color
+   comunica severidad, no marca. */
+
+/* ------------------------------------------------------------------ */
+/* Pie                                                                 */
+/* ------------------------------------------------------------------ */
+.ua-footer {
+  margin-top: 3.5rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--ua-linea);
+  font-size: 0.82rem;
+  color: var(--ua-gris);
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------------ */
+/* Impresion                                                           */
+/* ------------------------------------------------------------------ */
+@media print {
+  .ua-header { break-after: avoid; }
+  h1, h2 { break-after: avoid; }
+  table { break-inside: avoid; }
+}

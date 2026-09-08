@@ -17,6 +17,7 @@ data/results/
 *.csv
 !docs/**/*.csv
 !documentacion/**/*.csv
+!documentacion/assets/*.png
 
 .env
 mlruns/
