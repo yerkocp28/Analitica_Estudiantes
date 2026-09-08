@@ -49,7 +49,7 @@ INK_MUTED = "#8a8880"
 CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
                "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 
-st.set_page_config(page_title="Early Warning Cockpit — UA", layout="wide",
+st.set_page_config(page_title="Student Analytics · Benchmark UA", layout="wide",
                    page_icon="\U0001f393")
 
 
@@ -100,7 +100,21 @@ def capacity_curve(y: np.ndarray, score: np.ndarray, points: int = 60) -> pd.Dat
 # ----------------------------------------------------------------------
 # Barra lateral
 # ----------------------------------------------------------------------
+st.sidebar.image(str(REPO_ROOT / "documentacion" / "assets" / "logo-ua.png"),
+                 width="stretch")
 st.sidebar.title("Student Analytics UA")
+
+section = st.sidebar.radio("Sección", ["Benchmark UA", "Alerta temprana", "Retención universitaria"])
+if section == "Benchmark UA":
+    from student_analytics.ui.benchmark import render_benchmark
+
+    render_benchmark(RESULTS_DIR)
+    st.stop()
+if section == "Retención universitaria":
+    from student_analytics.ui.retention import render_retention
+
+    render_retention(RESULTS_DIR)
+    st.stop()
 
 available = [s for s in ("synthetic", "oulad") if load_results(s) is not None]
 if not available:

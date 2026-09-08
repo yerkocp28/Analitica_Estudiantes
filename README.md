@@ -90,7 +90,66 @@ pytest -q                                            # 58 tests
 
 ## La herramienta de visualización
 
-`streamlit run src/student_analytics/ui/app.py` — tres vistas:
+### Benchmark UA (vista inicial)
+
+La app abre con un benchmark centrado en la Universidad Autónoma. Los pares se
+identifican por perfil de ingreso **sin utilizar la retención como variable de
+clustering**. Se puede comparar con los cinco vecinos más cercanos, con el mismo
+cluster o con un conjunto manual; la UA permanece como referencia.
+
+```bash
+python scripts/build_retention.py   # si faltan los agregados de matrícula
+python scripts/build_benchmark.py   # perfiles de las cohortes disponibles
+streamlit run src/student_analytics/ui/app.py
+```
+
+El agrupamiento usa cuatro bloques con igual peso: tamaño de cohorte/sedes,
+distribución por áreas, distribución regional y jornada/modalidad. Compara
+K-means, mezcla gaussiana diagonal y jerárquico Ward, con 2–6 grupos y control
+de tamaño mínimo. La aplicación presenta diagnóstico de silueta, estabilidad
+entre cohortes, distancias por bloque, distribuciones originales y mapa PCA.
+Los filtros del resultado no modifican los pares identificados por perfil.
+
+La comparación muestra brechas frente a pares y frente al resto del sistema,
+excluyendo a la UA de ambas referencias. Incluye una referencia estandarizada
+con la mezcla de áreas de la UA y cobertura explícita de áreas comunes. Se pueden
+descargar la tabla CSV y la ficha metodológica JSON. Los perfiles no incluyen
+selectividad, recursos, investigación o acreditación; la similitud es parcial,
+y las brechas son descriptivas, no causales.
+
+Configuración: `config/benchmark.yml`. Artefactos locales:
+`data/results/benchmark_profiles.parquet` y `benchmark_manifest.json`.
+La generación comprueba denominadores contra los agregados de retención; la
+app verifica sus huellas SHA-256. Detalles en
+[la metodología del benchmark](documentacion/benchmark_universitario.md).
+
+### Sección complementaria: retención universitaria
+
+En la barra lateral, **Sección → Retención universitaria** permite comparar las
+universidades presentes en las matrículas públicas descargadas. Para preparar
+los agregados (sin entrenar modelos):
+
+```bash
+python scripts/build_retention.py
+streamlit run src/student_analytics/ui/app.py
+```
+
+Con matrícula 2023, 2024 y 2025 se obtienen las cohortes 2023→2024 y 2024→2025.
+La vista incluye selección de universidades, área de conocimiento, mínimo de
+inscripciones, comparación entre cohortes, detalle por sede y carrera y descarga
+CSV. Distingue continuidad en la misma carrera y universidad, en la misma
+universidad y en cualquier institución (incluidos IP/CFT).
+
+El denominador son inscripciones de pregrado con ingreso a la carrera en el año
+de cohorte y MRUN disponible; una persona puede contar en más de una carrera.
+Se eliminan duplicados exactos de las columnas leídas. Los registros sin MRUN se
+cuentan aparte. Las tasas agregadas se ponderan por inscripciones. La referencia
+nacional respeta el área y cohorte, pero no la selección de universidades ni el
+mínimo de tamaño. Son cálculos descriptivos propios, no un ranking de calidad ni
+predicciones semanales. El artefacto `data/results/retention_universities.parquet`
+contiene únicamente agregados y se carga independientemente del cockpit.
+
+La sección **Alerta temprana** mantiene tres vistas:
 
 **Cockpit de alerta temprana.** La pieza central no es el AUC sino la **curva de
 capacidad**: un deslizador que responde *si esta semana alcanzo a contactar al

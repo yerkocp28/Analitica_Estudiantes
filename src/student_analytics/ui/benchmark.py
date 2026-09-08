@@ -1,0 +1,301 @@
+"""Benchmark institucional centrado en la UA, con pares explicables."""
+from pathlib import Path
+import hashlib
+import json
+
+import altair as alt
+import numpy as np
+import pandas as pd
+import streamlit as st
+import yaml
+import sklearn
+from sklearn.metrics import adjusted_rand_score
+
+from student_analytics.modeling.benchmark import compare_outcomes, fit_peers, neighbors, target_code
+
+UA_RED = "#E2211C"
+BLUE = "#2a78d6"
+LABELS = {"misma_carrera": "Misma carrera y universidad", "misma_universidad": "Misma universidad",
+          "sistema": "Cualquier institución del sistema"}
+
+
+@st.cache_data(show_spinner=False)
+def load_benchmark(folder: str, signatures: tuple) -> tuple:
+    root = Path(folder)
+    outcomes = pd.read_parquet(root / "retention_universities.parquet")
+    profiles = pd.read_parquet(root / "benchmark_profiles.parquet")
+    manifest = json.loads((root / "benchmark_manifest.json").read_text(encoding="utf-8"))
+    for filename, field in [("retention_universities.parquet", "retencion_sha256"),
+                            ("benchmark_profiles.parquet", "perfiles_sha256")]:
+        if hashlib.sha256((root / filename).read_bytes()).hexdigest() != manifest[field]:
+            raise ValueError("Los perfiles y resultados se generaron en momentos distintos. Regenera el benchmark.")
+    return outcomes, profiles, manifest
+
+
+@st.cache_data(show_spinner=False)
+def cached_model(profiles: pd.DataFrame, config: dict):
+    return fit_peers(profiles, config)
+
+
+def percent(value: float) -> str:
+    return f"{value:.1%}" if np.isfinite(value) else "Sin datos"
+
+
+def gap(a: float, b: float) -> str | None:
+    return f"UA {(a - b) * 100:+.1f} pp" if np.isfinite(a) and np.isfinite(b) else None
+
+
+def render_benchmark(results_dir: Path) -> None:
+    st.title("Universidad Autónoma · Benchmark")
+    st.markdown("**¿Cómo se sitúa la UA frente a universidades de perfil similar?**")
+    st.caption("Cohortes de ingreso · Datos públicos Mineduc/SIES · Comparación descriptiva de continuidad al año siguiente")
+    files = [results_dir / name for name in ["retention_universities.parquet", "benchmark_profiles.parquet", "benchmark_manifest.json"]]
+    if not all(p.exists() for p in files):
+        st.info("Aún no están preparados los perfiles para identificar universidades comparables.")
+        st.code("python scripts/build_retention.py\npython scripts/build_benchmark.py", language="bash")
+        return
+    config_path = results_dir.parents[1] / "config/benchmark.yml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    try:
+        data, profiles, manifest = load_benchmark(str(results_dir), tuple(p.stat().st_mtime_ns for p in files))
+    except ValueError as exc:
+        st.warning(str(exc))
+        st.code("python scripts/build_benchmark.py", language="bash")
+        return
+    if profiles.empty or data.empty:
+        st.info("No hay cohortes disponibles para comparar.")
+        return
+    c1, c2, c3 = st.columns([1, 2, 2])
+    years = sorted(set(profiles.cohorte) & set(data.cohorte))
+    if not years:
+        st.info("Los perfiles y los resultados no tienen cohortes en común.")
+        return
+    year = c1.selectbox("Cohorte de ingreso", years, index=len(years) - 1, key="bench_year")
+    metric = c2.selectbox("Continuidad que se compara", list(LABELS), format_func=LABELS.get, key="bench_metric")
+    area_name = c3.selectbox("Área del resultado", ["Todas las áreas"] + sorted(data.loc[data.cohorte.eq(year), "area_conocimiento"].unique()), key="bench_area")
+    area = None if area_name == "Todas las áreas" else area_name
+    try:
+        cohort = profiles.loc[profiles.cohorte.eq(year)].copy()
+        code = target_code(cohort, config["target_name"])
+        with st.spinner("Identificando perfiles comparables…"):
+            model = cached_model(cohort, config)
+            nearest = neighbors(model, code)
+    except ValueError as exc:
+        st.info(str(exc))
+        return
+    # La selección se resuelve por perfiles de la cohorte completa, antes de mirar resultados.
+    selection, count = st.columns([3, 1])
+    mode = selection.radio("Grupo de comparación", ["Más cercanas por perfil", "Mismo cluster que la UA", "Selección manual"],
+                           horizontal=True, key="bench_mode")
+    number = count.number_input("Número de pares", min_value=1, max_value=len(nearest),
+                                value=min(config["nearest_peers"], len(nearest)), disabled=mode != "Más cercanas por perfil",
+                                key="bench_count")
+    if mode == "Mismo cluster que la UA":
+        peer_ids = nearest.loc[nearest.mismo_grupo_ua, "cod_inst"].tolist()
+    elif mode == "Selección manual":
+        names = nearest.set_index("cod_inst").nomb_inst.to_dict()
+        peer_ids = st.multiselect("Universidades pares (UA permanece como referencia)", nearest.cod_inst.tolist(),
+                                  default=nearest.head(int(number)).cod_inst.tolist(), format_func=names.get,
+                                  key=f"bench_manual_{year}")
+    else:
+        peer_ids = nearest.head(int(number)).cod_inst.tolist()
+    if not peer_ids:
+        st.info("No hay pares seleccionados. Elige universidades manualmente o utiliza las más cercanas por perfil.")
+        return
+    shown, stats = compare_outcomes(data, int(year), code, peer_ids, metric, area)
+    st.caption(f"Ingreso {year} → matrícula {year + 1} · {len(peer_ids)} pares seleccionados · "
+               "Los pares se identifican con el perfil completo de ingreso; cambiar el área o la continuidad no cambia su selección.")
+    if stats["ua_n"] == 0:
+        st.info("La UA no tiene inscripciones con seguimiento en esta área y cohorte. Selecciona otra área.")
+        return
+    if stats["pares_disponibles"] < len(peer_ids):
+        st.warning(f"Solo {stats['pares_disponibles']} de {len(peer_ids)} pares tienen resultados en esta área. "
+                   "Las referencias usan únicamente los pares con denominador disponible.")
+    a, b, c, d = st.columns(4)
+    a.metric("Continuidad UA", percent(stats["ua"]))
+    a.caption(f"{stats['ua_n']:,} inscripciones con seguimiento")
+    b.metric("Pares · promedio ponderado", percent(stats["pares"]), gap(stats["ua"], stats["pares"]), delta_color="off")
+    c.metric("Resto del sistema universitario", percent(stats["nacional"]), gap(stats["ua"], stats["nacional"]), delta_color="off")
+    d.metric("Pares · misma mezcla de áreas UA", percent(stats["ajustada"]), gap(stats["ua_comun"], stats["ajustada"]), delta_color="off")
+    st.caption("pp = puntos porcentuales. Las referencias de pares y del sistema excluyen a la UA. "
+               f"El ajuste por áreas cubre {stats['cobertura']:.1%} de las inscripciones UA del filtro; "
+               "su brecha usa la retención UA de esas mismas áreas comunes.")
+    position, similar, evolution, methodology = st.tabs(["Posición de la UA", "Por qué son comparables", "Evolución y áreas", "Método y cobertura"])
+    with position:
+        st.subheader("La UA frente a sus pares")
+        finite = shown.loc[shown.retencion.notna()].copy()
+        finite["referencia"] = np.where(finite.es_ua, "Universidad Autónoma", "Universidad par")
+        chart = alt.Chart(finite).mark_bar().encode(
+            y=alt.Y("nomb_inst:N", title=None, sort="-x", axis=alt.Axis(labelLimit=340, labelFontSize=12)),
+            x=alt.X("retencion:Q", title=LABELS[metric], scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format="%")),
+            color=alt.Color("referencia:N", title=None, legend=alt.Legend(orient="top"),
+                            scale=alt.Scale(domain=["Universidad Autónoma", "Universidad par"], range=[UA_RED, BLUE])),
+            tooltip=[alt.Tooltip("nomb_inst:N", title="Universidad"), alt.Tooltip("n:Q", title="Inscripciones"),
+                     alt.Tooltip("retencion:Q", title="Continuidad", format=".1%")])
+        if np.isfinite(stats["pares"]):
+            rule = alt.Chart(pd.DataFrame({"promedio": [stats["pares"]]})).mark_rule(
+                color="#555555", strokeDash=[5, 4]).encode(x="promedio:Q")
+            chart = chart + rule
+        st.altair_chart(chart.properties(height=max(260, 35 * len(shown))), width="stretch")
+        st.caption("Rojo e identificación por nombre: UA. Línea discontinua: promedio ponderado de los pares disponibles.")
+        if np.isfinite(stats["pares"]):
+            delta = (stats["ua"] - stats["pares"]) * 100
+            st.markdown(f"La continuidad de la UA está **{abs(delta):.1f} puntos porcentuales "
+                        f"{'sobre' if delta >= 0 else 'bajo'} sus pares** en este filtro. "
+                        "La diferencia describe estas cohortes; no mide un efecto atribuible a la universidad.")
+        export = shown.sort_values("retencion", ascending=False)[["cod_inst", "nomb_inst", "n", "sin_mrun", "retencion", "brecha_vs_ua_pp"]].copy()
+        export["retencion"] *= 100
+        export.insert(0, "cohorte", year)
+        export["area"] = area_name
+        export["definicion"] = LABELS[metric]
+        export["seleccion_pares"] = mode
+        export["referencia_pares_pct"] = 100 * stats["pares"]
+        export = export.rename(columns={"nomb_inst": "Universidad", "n": "Inscripciones", "sin_mrun": "Sin MRUN",
+                                        "retencion": "Continuidad (%)", "brecha_vs_ua_pp": "Brecha vs UA (pp)"}).round(2)
+        st.dataframe(export[["Universidad", "Inscripciones", "Sin MRUN", "Continuidad (%)", "Brecha vs UA (pp)"]],
+                     hide_index=True, width="stretch")
+        st.download_button("Descargar benchmark con contexto", export.to_csv(index=False).encode("utf-8-sig"),
+                           file_name=f"benchmark_ua_{year}_{metric}.csv", mime="text/csv")
+    with similar:
+        st.subheader("Similitud institucional explicada")
+        st.markdown("La cercanía combina **tamaño de cohorte y sedes, mezcla de áreas, presencia regional, "
+                    "jornada y modalidad**. Cada uno de los cuatro bloques tiene el mismo peso. "
+                    "La retención no participa en la distancia ni en los clusters.")
+        st.caption("Se describe el perfil de las cohortes de ingreso a carrera, no la totalidad de la universidad. "
+                   "No se han incorporado selectividad de admisión, acreditación, investigación o recursos institucionales.")
+        peers = nearest.loc[nearest.cod_inst.isin(peer_ids)]
+        table = peers[["nomb_inst", "cohorte_total", "sedes", "grupo", "distancia", "mismo_grupo_ua"]].rename(columns={
+            "nomb_inst": "Universidad", "cohorte_total": "Tamaño de cohorte", "sedes": "Sedes",
+            "grupo": "Cluster", "distancia": "Distancia a UA", "mismo_grupo_ua": "Mismo cluster UA"})
+        st.dataframe(table.round(3), hide_index=True, width="stretch")
+        st.caption("Menor distancia implica mayor similitud en las variables utilizadas. No es una probabilidad ni un porcentaje de similitud.")
+        ua_profile = model.universities.loc[model.universities.cod_inst.eq(code)].iloc[0]
+        st.caption(f"Perfil UA: {int(ua_profile.cohorte_total):,} inscripciones de ingreso y {int(ua_profile.sedes)} sedes.")
+        st.markdown("**¿En qué se parecen y en qué difieren?**")
+        dimensions = peers[["nomb_inst", *[f"distancia_{b}" for b in model.groups]]].melt(
+            id_vars="nomb_inst", var_name="bloque", value_name="distancia")
+        dimensions["bloque"] = dimensions.bloque.map({"distancia_escala": "Tamaño y sedes", "distancia_areas": "Áreas",
+                                                       "distancia_regiones": "Regiones", "distancia_docencia": "Jornada y modalidad"})
+        st.altair_chart(alt.Chart(dimensions).mark_rect().encode(
+            x=alt.X("bloque:N", title=None), y=alt.Y("nomb_inst:N", title=None, axis=alt.Axis(labelLimit=340)),
+            color=alt.Color("distancia:Q", title="Distancia", scale=alt.Scale(scheme="blues", domainMin=0)),
+            tooltip=["nomb_inst", "bloque", alt.Tooltip("distancia:Q", format=".3f")]), width="stretch")
+        block = st.selectbox("Distribución que quieres contrastar", ["area", "region", "jornada", "modalidad"],
+                             format_func={"area": "Áreas de conocimiento", "region": "Regiones", "jornada": "Jornadas", "modalidad": "Modalidades"}.get,
+                             key="bench_profile_block")
+        columns = [col for col in profiles if col.startswith(block + "::")]
+        comparison = pd.DataFrame({"Categoría": [col.split("::", 1)[1] for col in columns],
+            "Universidad Autónoma": ua_profile[columns].astype(float).to_numpy(),
+            "Pares": np.average(peers[columns].to_numpy(dtype=float), axis=0, weights=peers.cohorte_total)})
+        comparison = comparison.melt(id_vars="Categoría", var_name="Referencia", value_name="Proporción")
+        st.altair_chart(alt.Chart(comparison).mark_bar().encode(
+            y=alt.Y("Categoría:N", title=None, axis=alt.Axis(labelLimit=280)), x=alt.X("Proporción:Q", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1])),
+            yOffset="Referencia:N", color=alt.Color("Referencia:N", scale=alt.Scale(domain=["Universidad Autónoma", "Pares"], range=[UA_RED, BLUE])),
+            tooltip=["Categoría", "Referencia", alt.Tooltip("Proporción:Q", format=".1%")]), width="stretch")
+        st.caption("Distribución de pares ponderada por sus inscripciones de ingreso. Incluye registros sin MRUN.")
+        st.subheader("Mapa de perfiles universitarios")
+        mapped = model.universities.copy()
+        mapped["seleccion"] = np.where(mapped.cod_inst.eq(code), "UA", np.where(mapped.cod_inst.isin(peer_ids), "Par seleccionado", "Otras"))
+        chart = alt.Chart(mapped).mark_point(filled=True, size=100, opacity=.8).encode(
+            x=alt.X("mapa_x:Q", title="Componente 1"), y=alt.Y("mapa_y:Q", title="Componente 2"),
+            color=alt.Color("seleccion:N", title=None, scale=alt.Scale(domain=["UA", "Par seleccionado", "Otras"], range=[UA_RED, BLUE, "#b0b0b0"])),
+            shape=alt.Shape("seleccion:N", title=None),
+            tooltip=["nomb_inst", "grupo", "cohorte_total", "sedes"])
+        label = alt.Chart(mapped.loc[mapped.cod_inst.eq(code)]).mark_text(text="UA", dy=-14, fontWeight="bold", color=UA_RED).encode(x="mapa_x:Q", y="mapa_y:Q")
+        st.altair_chart((chart + label).properties(height=360), width="stretch")
+        st.caption(f"Proyección PCA: representa {model.explained_variance:.1%} de la variación del perfil. "
+                   "La selección utiliza todas las dimensiones; las distancias del mapa son una aproximación.")
+    with evolution:
+        st.subheader("¿La brecha se mantiene entre cohortes?")
+        rows = []
+        for y in years:
+            _, s = compare_outcomes(data, int(y), code, peer_ids, metric, area)
+            for name, value in [("Universidad Autónoma", s["ua"]), ("Pares seleccionados", s["pares"]), ("Resto del sistema", s["nacional"])]:
+                rows.append({"cohorte": str(y), "referencia": name, "retencion": value,
+                             "pares_disponibles": s["pares_disponibles"]})
+        history = pd.DataFrame(rows)
+        st.altair_chart(alt.Chart(history).mark_line(point=True).encode(
+            x=alt.X("cohorte:O", title="Cohorte de ingreso"),
+            y=alt.Y("retencion:Q", title="Continuidad", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1])),
+            color=alt.Color("referencia:N", title=None, scale=alt.Scale(domain=["Universidad Autónoma", "Pares seleccionados", "Resto del sistema"], range=[UA_RED, BLUE, "#777777"])),
+            tooltip=["cohorte", "referencia", "pares_disponibles", alt.Tooltip("retencion:Q", format=".1%")]), width="stretch")
+        st.caption("Se mantiene el mismo listado de pares seleccionado arriba para todas las cohortes. "
+                   "El peso de cada par depende de sus inscripciones en cada año; los datos ausentes no se sustituyen por cero. "
+                   "Dos cohortes permiten una primera comparación, no establecer una tendencia de largo plazo.")
+        st.subheader("Áreas que explican el resultado agregado")
+        area_rows = []
+        for label in sorted(data.loc[data.cohorte.eq(year) & data.cod_inst.eq(code), "area_conocimiento"].unique()):
+            _, s = compare_outcomes(data, int(year), code, peer_ids, metric, label)
+            area_rows.append({"Área": label, "Inscripciones UA": s["ua_n"], "UA (%)": 100 * s["ua"],
+                              "Pares (%)": 100 * s["pares"], "Brecha UA (pp)": 100 * (s["ua"] - s["pares"]),
+                              "Pares disponibles": s["pares_disponibles"]})
+        st.dataframe(pd.DataFrame(area_rows).round(1), hide_index=True, width="stretch")
+        st.caption("Desglose de todas las áreas UA de la cohorte, independientemente del filtro superior. "
+                   "Una celda vacía indica falta de denominador comparable.")
+    with methodology:
+        st.subheader("Calidad del agrupamiento")
+        if model.k:
+            st.write(f"Alternativa seleccionada: **{model.algorithm}, {model.k} grupos**, silueta **{model.silhouette:.3f}**.")
+            if model.silhouette < .25:
+                st.warning("La separación entre grupos es débil (silueta < 0,25, umbral orientativo). "
+                           "Interpreta el cluster como exploratorio y revisa las distancias de los pares.")
+        else:
+            st.warning("Ninguna partición cumple los requisitos de tamaño. Se mantienen disponibles los vecinos por perfil y la selección manual.")
+        st.dataframe(model.diagnostics.round(3), hide_index=True, width="stretch")
+        st.caption(f"Se prueban K-means, mezcla gaussiana diagonal y clustering jerárquico Ward con k={config['k_values']}. "
+                   f"Se descartan soluciones con grupos menores que {config['minimum_cluster']}; "
+                   "entre las admisibles se elige la mayor silueta. Los números de cluster son etiquetas, no posiciones en un ranking.")
+        others = [y for y in years if y != year]
+        if others:
+            previous = min(others, key=lambda y: abs(y - year))
+            try:
+                other_model = cached_model(profiles.loc[profiles.cohorte.eq(previous)], config)
+                previous_neighbors = neighbors(other_model, code)
+                now = set(nearest.head(int(number)).cod_inst)
+                then = set(previous_neighbors.head(int(number)).cod_inst)
+                overlap = len(now & then)
+                st.info(f"Estabilidad de vecinos: {overlap} de los {int(number)} pares más cercanos de {year} "
+                        f"también están entre los más cercanos de {previous}. "
+                        "Se recalculan perfiles y escalas en cada cohorte; esta medida no valida causalidad.")
+                common = model.universities[["cod_inst", "grupo"]].merge(
+                    other_model.universities[["cod_inst", "grupo"]], on="cod_inst", suffixes=("_actual", "_otra"))
+                if model.k and other_model.k and len(common) > 1:
+                    ari = adjusted_rand_score(common.grupo_actual, common.grupo_otra)
+                    st.caption(f"Estabilidad de la partición completa: índice Rand ajustado {ari:.3f} "
+                               f"sobre {len(common)} universidades comunes. 1 indica agrupamientos idénticos; "
+                               "0, concordancia similar al azar. Los algoritmos y k se eligen por separado en cada cohorte.")
+            except ValueError as exc:
+                st.caption(f"Estabilidad temporal no disponible: {exc}")
+        st.subheader("Cobertura y trazabilidad")
+        st.write(f"Universidades con perfil en la cohorte: **{len(cohort)}**. "
+                 f"Incluidas en el agrupamiento: **{len(model.universities)}**, "
+                 f"con al menos {config['minimum_cohort']} inscripciones de ingreso.")
+        coverage = model.universities[["nomb_inst", "cohorte_total", "cobertura_area", "cobertura_region", "cobertura_jornada", "cobertura_modalidad"]].copy()
+        st.dataframe(coverage, hide_index=True, width="stretch")
+        st.caption("Coberturas expresadas entre 0 y 1. La categoría «Sin información» se mantiene explícita en el perfil.")
+        st.markdown("**Cómo se construye la distancia.** Tamaño y sedes se transforman con log(1+x). "
+                    "Las distribuciones usan raíz cuadrada de las proporciones; cada bloque se normaliza por su "
+                    "varianza total y recibe un peso de 25%. Las universidades pesan igual al ajustar los clusters. "
+                    "Cambiar estas variables o pesos puede cambiar los pares.")
+        st.markdown("**Denominadores.** Son inscripciones de ingreso a carrera de pregrado universitario, "
+                    "no necesariamente personas que ingresan por primera vez a educación superior. Una persona puede "
+                    "contar en varias carreras. Se eliminan duplicados de las columnas canónicas. La retención excluye "
+                    "registros sin MRUN; los perfiles sí los incluyen. Se compara el mismo código de carrera e institución, "
+                    "o solo institución, o cualquier matrícula del sistema, según el indicador elegido.")
+        st.markdown("**Ajuste por áreas.** Aplica las proporciones de áreas de la UA a las tasas de los pares. "
+                    "Se limita a áreas con datos en ambos lados y muestra su cobertura. Es un ajuste de composición "
+                    "académica, no un ajuste completo por riesgo: no controla selección de estudiantes ni condiciones socioeconómicas. "
+                    "Las brechas no deben interpretarse como calidad causal ni como deserción definitiva. "
+                    "No se muestran intervalos muestrales porque son registros administrativos; persisten errores de registro, "
+                    "cobertura y cambios de codificación.")
+        st.markdown("Referencia técnica: [evaluación de clusters y silueta — scikit-learn](https://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation).")
+        st.caption(f"Agregados generados: {manifest['generado_utc']}. "
+                   "Se comprueba que perfiles y retención correspondan al mismo conjunto de artefactos.")
+        provenance = {"datos": manifest, "configuracion": config, "cohorte": int(year), "metrica": metric,
+                      "area": area_name, "seleccion": mode, "ua": code, "pares": peer_ids,
+                      "variables_por_bloque": model.groups,
+                      "sklearn_version": sklearn.__version__,
+                      "modelo": {"algoritmo": model.algorithm, "k": model.k,
+                                 "silueta": model.silhouette if np.isfinite(model.silhouette) else None}}
+        st.download_button("Descargar ficha metodológica (JSON)", json.dumps(provenance, ensure_ascii=False, indent=2),
+                           file_name=f"benchmark_ua_metodologia_{year}.json", mime="application/json")

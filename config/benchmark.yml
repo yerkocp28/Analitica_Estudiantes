@@ -1,0 +1,12 @@
+# Comparabilidad de cohortes de ingreso, no ranking institucional.
+target_name: UNIVERSIDAD AUTONOMA DE CHILE
+minimum_cohort: 100
+minimum_cluster: 3
+k_values: [2, 3, 4, 5, 6]
+random_seed: 42
+nearest_peers: 5
+block_weights:
+  escala: 0.25
+  areas: 0.25
+  regiones: 0.25
+  docencia: 0.25

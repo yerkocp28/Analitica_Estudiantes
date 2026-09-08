@@ -28,6 +28,7 @@ def app():
 
     at = AppTest.from_file(str(APP), default_timeout=180)
     at.run()
+    at.sidebar.radio[0].set_value("Alerta temprana").run()
     return at
 
 
