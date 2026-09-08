@@ -1,0 +1,633 @@
+---
+title: "Student Analytics UA — Informe metodológico"
+subtitle: "Fuentes, insumos, estadísticas descriptivas y metodología de la fase previa al acceso a datos institucionales"
+author: "Proyecto Analítica de Estudiantes — Facultad de Administración y Negocios"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    theme: cosmo
+    code-fold: true
+    code-summary: "Ver código"
+    df-print: kable
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+---
+
+```{python}
+#| label: setup
+import json
+from pathlib import Path
+import pandas as pd
+
+DATOS = Path("datos")
+
+def leer(nombre):
+    p = DATOS / f"{nombre}.csv"
+    return pd.read_csv(p) if p.exists() else None
+
+resumen = json.loads((DATOS / "resumen.json").read_text(encoding="utf-8")) \
+    if (DATOS / "resumen.json").exists() else {}
+
+def pct(x, d=1):
+    return "—" if x is None else f"{x:.{d}%}"
+```
+
+::: {.callout-important}
+## Ninguna cifra de este informe proviene de datos internos de la Universidad Autónoma
+
+Al momento de escribir este documento **el proyecto no tiene acceso a Banner ni a
+Canvas**. Todo lo que se reporta proviene de tres orígenes: datos abiertos del
+Ministerio de Educación de Chile, un conjunto de datos público del Reino Unido, y
+un generador sintético construido para este proyecto.
+
+La única excepción son las cifras de retención de la propia Universidad Autónoma
+(§ @sec-retencion), que **sí son reales** pero provienen de las bases abiertas de
+Mineduc, no de sistemas internos.
+:::
+
+# Resumen ejecutivo
+
+Este informe documenta la fase previa al acceso a los datos institucionales. Su
+propósito no fue construir un modelo, sino **dejar un pipeline cuyo contrato de
+entrada calce con Banner y Canvas lo bastante bien como para que la migración a
+datos reales sea un cambio de configuración**, y producir la evidencia que
+justifica solicitar ese acceso.
+
+Los tres resultados principales:
+
+1. **La retención real de la Universidad Autónoma se puede calcular hoy**, desde
+   datos abiertos, cruzando las bases de matrícula por el identificador MRUN. En
+   el área de Administración y Comercio la cohorte 2024 retuvo **84,1%** en la
+   misma carrera. Entre sedes hay una brecha de **14 puntos**.
+
+2. **El expediente completo de admisión predice poco.** Con 135.050 ingresantes
+   universitarios y validación temporal, un modelo que usa únicamente NEM,
+   ranking, notas de enseñanza media, todos los puntajes PAES, dependencia del
+   colegio, sexo y año de egreso alcanza **AUC 0,615**.
+
+3. **Los datos de comportamiento superan a ese expediente antes del primer mes.**
+   Sobre datos reales de la Open University, un baseline conductual alcanza
+   **AUC 0,697 en la semana 4** — con el 10% del curso transcurrido y sin
+   registro de asistencia.
+
+De ahí se sigue el argumento del proyecto: el valor no está en lo que ya se sabe
+del estudiante al matricularse, sino en lo que ocurre durante el semestre.
+
+---
+
+# Mandato y alcance {#sec-mandato}
+
+## Insumos documentales
+
+El proyecto se apoya en tres documentos, incluidos en `docs/`:
+
+| Documento | Origen | Qué aporta |
+|---|---|---|
+| *2026 Postulación FPDA BA v3* | Formulario Fondo de Desarrollo Académico, Universidad Autónoma de Chile | El mandato formal: alcance, compromisos e indicadores por mes |
+| *AT_informe-final-2* | Hofflinger, A. (2020). Universidad de Los Lagos | Benchmark metodológico; el hallazgo que define el problema |
+| *Actualiza-Titulos-Grados* | Subsecretaría de Educación Superior | Marco sistémico: masificación, heterogeneidad, trayectorias flexibles |
+
+## Compromisos formales
+
+La postulación adjudicada compromete plazos concretos:
+
+| Compromiso | Plazo |
+|---|---|
+| Permisos de acceso a los datos consolidados por la VRA | antes del mes 2 |
+| Segmentos de estudiantes obtenidos | antes del mes 3 |
+| ≥3 algoritmos entrenados, modelo priorizado 1 | antes del mes 4 |
+| ≥3 algoritmos entrenados, modelo priorizado 2 | antes del mes 6 |
+
+Quedan explícitamente **fuera de alcance** las acciones preventivas de las
+direcciones de carrera y cualquier implementación dentro de Banner.
+
+## El hallazgo que define el problema
+
+El informe de la Universidad de Los Lagos es el antecedente más relevante. Su
+resultado central:
+
+> Con solo datos previos al ingreso (género, etnia, NEM, PSU, ingreso familiar,
+> dependencia), para alcanzar al 80% de los futuros desertores había que
+> intervenir al **80% de los estudiantes**. Incorporando las notas del primer
+> semestre, capturar el 60% requería solo el **20%**.
+
+Y su recomendación explícita fue mejorar la predicción durante el primer semestre
+incorporando **notas parciales, asistencia y uso de plataformas virtuales**. Este
+proyecto es la continuación operativa de esa recomendación.
+
+---
+
+# Fuentes de datos {#sec-fuentes}
+
+## Fuentes utilizadas
+
+| Fuente | Grano | Licencia | Rol en el proyecto |
+|---|---|---|---|
+| [Matrícula en Educación Superior](https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/) 2023, 2024, 2025 | Individual (MRUN) | Datos abiertos de gobierno | Retención real UA; población de los modelos |
+| [Pruebas de admisión (PAES)](https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Variables previas al ingreso |
+| [OULAD](https://analyse.kmi.open.ac.uk/open_dataset) | Estudiante × módulo × semana | CC-BY 4.0 | Validar la metodología con datos reales de comportamiento |
+| [Canvas Data 2 — esquema](https://developerdocs.instructure.com/services/dap/dataset) | Documentación | Pública | Nombres reales de tablas y columnas |
+| [Banner ODS Handbook](https://tech.wayne.edu/depdocs/banner-ods-handbook-8-4.pdf) | Documentación | Publicada por Wayne State University | Nombres reales de tablas Banner |
+| Generador sintético | Estudiante × asignatura × semana | Propio | Forma UA completa: sedes, carreras, asistencia, escala 1,0–7,0 |
+
+**Cita de OULAD:** Kuzilek, J., Hlosta, M., & Zdrahal, Z. (2017). Open University
+Learning Analytics dataset. *Scientific Data*, 4, 170171.
+
+## Sobre el identificador MRUN
+
+Las bases de Mineduc están desagregadas **a nivel individual** y usan MRUN, un
+identificador ficticio pero **estable entre bases y años**, que permite seguir la
+trayectoria de una persona desde prekínder hasta doctorado. Chile es de los pocos
+países OCDE que publica esto abiertamente.
+
+::: {.callout-warning}
+## MRUN no se puede unir a Banner
+
+MRUN es un RUT enmascarado y no existe tabla de equivalencia pública. **Estas
+bases no pueden generar features de estudiantes concretos de la UA.** Sirven para
+calibrar, para benchmarking y para argumentar — no para modelar individuos.
+:::
+
+## Fuentes identificadas y no utilizadas todavía
+
+Unibles a estudiantes de la UA por claves **no personales** (RBD del colegio de
+origen, comuna), y por tanto candidatas legítimas a features:
+
+| Fuente | Llave | Feature potencial |
+|---|---|---|
+| [JUNAEB — IVE](http://junaebabierta.junaeb.cl/catalogo-de-datos/indicadores-de-vulnerabilidad/) | RBD | Índice de vulnerabilidad del colegio (0–100) |
+| Agencia de Calidad — SIMCE | RBD | Rendimiento histórico del establecimiento |
+| Mineduc — Rendimiento Escolar | RBD | Notas y asistencia agregadas del colegio |
+| Matrícula ES (calculado) | RBD | Persistencia en educación superior de los egresados de ese colegio |
+| CASEN | comuna | Contexto socioeconómico |
+
+Ver § @sec-limitaciones para la razón por la que su incorporación requiere
+cuidado.
+
+## Fuentes de contexto (solo agregadas)
+
+[CNED INDICES](https://www.cned.cl/indices), informes SIES,
+[mifuturo.cl](https://www.mifuturo.cl/bases-de-datos/),
+[datos.gob.cl](https://datos.gob.cl/group/educacion). Útiles para benchmarking y
+acreditación; no aportan al modelamiento.
+
+---
+
+# Estadísticas descriptivas {#sec-descriptivas}
+
+## Bases de Mineduc
+
+```{python}
+#| label: tbl-mineduc-volumen
+#| tbl-cap: "Volumen de las bases de matrícula en educación superior"
+vol = leer("mineduc_volumen")
+if vol is not None:
+    vol.columns = ["Año", "Filas"]
+    vol["Filas"] = vol["Filas"].map("{:,.0f}".format)
+vol
+```
+
+```{python}
+#| label: mineduc-resumen
+from IPython.display import Markdown
+m = resumen.get("mineduc", {})
+Markdown(f"""
+De la base 2024 ({m.get('matricula_total_2024', 0):,} filas), la Universidad
+Autónoma registra **{m.get('ua_pregrado_2024', 0):,} matriculados de pregrado**,
+de los cuales **{m.get('ua_cohorte_2024', 0):,} son cohorte de ingreso 2024**.
+
+Sedes identificadas: {', '.join(m.get('ua_sedes', []))}.
+""")
+```
+
+```{python}
+#| label: tbl-ua-carreras
+#| tbl-cap: "Matriculados 2024 de la UA en el área Administración y Comercio"
+c = leer("mineduc_ua_admin_por_carrera")
+if c is not None:
+    c.columns = ["Carrera", "Matriculados 2024"]
+c
+```
+
+## OULAD
+
+```{python}
+#| label: oulad-resumen
+o = resumen.get("oulad", {})
+Markdown(f"""
+| Métrica | Valor |
+|---|---|
+| Estudiantes únicos | {o.get('estudiantes_unicos', 0):,} |
+| Inscripciones (estudiante × módulo × presentación) | {o.get('inscripciones', 0):,} |
+| Módulos | {o.get('modulos', 0)} |
+| Presentaciones | {', '.join(o.get('presentaciones', []))} |
+| Regiones (Reino Unido) | {o.get('regiones', 0)} |
+| Entregas evaluadas | {o.get('entregas_evaluadas', 0):,} |
+""")
+```
+
+```{python}
+#| label: tbl-oulad-resultado
+#| tbl-cap: "Distribución del resultado final en OULAD"
+r = leer("oulad_resultado_final")
+if r is not None:
+    r["proporcion"] = r["proporcion"].map("{:.1%}".format)
+    r.columns = ["Resultado final", "n", "Proporción"]
+r
+```
+
+::: {.callout-note}
+OULAD es educación **a distancia** del Reino Unido: no existe registro de
+asistencia, la escala de notas es 0–100 y los módulos duran ~9 meses. Sus
+resultados son un **piso** para lo alcanzable en la UA, no una estimación.
+:::
+
+## Datos sintéticos
+
+```{python}
+#| label: sint-resumen
+s = resumen.get("sintetico", {})
+Markdown(f"""
+| Métrica | Valor |
+|---|---|
+| Estudiantes generados | {s.get('estudiantes', 0):,} |
+| Asignaturas | {s.get('asignaturas', 0):,} |
+| Inscripciones | {s.get('inscripciones', 0):,} |
+| Filas del panel semanal | {s.get('filas_panel_semanal', 0):,} |
+| Notas parciales | {s.get('notas_parciales', 0):,} |
+| Nota final media (escala 1,0–7,0) | {s.get('nota_final_media', 0):.2f} (sd {s.get('nota_final_sd', 0):.2f}) |
+| Asistencia media | {pct(s.get('asistencia_media'))} |
+| Reprobación por nota | {pct(s.get('reprobacion_por_nota'))} |
+| Reprobación por inasistencia | {pct(s.get('reprobacion_por_inasistencia'))} |
+| Reprobación total | {pct(s.get('reprobacion_total'))} |
+| Cursos sin registro de asistencia | {pct(s.get('cursos_sin_registro_asistencia'))} |
+""")
+```
+
+```{python}
+#| label: tbl-sint-perfil
+#| tbl-cap: "Reprobación por perfil latente de estudiante"
+p = leer("sint_por_perfil")
+if p is not None:
+    p["reprobacion"] = p["reprobacion"].map("{:.1%}".format)
+    p.columns = ["Perfil latente", "Inscripciones", "Reprobación"]
+p
+```
+
+```{python}
+#| label: tbl-sint-dificultad
+#| tbl-cap: "Reprobación por nivel de dificultad de la asignatura"
+d = leer("sint_por_dificultad")
+if d is not None:
+    d["reprobacion"] = d["reprobacion"].map("{:.1%}".format)
+    d.columns = ["Dificultad", "Inscripciones", "Reprobación"]
+d
+```
+
+```{python}
+#| label: tbl-sint-sede
+#| tbl-cap: "Distribución sintética por sede"
+leer("sint_por_sede")
+```
+
+---
+
+# Metodología {#sec-metodologia}
+
+## Grano analítico
+
+Todo el pipeline opera sobre **estudiante × asignatura × período**, construido a
+partir de un panel semanal **estudiante × asignatura × semana**. La elección no
+es cosmética: un modelo entrenado sobre promedios de cierre no distingue a un
+estudiante que empezó bien y se cayó de otro que siempre estuvo bajo, y esos dos
+casos requieren intervenciones opuestas.
+
+## Prevención de fuga temporal
+
+La fuga de información desde el futuro es el error que **no se detecta mirando
+métricas**: produce modelos con AUC excelente que fracasan en producción, porque
+en producción el futuro todavía no ocurrió.
+
+Reglas aplicadas:
+
+- Para el scoring de la semana *N*, solo se usan filas con `week <= N`.
+- Las notas se filtran por `available_from_week`, **nunca** por `week`. Una nota
+  de la semana 8 cargada con atraso en la semana 10 existe en la base con
+  `week = 8`; usarla en el scoring de la semana 8 sería entrenar con información
+  que en producción no habría estado disponible.
+- Ninguna columna del resultado entra al conjunto de features; hay una
+  verificación explícita que falla si ocurre.
+- Una tabla ausente produce features ausentes (`NaN`), nunca ceros.
+
+La verificación es **de invarianza, no de inspección**: se calculan las features
+de la semana 8, se reemplaza con valores arbitrarios todo dato posterior a la
+semana 8, y se recalculan. Si algo cambia, el pipeline estaba mirando adelante.
+
+## Validación temporal
+
+Nunca se usa un split aleatorio como criterio principal. Los períodos antiguos
+entrenan y los recientes testean. Un split aleatorio mezcla cohortes del mismo
+año entre entrenamiento y prueba, y produce métricas optimistas que no se
+sostienen sobre una cohorte futura.
+
+## Cohorte fija
+
+Excluir del scoring a quien ya se dio de baja es correcto: no es un caso a
+predecir. Pero recalcular esa exclusión en cada semana hace que **la población
+cambie** entre puntos de la curva, y entonces una mejora del AUC podría venir de
+más información o simplemente de una población distinta.
+
+Por eso la curva de anticipación se calcula sobre una **cohorte fija**, anclada
+en la última semana de scoring y evaluada igual en todas. Así lo único que varía
+entre filas es la información disponible.
+
+La diferencia se midió: los deltas de AUC entre ambos modos son ≤ 0,008, de modo
+que la pendiente **no** venía del cambio de población. Pero la prevalencia
+variable (44% → 33%) hacía las filas no comparables, y el lift sí se movía.
+
+## Calibración del generador sintético
+
+El generador **no contiene constantes mágicas**. `config/synthetic.yml` declara
+tasas objetivo y el código resuelve sus parámetros internos por bisección para
+satisfacerlas. Cambiar el peso de una señal no altera la tasa global de
+reprobación, lo que permite probar robustez sin recalibrar todo.
+
+El orden causal es deliberado y no invertible:
+
+```
+perfil latente → comportamiento semanal → agregados de cierre
+              → riesgo latente → resultado
+```
+
+El resultado nunca se sortea primero. Si se hiciera al revés, cualquier modelo
+obtendría un AUC excelente y no se sabría si es porque el pipeline funciona o
+porque el generador filtró la respuesta.
+
+## Dos objetivos separados
+
+Se modelan por separado `fail_by_grade` (reprobación por nota) y
+`fail_by_attendance` (reprobación por inasistencia). Si la universidad reprueba
+por inasistencia, la asistencia **no es un predictor** de la reprobación: es
+parcialmente el mecanismo reglamentario que la produce. Mezclarlos genera un
+modelo que aprendió el reglamento en vez del fenómeno académico.
+
+## Calidad de la plataforma como propiedad del curso
+
+La adopción de Canvas es heterogénea entre docentes. En cursos de baja adopción
+las features de actividad se emiten como `NULL` explícito, no como cero: sin
+esto, todo estudiante de un curso cuyo profesor no usa la plataforma aparece como
+desenganchado.
+
+## Ausencia de dato distinta de cero
+
+Un conteo ausente es un cero real (no hubo tareas, no hubo notas). Un promedio
+ausente es **desconocido**. Imputar 0 en `mean_grade` equivale a inventar la peor
+nota posible.
+
+---
+
+# Resultados {#sec-resultados}
+
+## Retención real de la Universidad Autónoma {#sec-retencion}
+
+Calculada cruzando Matrícula 2024 con Matrícula 2025 por MRUN. Cohorte de ingreso
+2024.
+
+```{python}
+#| label: tbl-retencion-resumen
+#| tbl-cap: "Retención al segundo año, cohorte 2024"
+r = leer("ua_retencion_resumen")
+if r is not None:
+    r["retencion_misma_carrera"] = r["retencion_misma_carrera"].map("{:.1%}".format)
+    r["retencion_sistema"] = r["retencion_sistema"].map("{:.1%}".format)
+    r.columns = ["Población", "n", "Misma carrera y universidad", "Cualquier institución"]
+r
+```
+
+```{python}
+#| label: tbl-retencion-sede
+#| tbl-cap: "Retención por sede — área Administración y Comercio, cohorte 2024"
+r = leer("ua_retencion_por_sede")
+if r is not None:
+    r = r.sort_values("retencion_misma_carrera", ascending=False)
+    r["retencion_misma_carrera"] = r["retencion_misma_carrera"].map("{:.1%}".format)
+    r["retencion_sistema"] = r["retencion_sistema"].map("{:.1%}".format)
+    r.columns = ["Sede", "n", "Misma carrera", "Cualquier institución"]
+r
+```
+
+```{python}
+#| label: tbl-retencion-carrera
+#| tbl-cap: "Retención por carrera — área Administración y Comercio"
+r = leer("ua_retencion_por_carrera")
+if r is not None:
+    r = r.sort_values("retencion_misma_carrera", ascending=False)
+    r["retencion_misma_carrera"] = r["retencion_misma_carrera"].map("{:.1%}".format)
+    r["retencion_sistema"] = r["retencion_sistema"].map("{:.1%}".format)
+    r.columns = ["Carrera", "n", "Misma carrera", "Cualquier institución"]
+r
+```
+
+::: {.callout-tip}
+## Implicación de diseño
+
+La brecha entre la sede con mayor y menor retención supera los **14 puntos**. Con
+esos tamaños muestrales no es ruido. La sede debe entrar al modelo como variable,
+no quedarse como filtro del tablero.
+:::
+
+## Piso predictivo de las variables previas al ingreso
+
+Modelo: regresión logística sobre NEM, ranking, promedio de notas de enseñanza
+media, puntajes PAES (Competencia Lectora, Matemática M1 y M2, Historia,
+Ciencias), dependencia del establecimiento, sexo y años desde el egreso.
+Objetivo: no continuar en la misma carrera al año siguiente.
+
+```{python}
+#| label: tbl-piso
+#| tbl-cap: "Piso predictivo — comparación de esquemas de validación"
+filas = []
+n_ = leer("piso_preingreso_nacional")
+t_ = leer("piso_preingreso_temporal")
+if n_ is not None:
+    for _, row in n_.iterrows():
+        filas.append({"Validación": "Split aleatorio (una cohorte)",
+                      "Población": row["poblacion"], "AUC": f"{row['auc']:.3f}"})
+if t_ is not None:
+    for _, row in t_.iterrows():
+        filas.append({"Validación": "Temporal (2023 entrena → 2024 testea)",
+                      "Población": row["poblacion"], "AUC": f"{row['auc']:.3f}"})
+pd.DataFrame(filas)
+```
+
+Con validación temporal — cohorte 2023 entrena (n = 129.512) y cohorte 2024
+testea (n = 135.050), sin que ninguna persona ni ningún año aparezca en ambos
+lados:
+
+| Capacidad de revisión | Casos capturados | Sobre azar |
+|---|---|---|
+| Top 5% | 9,6% | 1,92× |
+| Top 10% | 17,6% | 1,76× |
+| Top 20% | 31,3% | 1,57× |
+| Top 50% | 63,8% | 1,28× |
+
+**El AUC con validación temporal (0,615) es idéntico al del split aleatorio
+(0,615).** El piso es estable y el resultado se sostiene sobre cohortes futuras.
+
+## Curva de anticipación sobre OULAD
+
+```{python}
+#| label: tbl-oulad-leadtime
+#| tbl-cap: "Poder predictivo vs anticipación — OULAD, cohorte fija"
+m = leer("metricas_oulad")
+if m is not None:
+    t = m[["week", "auc", "lift_10", "lift_20", "weeks_remaining"]].copy()
+    t["auc"] = t["auc"].map("{:.3f}".format)
+    for c in ("lift_10", "lift_20"):
+        t[c] = t[c].map("{:.1%}".format)
+    t.columns = ["Semana", "AUC", "Top 10%", "Top 20%", "Semanas restantes"]
+t
+```
+
+## Curva de anticipación sobre datos sintéticos
+
+```{python}
+#| label: tbl-sint-leadtime
+#| tbl-cap: "Poder predictivo vs anticipación — datos sintéticos"
+m = leer("metricas_synthetic")
+if m is not None:
+    t = m[["week", "auc", "lift_10", "lift_20", "weeks_remaining"]].copy()
+    t["auc"] = t["auc"].map("{:.3f}".format)
+    for c in ("lift_10", "lift_20"):
+        t[c] = t[c].map("{:.1%}".format)
+    t.columns = ["Semana", "AUC", "Top 10%", "Top 20%", "Semanas restantes"]
+t
+```
+
+Estas cifras **no son un hallazgo**: miden que el pipeline recupera la señal que
+el propio generador inyectó, y que la dificultad del problema simulado está en el
+rango que reporta la literatura.
+
+---
+
+# El argumento central {#sec-argumento}
+
+Poniendo los dos resultados reales uno junto al otro:
+
+| Modelo | Datos | n | AUC |
+|---|---|---|---|
+| Expediente completo de admisión | PAES + Matrícula, validación temporal | 135.050 | **0,615** |
+| Comportamiento, semana 4 | OULAD, 10% del curso, **sin asistencia** | 13.144 | **0,697** |
+| Comportamiento, semana 12 | OULAD, 31% del curso, sin asistencia | 13.144 | 0,801 |
+
+> Toda la ficha de admisión junta —NEM, ranking, cinco pruebas PAES, dependencia
+> del colegio— alcanza AUC 0,615. Un baseline conductual la supera con el 10% del
+> curso transcurrido y sin siquiera disponer de asistencia, que es justamente la
+> variable que el informe ULagos identificó como clave.
+
+Ese es el caso para solicitar acceso a Banner y Canvas: **el valor no está en lo
+que ya se sabe del estudiante al matricularse.**
+
+---
+
+# Limitaciones y supuestos abiertos {#sec-limitaciones}
+
+## Sobre los datos
+
+- **Cobertura del cruce PAES.** Solo el 53% de los ingresantes 2024 aparece en
+  PAES 2024: quienes entran a IP/CFT o por vías alternativas no la rinden. La
+  población analizada son ingresantes con PAES, que es el perfil relevante para
+  la UA pero no describe al sistema completo.
+- **OULAD no tiene asistencia.** Sus resultados son un piso.
+- **OULAD no registra fecha de corrección**, solo de entrega. Se asume
+  disponibilidad inmediata, lo cual es optimista.
+- **Los datos sintéticos no son evidencia** sobre estudiantes reales.
+
+## Sobre el sesgo
+
+Las fuentes unibles por RBD (IVE, SIMCE, dependencia) son **proxies de nivel
+socioeconómico**. Un modelo que marque en rojo a estudiantes de colegios
+vulnerables *antes de observar conducta alguna* no detecta riesgo: reproduce
+desigualdad.
+
+La recomendación no es excluirlas por precaución, sino someterlas a una prueba de
+**valor incremental por encima de las features conductuales**. El resultado de
+§ @sec-argumento predice que aportarán poco. Si el análisis de ablación lo
+confirma, se descartan por razones estadísticas y el modelo queda además
+éticamente más limpio — una sola decisión resuelve ambos problemas.
+
+## Preguntas bloqueantes para la universidad
+
+Tres cambian el diseño del pipeline:
+
+1. **¿Usa la UA el módulo Banner Attendance Tracking?** Es opcional. Sin él solo
+   existe `SFRSTCR_LAST_ATTEND`, que no entrega grano semanal.
+2. **¿Existen notas parciales fechadas**, o solo la nota final del período?
+3. **¿Contempla el reglamento la reprobación por inasistencia**, y con qué
+   umbral?
+
+El contrato completo de datos, con el nivel de confianza de cada campo, está en
+`config/data_contracts.yml`.
+
+---
+
+# Marco legal {#sec-legal}
+
+La **Ley 21.719** de Protección de Datos Personales entra en plena vigencia el
+**1 de diciembre de 2026**, dentro del horizonte de este proyecto. Consagra el
+derecho a no ser objeto de decisiones basadas exclusivamente en tratamiento
+automatizado, incluido el perfilamiento, con garantías de **explicación,
+intervención humana y revisión**.
+
+Consecuencias de diseño, no de cumplimiento:
+
+1. El humano en el circuito deja de ser buena práctica y pasa a ser requisito: el
+   modelo prioriza, la dirección de carrera decide.
+2. La explicabilidad por caso deja de ser opcional.
+3. Conviene levantar base de licitud y evaluación de impacto con la Dirección
+   Jurídica **antes** de que el modelo toque datos reales.
+
+---
+
+# Reproducibilidad {#sec-reproducibilidad}
+
+Todas las cifras de este informe se regeneran con:
+
+```bash
+python -m venv .venv && .venv\Scripts\activate
+pip install -e ".[modeling,ui,dev]"
+
+python scripts/generate_synthetic.py
+python scripts/download_oulad.py
+python scripts/download_mineduc.py
+python scripts/analyze_mineduc.py
+python scripts/validate_lead_time.py --source synthetic --out data/results
+python scripts/validate_lead_time.py --source oulad     --out data/results
+python scripts/descriptive_stats.py
+
+quarto render documentacion/informe_metodologico.qmd
+```
+
+El generador sintético es determinista dado su semilla
+(`config/synthetic.yml: seed`). La suite de pruebas incluye una verificación de
+reproducibilidad que falla si dos ejecuciones con la misma semilla difieren.
+
+```{python}
+#| label: entorno
+import sys, platform
+Markdown(f"""
+| | |
+|---|---|
+| Python | {sys.version.split()[0]} |
+| Plataforma | {platform.system()} {platform.release()} |
+| pandas | {pd.__version__} |
+| Generado | {pd.Timestamp.now():%Y-%m-%d %H:%M} |
+""")
+```

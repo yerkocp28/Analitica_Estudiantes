@@ -18,6 +18,7 @@ La especificación completa está en
 | **1** | **Paquete, configuración, generador sintético, tests** | **Completo** |
 | **1b** | **Adaptador OULAD + baseline + cockpit Streamlit** | **Completo** |
 | **1c** | **Datos abiertos Mineduc/SIES: retención real UA + piso predictivo** | **Completo** |
+| **1d** | **Informe metodológico reproducible (Quarto)** | **Completo** |
 | 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
@@ -75,6 +76,10 @@ python scripts/validate_lead_time.py --source oulad     --out data/results
 
 # 4. Cockpit
 streamlit run src/student_analytics/ui/app.py
+
+# 5. Informe metodologico (fuentes, descriptivas, metodologia)
+python scripts/descriptive_stats.py
+quarto render documentacion/informe_metodologico.qmd
 
 pytest -q                                            # 58 tests
 ```
@@ -251,6 +256,10 @@ media, puntajes PAES, dependencia del colegio, sexo y año de egreso:
 | Todo el sistema | 184.279 | 18,3% | 0,626 | 31,8% (1,59×) |
 | **Solo universidades** | 135.050 | 16,4% | **0,615** | 31,5% (1,58×) |
 
+Con **validación temporal** (cohorte 2023 entrena, n=129.512 → cohorte 2024
+testea, n=135.050) el AUC de universidades es **0,615**: idéntico al del split
+aleatorio. El piso es estable y se sostiene sobre cohortes futuras.
+
 **Esto replica el hallazgo de ULagos con 135.000 estudiantes en vez de dos
 cohortes**, y es el argumento central del proyecto:
 
@@ -262,10 +271,21 @@ cohortes**, y es el argumento central del proyecto:
 Ese es el caso para pedir acceso a Banner y Canvas: el valor no está en lo que
 ya se sabe del estudiante al matricularse.
 
-*Caveats: solo el 53% de los ingresantes 2024 aparece en PAES 2024 (los ingresos
-a IP/CFT y por vías alternativas no la rinden). Split aleatorio, no temporal —
-hay una sola cohorte, y si acaso eso favorece al modelo, así que el piso real es
-aún más bajo.*
+*Caveat: solo el 53% de los ingresantes 2024 aparece en PAES 2024 (los ingresos
+a IP/CFT y por vías alternativas no la rinden), así que la población analizada
+son ingresantes con PAES — el perfil relevante para la UA, pero no el sistema
+completo.*
+
+---
+
+## Documentación
+
+[`documentacion/informe_metodologico.qmd`](documentacion/informe_metodologico.qmd)
+— informe reproducible con todas las fuentes y sus licencias, los insumos
+documentales, estadísticas descriptivas de cada base, la metodología completa
+(grano, anti-leakage, validación temporal, cohorte fija, calibración por anclas)
+y las limitaciones. Ninguna cifra está escrita a mano: todas salen de
+`documentacion/datos/`, que `scripts/descriptive_stats.py` regenera.
 
 ---
 
@@ -320,7 +340,10 @@ scripts/
     analyze_mineduc.py      retencion real UA + piso predictivo nacional
     validate_lead_time.py   --source synthetic | oulad
 tests/           58 tests: generador, leakage, OULAD, UI
-docs/            documentos base del proyecto
+docs/            documentos base del proyecto (postulación, ULagos, títulos)
+documentacion/
+    informe_metodologico.qmd   fuentes, descriptivas, metodología, resultados
+    datos/                     artefactos que el informe cita (CSV pequeños)
 ```
 
 El feature builder y el evaluador **no saben de que fuente vienen los datos**.

@@ -165,18 +165,35 @@ def retencion_ua(m24: pd.DataFrame, m25: pd.DataFrame) -> None:
     print(f"    misma carrera y universidad : {prog_a:6.1%}")
     print(f"    en cualquier institucion    : {sis_a:6.1%}")
 
+    # Los desgloses se guardan como artefacto para que el informe
+    # metodologico los cite sin recalcular sobre 3 GB de CSV.
+    doc = REPO_ROOT / "documentacion" / "datos"
+    doc.mkdir(parents=True, exist_ok=True)
+    filas_sede, filas_carr = [], []
+
     if n_a:
         print("\n  Por sede:")
-        for sede, g in adm.groupby("nomb_sede"):
+        for sede, g in adm.groupby("nomb_sede", observed=True):
             s, p, k = _tasas(g)
             if k >= 20:
                 print(f"    {str(sede)[:34]:34s} n={k:5,}  misma carrera {p:6.1%}")
+                filas_sede.append({"sede": str(sede), "n": k,
+                                   "retencion_misma_carrera": round(p, 6),
+                                   "retencion_sistema": round(s, 6)})
 
         print("\n  Por carrera (n>=30):")
-        for carr, g in adm.groupby("nomb_carrera"):
+        for carr, g in adm.groupby("nomb_carrera", observed=True):
             s, p, k = _tasas(g)
             if k >= 30:
                 print(f"    {str(carr)[:40]:40s} n={k:5,}  misma carrera {p:6.1%}")
+                filas_carr.append({"carrera": str(carr), "n": k,
+                                   "retencion_misma_carrera": round(p, 6),
+                                   "retencion_sistema": round(s, 6)})
+
+    pd.DataFrame(filas_sede).to_csv(doc / "ua_retencion_por_sede.csv",
+                                    index=False, encoding="utf-8")
+    pd.DataFrame(filas_carr).to_csv(doc / "ua_retencion_por_carrera.csv",
+                                    index=False, encoding="utf-8")
 
     # Referencia del sistema, para leer las cifras en contexto.
     univ = m24[(m24["nivel_global"] == "Pregrado")
@@ -186,6 +203,18 @@ def retencion_ua(m24: pd.DataFrame, m25: pd.DataFrame) -> None:
     print(f"\n  Referencia — todas las universidades del pais (n={n_u:,}):")
     print(f"    misma carrera y universidad : {p_u:6.1%}")
     print(f"    en cualquier institucion    : {s_u:6.1%}")
+
+    pd.DataFrame([
+        {"poblacion": "UA - Administracion y Comercio", "n": n_a,
+         "retencion_misma_carrera": round(prog_a, 6),
+         "retencion_sistema": round(sis_a, 6)},
+        {"poblacion": "UA - todo el pregrado", "n": n,
+         "retencion_misma_carrera": round(prog, 6),
+         "retencion_sistema": round(sis, 6)},
+        {"poblacion": "Todas las universidades del pais", "n": n_u,
+         "retencion_misma_carrera": round(p_u, 6),
+         "retencion_sistema": round(s_u, 6)},
+    ]).to_csv(doc / "ua_retencion_resumen.csv", index=False, encoding="utf-8")
 
 
 # ----------------------------------------------------------------------
@@ -293,12 +322,151 @@ def piso_predictivo(m24: pd.DataFrame, m25: pd.DataFrame) -> None:
     ]).to_parquet(OUT / "piso_preingreso_nacional.parquet", index=False)
 
 
+# ----------------------------------------------------------------------
+# 3. Validacion temporal del piso: cohorte 2023 entrena, 2024 testea
+# ----------------------------------------------------------------------
+COHORT_COLS = ["mrun", "cod_inst", "cod_carrera", "anio_ing_carr_ori",
+               "nivel_global", "tipo_inst_1"]
+
+
+def load_paes(year: int) -> pd.DataFrame | None:
+    """Lee PAES de un anio y normaliza nombres y tipos.
+
+    El nombre de la prueba y de los archivos cambio entre anios, pero las
+    columnas relevantes se mantienen. Se toman las que existan.
+    """
+    try:
+        path = _find(f"paes_{year}_puntajes", "*.csv")
+    except FileNotFoundError:
+        log.warning("PAES %s no descargado; se omite la validacion temporal", year)
+        return None
+    head = pd.read_csv(path, sep=";", encoding="utf-8-sig", nrows=1)
+    cols = [c for c in PAES_COLS if c in head.columns]
+    faltan = set(PAES_COLS) - set(cols)
+    if faltan:
+        log.warning("PAES %s no trae: %s", year, sorted(faltan))
+    log.info("Leyendo PAES %s (%.0f MB)", year, path.stat().st_size / 1e6)
+    df = pd.read_csv(path, sep=";", encoding="utf-8-sig", usecols=cols,
+                     dtype=str, low_memory=False)
+    df["mrun"] = pd.to_numeric(df["MRUN"], errors="coerce")
+    for c in SCORE_COLS:
+        if c in df.columns:
+            df[c] = _decimal_comma(df[c])
+            # 0 = no rindio esa prueba: ausencia de dato, no un puntaje.
+            df.loc[df[c] <= 0, c] = np.nan
+        else:
+            df[c] = np.nan
+    return df
+
+
+def _construir_cohorte(mat: pd.DataFrame, mat_sig: pd.DataFrame,
+                       paes: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Ingresantes de `year` con features PAES y si continuaron al year+1."""
+    nuevos = mat[(mat["nivel_global"] == "Pregrado")
+                 & (mat["anio_ing_carr_ori"] == year)][
+        ["mrun", "cod_inst", "cod_carrera", "tipo_inst_1"]].drop_duplicates("mrun")
+    df = nuevos.merge(paes, on="mrun", how="inner")
+    misma = pd.Index(_clave(mat_sig.dropna(subset=["mrun"])).unique())
+    df["desertor"] = (~_clave(df).isin(misma)).astype(int)
+
+    df["sexo_f"] = (df["COD_SEXO"] == "2").astype(int) if "COD_SEXO" in df else 0
+    dep = pd.to_numeric(df.get("DEPENDENCIA"), errors="coerce")
+    df["dep_municipal"] = (dep == 1).astype(int)
+    df["dep_particular_sub"] = (dep == 2).astype(int)
+    df["dep_particular_pag"] = (dep == 3).astype(int)
+    df["anios_desde_egreso"] = year - pd.to_numeric(
+        df.get("ANYO_DE_EGRESO"), errors="coerce")
+    return df
+
+
+def piso_temporal(m25: pd.DataFrame) -> None:
+    """Igual que `piso_predictivo`, pero con validacion temporal real.
+
+    El resultado anterior usaba un split aleatorio sobre una sola cohorte,
+    lo que mezcla estudiantes del mismo anio entre train y test. Aca la
+    cohorte 2023 entrena y la 2024 testea: ninguna persona ni ningun anio
+    aparece en ambos lados, que es la unica forma de estimar como se
+    comportaria el modelo sobre una cohorte futura.
+    """
+    print("\n" + "=" * 78)
+    print("3. PISO PREDICTIVO CON VALIDACION TEMPORAL (cohorte 2023 -> cohorte 2024)")
+    print("=" * 78)
+
+    paes23 = load_paes(2023)
+    paes24 = load_paes(2024)
+    if paes23 is None or paes24 is None:
+        return
+    try:
+        m23 = load_matricula(2023, COHORT_COLS)
+    except FileNotFoundError as exc:
+        log.warning("%s", exc)
+        return
+    m24 = load_matricula(2024, COHORT_COLS)
+
+    tr = _construir_cohorte(m23, m24, paes23, 2023)
+    te = _construir_cohorte(m24, m25, paes24, 2024)
+    del m23
+    print(f"\n  Cohorte 2023 (entrena): n={len(tr):,}  desertan {tr['desertor'].mean():.1%}")
+    print(f"  Cohorte 2024 (testea):  n={len(te):,}  desertan {te['desertor'].mean():.1%}")
+
+    feats = SCORE_COLS + ["sexo_f", "dep_municipal", "dep_particular_sub",
+                          "dep_particular_pag", "anios_desde_egreso"]
+
+    def _evaluar(a: pd.DataFrame, b: pd.DataFrame, etiqueta: str) -> float:
+        if len(a) < 5000 or len(b) < 5000:
+            print(f"\n  {etiqueta}: muestra insuficiente")
+            return float("nan")
+        # La mediana se toma de TRAIN. Usar la del conjunto completo seria
+        # dejar que el test influya en la imputacion.
+        med = a[feats].median()
+        Xa = a[feats].fillna(med).fillna(0).to_numpy(dtype=float)
+        Xb = b[feats].fillna(med).fillna(0).to_numpy(dtype=float)
+        ya, yb = a["desertor"].to_numpy(), b["desertor"].to_numpy()
+        model = make_pipeline(
+            StandardScaler(),
+            LogisticRegression(max_iter=3000, class_weight="balanced"))
+        model.fit(Xa, ya)
+        p = model.predict_proba(Xb)[:, 1]
+        auc = roc_auc_score(yb, p)
+
+        def captura(pct: float) -> float:
+            k = max(1, int(round(len(p) * pct)))
+            return float(yb[np.argsort(-p)[:k]].sum() / yb.sum())
+
+        print(f"\n  {etiqueta}")
+        print(f"    entrena n={len(ya):,}  testea n={len(yb):,}  "
+              f"prevalencia test={yb.mean():.1%}")
+        print(f"    AUC = {auc:.3f}")
+        for pct in (0.05, 0.10, 0.20, 0.50):
+            print(f"    top {pct:4.0%} -> captura {captura(pct):5.1%}"
+                  f"   ({captura(pct) / pct:.2f}x sobre azar)")
+        return float(auc)
+
+    auc_sis = _evaluar(tr, te, "TODO EL SISTEMA")
+    auc_u = _evaluar(tr[tr["tipo_inst_1"] == "Universidades"],
+                     te[te["tipo_inst_1"] == "Universidades"],
+                     "SOLO UNIVERSIDADES  <- el comparable para la UA")
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([
+        {"validacion": "temporal_2023_2024", "poblacion": "sistema", "auc": auc_sis},
+        {"validacion": "temporal_2023_2024", "poblacion": "universidades", "auc": auc_u},
+    ]).to_parquet(OUT / "piso_preingreso_temporal.parquet", index=False)
+
+    print("\n  " + "-" * 74)
+    print("  Ninguna persona ni ningun anio aparece en train y test a la vez.")
+    print("  Si este AUC se parece al del split aleatorio, el piso es estable")
+    print("  y el argumento se sostiene sobre cohortes futuras.")
+
+
 def main() -> int:
     # De 2025 solo se necesita saber quien sigue y en que carrera.
     m25 = load_matricula(2025, ["mrun", "cod_inst", "cod_carrera"])
     m24 = load_matricula(2024)
     retencion_ua(m24, m25)
     piso_predictivo(m24, m25)
+    del m24
+    piso_temporal(m25)
     return 0
 
 

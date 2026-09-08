@@ -1,0 +1,40 @@
+{
+  "sintetico": {
+    "estudiantes": 3000,
+    "asignaturas": 72,
+    "inscripciones": 41744,
+    "filas_panel_semanal": 751392,
+    "notas_parciales": 166976,
+    "nota_final_media": 4.72,
+    "nota_final_sd": 1.24,
+    "reprobacion_por_nota": 0.1999,
+    "reprobacion_por_inasistencia": 0.07,
+    "reprobacion_total": 0.2459,
+    "asistencia_media": 0.8155,
+    "cursos_sin_registro_asistencia": 0.1667
+  },
+  "oulad": {
+    "estudiantes_unicos": 28785,
+    "inscripciones": 32593,
+    "modulos": 7,
+    "presentaciones": [
+      "2013B",
+      "2013J",
+      "2014B",
+      "2014J"
+    ],
+    "regiones": 13,
+    "entregas_evaluadas": 173912
+  },
+  "mineduc": {
+    "matricula_total_2024": 1386084,
+    "ua_pregrado_2024": 29889,
+    "ua_cohorte_2024": 6475,
+    "ua_sedes": [
+      "CAMPUS EL LLANO",
+      "CAMPUS PROVIDENCIA",
+      "CASA CENTRAL (TEMUCO)",
+      "SEDE TALCA"
+    ]
+  }
+}

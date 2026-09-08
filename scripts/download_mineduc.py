@@ -36,8 +36,16 @@ BASE = "https://datosabiertos.mineduc.cl/wp-content/uploads"
 
 # Solo lo necesario para el analisis; el catalogo completo es mucho mayor.
 FILES = {
+    # Tres anios consecutivos de matricula permiten dos transiciones
+    # (2023->2024 y 2024->2025) y por tanto validacion TEMPORAL: la cohorte
+    # antigua entrena y la reciente testea. Con un solo anio solo cabe un
+    # split aleatorio, que mezcla cohortes y es optimista.
+    "matricula_2023": f"{BASE}/2026/09/Matricula-Ed-Superior-2023.rar",
     "matricula_2024": f"{BASE}/2026/09/Matricula-Ed-Superior-2024.rar",
     "matricula_2025": f"{BASE}/2026/09/Matricula-Ed-Superior-2025.rar",
+    # En 2023 la prueba aun se llamaba "de Acceso a la Educacion Superior".
+    "paes_2023_puntajes": (f"{BASE}/2023/05/Prueba-de-Acceso-a-la-Educacion"
+                           "-Superior-2023-Inscritos-Puntajes-1.rar"),
     "paes_2024_puntajes": f"{BASE}/2025/10/PAES-2024-Inscritos-Puntajes.rar",
 }
 

@@ -16,6 +16,7 @@ data/results/
 *.parquet
 *.csv
 !docs/**/*.csv
+!documentacion/**/*.csv
 
 .env
 mlruns/
