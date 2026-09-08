@@ -78,9 +78,10 @@ python scripts/validate_lead_time.py --source oulad     --out data/results
 # 4. Cockpit
 streamlit run src/student_analytics/ui/app.py
 
-# 5. Informe metodologico (fuentes, descriptivas, metodologia)
+# 5. Informe metodológico (fuentes, descriptivas, metodología)
 python scripts/descriptive_stats.py
-quarto render documentacion/informe_metodologico.qmd
+quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
+quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
 pytest -q                                            # 58 tests
 ```
@@ -312,10 +313,22 @@ completo.*
 
 [`documentacion/informe_metodologico.qmd`](documentacion/informe_metodologico.qmd)
 — informe reproducible con todas las fuentes y sus licencias, los insumos
-documentales, estadísticas descriptivas de cada base, la metodología completa
+documentales, estadísticas descriptivas por fuente, la metodología completa
 (grano, anti-leakage, validación temporal, cohorte fija, calibración por anclas)
 y las limitaciones. Ninguna cifra está escrita a mano: todas salen de
 `documentacion/datos/`, que `scripts/descriptive_stats.py` regenera.
+
+Se genera en **dos formatos** desde el mismo fuente:
+
+| Salida | Cómo | Identidad visual |
+|---|---|---|
+| `informe_metodologico.html` | tema `cosmo` + `estilos.css` | Franja con logo sobre el título, logo embebido en base64 |
+| `informe_metodologico.pdf` | **Typst** (no requiere LaTeX) | Encabezado corrido con logo en las 14 páginas |
+
+El PDF sale por Typst, que viene incorporado en Quarto: no hace falta instalar
+TinyTeX ni una distribución LaTeX. Los colores de marca (`#E2211C` del escudo,
+`#3D3935` del texto) se muestrearon del propio logo y se verificó su contraste
+sobre blanco — 4,70:1 y 11,44:1, ambos WCAG AA.
 
 ---
 

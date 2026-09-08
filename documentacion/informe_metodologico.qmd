@@ -21,6 +21,28 @@ format:
     fig-cap-location: top
     tbl-cap-location: top
     embed-resources: true
+
+  # PDF via Typst. No requiere LaTeX: Quarto trae Typst incorporado, asi que
+  # el informe se genera en cualquier maquina con Quarto y sin instalar una
+  # distribucion de 200 MB. Las claves de estilo del bloque html (css,
+  # include-before-body) son propias de ese formato; el equivalente aca es
+  # encabezado.typ, que pone el logo como encabezado corrido.
+  typst:
+    toc: true
+    toc-title: "Contenidos"
+    toc-depth: 3
+    number-sections: true
+    section-numbering: "1.1.1"
+    papersize: a4
+    fontsize: 10pt
+    margin:
+      x: 2.2cm
+      top: 3.0cm      # el encabezado con logo vive dentro de este margen
+      bottom: 2.2cm
+    df-print: kable
+    fig-cap-location: top
+    tbl-cap-location: top
+    include-in-header: encabezado.typ
 execute:
   echo: false
   warning: false
