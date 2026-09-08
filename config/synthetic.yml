@@ -32,9 +32,18 @@ calibration:
   # numericamente sus parametros internos para satisfacerlos. Cambiar un
   # ancla cambia los datos; no hay constantes magicas en el codigo.
 
-  # [ANCLA] SIES 2022: retencion de primer anio, universidades = 82.8%.
-  # Fuente: cned.cl/indices/retencion-primer-ano
-  retention_first_year: 0.828
+  # [ANCLA MEDIDA] Retencion al 2do anio de la propia Universidad Autonoma,
+  # area Administracion y Comercio, cohorte de ingreso 2024 (n=680): 84.1%
+  # en la misma carrera y universidad (definicion SIES); 92.1% contando a
+  # quienes siguen en cualquier institucion.
+  #
+  # Calculada, no citada: cruce de Matricula Ed. Superior 2024 con 2025 por
+  # MRUN, con scripts/analyze_mineduc.py sobre datos abiertos de Mineduc.
+  # Referencia: 82.0% para todas las universidades del pais (n=153.391).
+  #
+  # Por sede la dispersion es grande y vale la pena tenerla presente:
+  #   Providencia 88.8% | Temuco 85.5% | Talca 80.9% | El Llano 74.7%
+  retention_first_year: 0.841
 
   # [SUPUESTO] Tasa de reprobacion por NOTA a nivel asignatura, promedio
   # del sistema. Es el ancla binding: el intercepto del riesgo latente se

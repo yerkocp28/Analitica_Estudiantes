@@ -48,11 +48,11 @@ def main() -> int:
             df.to_csv(path, index=False)
         log.info("  %-20s %10s filas  %2d cols", name, f"{len(df):,}", df.shape[1])
 
-    _report(ds, settings)
+    _report(ds, settings, cfg)
     return 0
 
 
-def _report(ds, settings: Settings) -> None:
+def _report(ds, settings: Settings, cfg: dict) -> None:
     """Chequeos de sanidad frente a los anclajes de calibracion."""
     out = ds.outcomes
     pass_line = settings.academic["grade_pass"]
@@ -76,7 +76,9 @@ def _report(ds, settings: Settings) -> None:
     entry = sm.set_index("student_id")["entry_term"]
     eligible = entry[entry < sm["entry_term"].max()]
     retained = (terms_by_student.reindex(eligible.index).fillna(0) > eligible).mean()
-    print(f"  Retencion al termino siguiente      {retained:6.1%}   (ancla SIES 82.8%)")
+    ancla = cfg["calibration"]["retention_first_year"]
+    print(f"  Retencion al termino siguiente      {retained:6.1%}   "
+          f"(ancla medida UA {ancla:.1%})")
 
     print("\n  Reprobacion por dificultad de curso:")
     cm = ds.course_master[["course_id", "difficulty_tier"]]

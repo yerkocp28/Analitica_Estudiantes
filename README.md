@@ -17,25 +17,29 @@ La especificación completa está en
 | 0 | Contextualización y especificación | Completo |
 | **1** | **Paquete, configuración, generador sintético, tests** | **Completo** |
 | **1b** | **Adaptador OULAD + baseline + cockpit Streamlit** | **Completo** |
+| **1c** | **Datos abiertos Mineduc/SIES: retención real UA + piso predictivo** | **Completo** |
 | 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
 | 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
 | 6 | Modelo 2 — desenganche académico | Pendiente |
 
-**Sin accesos a Banner/Canvas todavía.** Todo lo que existe corre sobre datos
-sintéticos calibrados contra estadísticas públicas del sistema chileno.
+**Sin accesos a Banner/Canvas todavía.** El pipeline corre sobre datos
+sintéticos y sobre dos fuentes reales abiertas (OULAD y Mineduc/SIES). La
+calibración del generador está anclada a la retención **medida** de la propia
+UA, calculada desde datos abiertos.
 
 ---
 
 ## Estrategia de datos antes de tener accesos
 
-Tres fuentes, tres problemas distintos:
+Cuatro fuentes, cuatro problemas distintos:
 
 | Fuente | Resuelve | No resuelve |
 |---|---|---|
 | Esquemas públicos de Canvas Data 2 y Banner ODS | Que el pipeline reciba las **columnas reales** | No trae datos |
-| **OULAD** (Open University, 32k estudiantes reales) | ¿Funciona la predicción temprana? ¿Cuán temprano? | Sin asistencia, sin escala 1–7, sin sedes |
+| **OULAD** (Open University, 28.785 estudiantes reales) | ¿Funciona la predicción temprana? ¿Cuán temprano? | Sin asistencia, sin escala 1–7, sin sedes |
+| **Mineduc / SIES abiertos** (individual, vía MRUN) | Retención real de la UA; piso predictivo nacional | No se puede unir al RUT de Banner |
 | **Generador sintético** (este repo) | Forma UA completa: sedes, carreras, asistencia, notas 1.0–7.0 | No valida nada por sí solo |
 
 El objetivo de esta fase no es tener un modelo. Es tener un pipeline cuyo
@@ -61,6 +65,10 @@ python scripts/generate_synthetic.py --students 500  # smoke test
 # 2. Datos reales de referencia (~45 MB comprimidos)
 python scripts/download_oulad.py
 
+# 2b. Bases abiertas de Mineduc/SIES (~1,3 GB); retencion real y piso predictivo
+python scripts/download_mineduc.py
+python scripts/analyze_mineduc.py
+
 # 3. Curva de poder predictivo vs anticipación, sobre cualquier fuente
 python scripts/validate_lead_time.py --source synthetic --out data/results
 python scripts/validate_lead_time.py --source oulad     --out data/results
@@ -68,7 +76,7 @@ python scripts/validate_lead_time.py --source oulad     --out data/results
 # 4. Cockpit
 streamlit run src/student_analytics/ui/app.py
 
-pytest -q                                            # 55 tests
+pytest -q                                            # 58 tests
 ```
 
 ---
@@ -103,9 +111,9 @@ siempre con **icono + etiqueta**, nunca solo con color.
 ## Decisiones de diseño
 
 **El generador se auto-calibra contra anclas, no contra constantes.**
-`config/synthetic.yml` declara tasas objetivo (retención 82,8% — ancla SIES 2022;
-reprobación por asignatura 20%) y el código resuelve sus parámetros internos por
-bisección para satisfacerlas. Cambiar el peso de una señal no altera la tasa
+`config/synthetic.yml` declara tasas objetivo (retención 84,1% — **medida** para
+la UA desde datos abiertos; reprobación por asignatura 20%) y el código resuelve
+sus parámetros internos por bisección para satisfacerlas. Cambiar el peso de una señal no altera la tasa
 global de reprobación, que es lo que permite probar robustez sin re-tunear todo.
 
 **Orden causal no invertible.** Perfil latente → comportamiento semanal →
@@ -137,14 +145,14 @@ esa correlación se vuelve fuerte.
 ## Resultados sobre datos sintéticos
 
 Regresión logística, validación temporal (semestres 1–4 entrenan, 5–6 testean),
-3.000 estudiantes, prevalencia de reprobación 24,5%:
+3.000 estudiantes, cohorte fija de 19.842 casos y prevalencia 23,4%:
 
 | Semana de scoring | AUC | Top 10% | Top 20% | Semanas restantes |
 |---|---|---|---|---|
-| 3 | 0,661 | 16,4% | 30,4% | 15 |
-| 5 | 0,687 | 16,8% | 31,9% | 13 |
-| 8 | 0,722 | 18,9% | 36,1% | 10 |
-| 12 | 0,751 | 22,8% | 41,3% | 6 |
+| 3 | 0,652 | 14,8% | 28,9% | 15 |
+| 5 | 0,681 | 16,5% | 30,9% | 13 |
+| 8 | 0,717 | 19,2% | 36,3% | 10 |
+| 12 | 0,749 | 22,3% | 41,5% | 6 |
 
 *Top 20% = de los estudiantes que efectivamente reprobaron, qué fracción queda
 dentro del 20% priorizado por el modelo esa semana. Baseline aleatorio = 20%.*
@@ -199,6 +207,68 @@ señales conductuales toman el relevo cuando ya hay conducta que observar.
 
 ---
 
+## Resultados sobre datos abiertos de Mineduc / SIES
+
+```bash
+python scripts/download_mineduc.py    # ~1,3 GB comprimidos
+python scripts/analyze_mineduc.py
+```
+
+Estas bases están desagregadas **a nivel individual** y usan **MRUN**, un
+identificador ficticio pero estable entre bases y años. Chile es de los pocos
+países OCDE que publica esto abiertamente.
+
+### Retención real de la UA (Matrícula 2024 → 2025, cruce por MRUN)
+
+Calculada, no citada. Cohorte de ingreso 2024, área Administración y Comercio:
+
+| | Misma carrera y universidad | En cualquier institución |
+|---|---|---|
+| **Administración y Comercio (n=680)** | **84,1%** | 92,1% |
+| Toda la UA, pregrado (n=6.475) | 85,8% | 93,7% |
+| Todas las universidades del país (n=153.391) | 82,0% | 92,1% |
+
+Por sede, dentro del área del piloto:
+
+| Sede | n | Retención |
+|---|---|---|
+| Providencia | 251 | 88,8% |
+| Temuco | 173 | 85,5% |
+| Talca | 157 | 80,9% |
+| El Llano (San Miguel) | 99 | 74,7% |
+
+La brecha de **14 puntos entre Providencia y El Llano** es un hallazgo real, no
+simulado, y sugiere que el modelo debería considerar la sede explícitamente.
+
+### El piso predictivo de las variables previas al ingreso
+
+Cruce PAES 2024 → Matrícula 2024 → Matrícula 2025 por MRUN. Predice no
+continuar en la misma carrera, usando **solo** NEM, ranking, notas de enseñanza
+media, puntajes PAES, dependencia del colegio, sexo y año de egreso:
+
+| Población | n | Prevalencia | AUC | Top 20% |
+|---|---|---|---|---|
+| Todo el sistema | 184.279 | 18,3% | 0,626 | 31,8% (1,59×) |
+| **Solo universidades** | 135.050 | 16,4% | **0,615** | 31,5% (1,58×) |
+
+**Esto replica el hallazgo de ULagos con 135.000 estudiantes en vez de dos
+cohortes**, y es el argumento central del proyecto:
+
+> Toda la ficha de admisión junta alcanza **AUC 0,615**. El baseline sobre
+> comportamiento en OULAD llega a **0,697 en la semana 4** — con el 10% del
+> curso transcurrido y **sin asistencia**. Los datos de comportamiento
+> intrasemestral superan a la ficha de admisión completa antes del primer mes.
+
+Ese es el caso para pedir acceso a Banner y Canvas: el valor no está en lo que
+ya se sabe del estudiante al matricularse.
+
+*Caveats: solo el 53% de los ingresantes 2024 aparece en PAES 2024 (los ingresos
+a IP/CFT y por vías alternativas no la rinden). Split aleatorio, no temporal —
+hay una sola cohorte, y si acaso eso favorece al modelo, así que el piso real es
+aún más bajo.*
+
+---
+
 ## Preguntas bloqueantes
 
 Están en `open_questions` de [config/data_contracts.yml](config/data_contracts.yml).
@@ -246,8 +316,10 @@ src/student_analytics/
 scripts/
     generate_synthetic.py
     download_oulad.py
+    download_mineduc.py     bases abiertas Mineduc/SIES
+    analyze_mineduc.py      retencion real UA + piso predictivo nacional
     validate_lead_time.py   --source synthetic | oulad
-tests/           55 tests: generador, leakage, OULAD, UI
+tests/           58 tests: generador, leakage, OULAD, UI
 docs/            documentos base del proyecto
 ```
 
