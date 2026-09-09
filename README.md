@@ -55,6 +55,11 @@ su origen real esperado y su nivel de confianza (`confirmed` / `likely` /
 
 ## Uso
 
+Para publicar en Streamlit Community Cloud, la entrada es `streamlit_app.py`.
+Incluye los agregados públicos necesarios en `deploy/data/` y dependencias
+verificadas en `requirements.txt`. Consulta la
+[configuración de despliegue](deploy/README.md).
+
 ```bash
 python -m venv .venv
 .venv\Scripts\activate           # Windows

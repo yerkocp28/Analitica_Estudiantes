@@ -15,6 +15,7 @@ en una decision.
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
 
 import altair as alt
@@ -25,7 +26,7 @@ import streamlit as st
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-RESULTS_DIR = REPO_ROOT / "data" / "results"
+RESULTS_DIR = Path(os.environ.get("STUDENT_ANALYTICS_RESULTS_DIR", REPO_ROOT / "data" / "results"))
 
 # Paleta de estado: reservada, nunca reutilizada como color de serie.
 # Cada banda va SIEMPRE con icono y etiqueta, nunca solo con color.

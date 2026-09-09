@@ -24,5 +24,9 @@ data/results/
 !documentacion/**/*.csv
 !documentacion/assets/*.png
 
+# Artefactos públicos revisados para ejecutar la app sin bases individuales.
+!deploy/data/*.parquet
+.streamlit/secrets.toml
+
 .env
 mlruns/

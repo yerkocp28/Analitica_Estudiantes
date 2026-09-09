@@ -194,7 +194,7 @@ def render_benchmark(results_dir: Path) -> None:
         st.info("Aún no están preparados los perfiles para identificar universidades comparables.")
         st.code("python scripts/build_retention.py\npython scripts/build_benchmark.py", language="bash")
         return
-    config_path = results_dir.parents[1] / "config/benchmark.yml"
+    config_path = Path(__file__).resolve().parents[3] / "config/benchmark.yml"
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     try:
         data, profiles, manifest = load_benchmark(str(results_dir), tuple(p.stat().st_mtime_ns for p in files))

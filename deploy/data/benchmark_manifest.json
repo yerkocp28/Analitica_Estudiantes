@@ -1,0 +1,26 @@
+{
+  "generado_utc": "2026-09-08T23:55:35.984264+00:00",
+  "version": 1,
+  "fuentes": [
+    {
+      "cohorte": 2023,
+      "archivo": "20260810_Matrícula_Ed_Superior_2023_PUBL_MRUN.csv",
+      "bytes": 905796378,
+      "modificado_utc": "2026-09-01T17:00:07.461052+00:00"
+    },
+    {
+      "cohorte": 2024,
+      "archivo": "20260810_Matrícula_Ed_Superior_2024_PUBL_MRUN.csv",
+      "bytes": 938172812,
+      "modificado_utc": "2026-09-01T17:00:19.803810+00:00"
+    },
+    {
+      "fuente": "CNED INDICES Institucional",
+      "archivo": "INDICES_Institucional_2005-2025.xlsx",
+      "bytes": 3321254
+    }
+  ],
+  "perfil": "cohorte de ingreso a carrera, pregrado universitario",
+  "retencion_sha256": "c6ff9791d91324f1a90774c296a8f8b92d9b14b9cef8f668d8671d47b14aee07",
+  "perfiles_sha256": "7c0a13ee5f569d118b151b050f1a4a1f5c62e4fdedd7f1bb6ff5b49bd52b96fb"
+}
