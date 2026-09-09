@@ -10,6 +10,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+from student_analytics.ingestion.cned import attach_resources, load_institutional
 from student_analytics.modeling.benchmark import build_profiles
 
 
@@ -47,6 +48,27 @@ def main() -> None:
                         "modificado_utc": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()})
     out = ROOT / "data/results"
     result = pd.concat(profiles, ignore_index=True)
+
+    # Recursos institucionales del CNED, si estan descargados. Se unen por
+    # nombre normalizado porque los codigos de institucion del CNED no son
+    # los del SIES. Son descriptivos: no entran en la distancia.
+    cned = ROOT / "data/external/cned/INDICES_Institucional_2005-2025.xlsx"
+    if cned.exists():
+        piezas = []
+        for year, grupo in result.groupby("cohorte"):
+            recursos = load_institutional(cned, int(year))
+            unido = attach_resources(grupo, recursos)
+            calce = unido.docentes_jce.notna().mean() if "docentes_jce" in unido else 0
+            print(f"  cohorte {year}: {calce:.0%} de las universidades con datos CNED",
+                  flush=True)
+            piezas.append(unido)
+        result = pd.concat(piezas, ignore_index=True)
+        sources.append({"fuente": "CNED INDICES Institucional", "archivo": cned.name,
+                        "bytes": cned.stat().st_size})
+    else:
+        print("  sin base CNED; se omiten los recursos institucionales "
+              "(python scripts/download_cned.py)", flush=True)
+
     shares = [c for c in result if "::" in c]
     result[shares] = result[shares].fillna(0)
     result.to_parquet(out / "benchmark_profiles.parquet", index=False)

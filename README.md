@@ -99,9 +99,38 @@ cluster o con un conjunto manual; la UA permanece como referencia.
 
 ```bash
 python scripts/build_retention.py   # si faltan los agregados de matrícula
+python scripts/download_cned.py     # recursos institucionales (3,3 MB, opcional)
 python scripts/build_benchmark.py   # perfiles de las cohortes disponibles
 streamlit run src/student_analytics/ui/app.py
 ```
+
+### Recursos institucionales (CNED)
+
+`scripts/download_cned.py` baja la base **INDICES Institucional 2005–2025** del
+Consejo Nacional de Educación y `build_benchmark.py` la incorpora si está
+presente. Aporta, por institución y sede: cuerpo docente por jornada y nivel de
+grado (permite calcular JCE y % con doctorado), inmuebles y m² construidos,
+laboratorios y PC para estudiantes, bibliotecas, año de creación, pertenencia al
+CRUCH y años de acreditación.
+
+Con eso el mapa de posicionamiento pasa de 14 a **24 variables** en los ejes.
+
+Tres cosas que hay que saber de esta fuente:
+
+1. **Los códigos de institución del CNED no son los del SIES** — la Universidad
+   Autónoma es 1037 en CNED y 31 en matrícula. La unión se hace por nombre
+   normalizado y calza 51 de 51 universidades; hay un test que falla si esa
+   cobertura baja del 95%.
+2. **Las bibliotecas están en dos hojas** (2005–2018 y 2019–2025) porque cambió
+   el instrumento de medición. Se usa solo la vigente: concatenarlas produciría
+   un salto en 2019 que es metodológico, no real.
+3. **La columna "Tradicional" del CNED marca pertenencia al CRUCH, no
+   antigüedad.** Desde la Ley 21.091 el CRUCH admite privadas posteriores a
+   1981, y en 2019 entraron Diego Portales, Alberto Hurtado y Los Andes. Por eso
+   la variable se llama `cruch`.
+
+Los recursos entran como **descriptivos**: aparecen en los ejes del mapa pero no
+participan en la distancia ni en los clusters, así que no cambian los pares.
 
 El agrupamiento usa cuatro bloques con igual peso: tamaño de cohorte/sedes,
 distribución por áreas, distribución regional y jornada/modalidad. Compara

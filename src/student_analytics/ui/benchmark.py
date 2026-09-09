@@ -37,6 +37,18 @@ AXES = {
     "concentracion_areas": ("Concentración de áreas (HHI)", ".2f"),
     "regiones_presencia": ("Regiones con presencia", ","),
     "distancia": ("Distancia al perfil de la UA", ".2f"),
+    # Recursos institucionales del CNED. Aparecen solo si la base esta
+    # descargada: `disponibles` filtra por columnas con dato.
+    "docentes_por_100_alumnos": ("Docentes JCE por 100 estudiantes", ".1f"),
+    "share_doctorado": ("Docentes con doctorado", "%"),
+    "share_magister": ("Docentes con magíster o doctorado", "%"),
+    "share_jornada_completa": ("Docentes con jornada completa", "%"),
+    "share_docentes_mujeres": ("Docentes mujeres", "%"),
+    "m2_construido_por_alumno": ("M² construidos por estudiante", ".1f"),
+    "pc_por_100_alumnos": ("PC para estudiantes por cada 100", ".1f"),
+    "ejemplares_por_alumno": ("Ejemplares de biblioteca por estudiante", ".1f"),
+    "anio_creacion": ("Año de creación", "d"),
+    "acreditacion_cned": ("Años de acreditación (CNED)", ","),
 }
 
 
@@ -362,7 +374,9 @@ def render_benchmark(results_dir: Path) -> None:
                     "jornada y modalidad**. Cada uno de los cuatro bloques tiene el mismo peso. "
                     "La retención no participa en la distancia ni en los clusters.")
         st.caption("Se describe el perfil de las cohortes de ingreso a carrera, no la totalidad de la universidad. "
-                   "No se han incorporado selectividad de admisión, acreditación, investigación o recursos institucionales.")
+                   "Los recursos institucionales y el cuerpo docente (base INDICES del CNED) están disponibles "
+                   "como variables descriptivas en el mapa de posicionamiento, pero **no participan** en la "
+                   "distancia ni en los clusters. Siguen sin incorporarse selectividad de admisión e investigación.")
         peers = nearest.loc[nearest.cod_inst.isin(peer_ids)]
         table = peers[["nomb_inst", "cohorte_total", "sedes", "grupo", "distancia", "mismo_grupo_ua"]].rename(columns={
             "nomb_inst": "Universidad", "cohorte_total": "Tamaño de cohorte", "sedes": "Sedes",
