@@ -129,6 +129,9 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
         pytest.skip("perfiles no generados")
     app = AppTest.from_file(str(ROOT / "src/student_analytics/ui/app.py"), default_timeout=180).run()
     assert not app.exception, [str(e.value) for e in app.exception]
+    # Se navega explícitamente en vez de confiar en la vista por defecto.
+    app.sidebar.radio[0].set_value("Benchmark UA").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
     assert "Benchmark" in app.title[0].value
     assert len(app.tabs) >= 4
     assert len(app.metric) == 4

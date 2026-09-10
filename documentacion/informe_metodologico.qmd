@@ -154,6 +154,234 @@ proyecto es la continuación operativa de esa recomendación.
 
 ---
 
+# Hallazgos principales {#sec-hallazgos}
+
+Esta sección reúne lo que el proyecto encontró. Cada cifra sale de
+`documentacion/datos/hallazgo_*.csv`, que genera `scripts/build_findings.py`
+desde los mismos artefactos que alimentan el tablero: **ninguna está escrita a
+mano**, y la sección «Hallazgos» de la aplicación muestra exactamente estos
+mismos números. Las secciones posteriores desarrollan cada punto.
+
+## 1. El valor no está en lo que ya se sabe del estudiante
+
+```{python}
+#| label: fig-argumento
+#| fig-cap: "Poder predictivo del expediente previo al ingreso frente al comportamiento observado en la semana 4"
+import matplotlib.pyplot as plt
+
+TINTA, AZUL, NARANJA, GRIS = "#3D3935", "#2a78d6", "#eb6834", "#8a8880"
+plt.rcParams.update({"font.size": 9, "axes.edgecolor": GRIS,
+                     "axes.labelcolor": TINTA, "text.color": TINTA,
+                     "xtick.color": GRIS, "ytick.color": GRIS,
+                     "axes.spines.top": False, "axes.spines.right": False})
+
+d = leer("hallazgo_argumento_central")
+if d is not None and len(d) >= 2:
+    fig, ax = plt.subplots(figsize=(7.2, 1.9))
+    etiquetas = ["Todo el expediente\nprevio al ingreso", "Conducta observada\nen la semana 4"]
+    ax.barh(etiquetas, d["auc"], color=[GRIS, AZUL], height=.55)
+    ax.axvline(.5, color=GRIS, ls="--", lw=1)
+    for y, v in enumerate(d["auc"]):
+        ax.text(v + .004, y, f"{v:.3f}", va="center", fontweight="bold")
+    ax.set_xlim(.5, .75); ax.set_xlabel("AUC")
+    # Va en el hueco entre las dos barras: abajo se monta sobre el tick del
+    # 0,50 y arriba la recorta el borde de la figura.
+    ax.annotate("azar", xy=(0.008, 0.5), xycoords="axes fraction",
+                color=GRIS, fontsize=8, va="center")
+    ax.invert_yaxis(); fig.tight_layout(); plt.show()
+```
+
+```{python}
+#| label: tbl-argumento
+#| tbl-cap: "Los dos resultados, uno junto al otro"
+d = leer("hallazgo_argumento_central")
+if d is not None:
+    d["auc"] = d["auc"].map("{:.3f}".format)
+    d["n"] = d["n"].map(lambda v: "—" if pd.isna(v) else f"{v:,.0f}")
+    d = d[["momento", "detalle", "n", "auc", "anticipacion"]]
+    d.columns = ["Momento", "Qué se sabe", "n", "AUC", "Margen para actuar"]
+d
+```
+
+Todo lo que el Estado de Chile sabe de un estudiante **antes de que pise la
+universidad** —NEM, ranking, pruebas de admisión, dependencia del colegio,
+asistencia mensual de cuarto medio, decil de ingreso oficial, condición de
+prioritario, tipo de financiamiento— se queda por debajo de un modelo que solo
+mira **cuatro semanas de comportamiento** dentro del curso, y que ni siquiera
+dispone de asistencia.
+
+::: {.callout-important}
+## La consecuencia operativa
+
+Un sistema de alerta temprana construido sobre la ficha de admisión ordena poco
+mejor que el azar y, sobre todo, **no cambia durante el semestre**: clasifica al
+estudiante el día que se matricula y lo deja ahí. El comportamiento observado sí
+se mueve, y por eso admite una intervención.
+
+Ese es el caso para pedir acceso a Banner y Canvas. Detalle en @sec-argumento.
+:::
+
+## 2. La UA está sobre el sistema en continuidad, y la brecha entre sedes es interna
+
+```{python}
+#| label: fig-retencion
+#| fig-cap: "Continuidad en la misma universidad al año siguiente: UA frente al resto del sistema, 19 cohortes"
+d = leer("hallazgo_serie_retencion")
+if d is not None:
+    fig, ax = plt.subplots(figsize=(7.2, 2.8))
+    ax.plot(d["cohorte"], 100 * d["retencion_misma_universidad_ua"], "-o",
+            color=AZUL, lw=2, ms=4, label="Universidad Autónoma")
+    ax.plot(d["cohorte"], 100 * d["retencion_misma_universidad_sistema"], "-o",
+            color=GRIS, lw=2, ms=4, label="Resto del sistema")
+    ax.set_ylabel("Continuidad (%)"); ax.set_xlabel("Cohorte de ingreso")
+    ax.set_xticks(d["cohorte"][::2]); ax.legend(frameon=False, loc="lower right")
+    fig.tight_layout(); plt.show()
+```
+
+La UA supera al resto del sistema en **todas** las cohortes de la serie. La
+referencia excluye a la UA, de modo que una institución grande no atenúe su
+propia comparación.
+
+```{python}
+#| label: tbl-sede
+#| tbl-cap: "Continuidad por sede — área del piloto, última cohorte disponible"
+d = leer("hallazgo_retencion_sede")
+if d is not None:
+    d = d[["nomb_sede", "n", "retencion_misma_carrera",
+           "retencion_misma_universidad", "retencion_sistema"]].copy()
+    for c in d.columns[2:]:
+        d[c] = d[c].map("{:.1%}".format)
+    d.columns = ["Sede", "n", "Misma carrera", "Misma universidad", "Cualquier institución"]
+d
+```
+
+::: {.callout-tip}
+## La sede debe ser variable del modelo, no filtro del tablero
+
+La distancia entre la sede con mayor y menor continuidad supera los diez puntos
+porcentuales, con tamaños que no admiten leerla como ruido. Una institución que
+está **sobre** el promedio nacional contiene internamente un rango que el
+promedio esconde: es exactamente el tipo de heterogeneidad que un modelo debe
+capturar y un indicador agregado no.
+:::
+
+## 3. La UA es del montón en selectividad, y no se mueve
+
+```{python}
+#| label: tbl-selectividad
+#| tbl-cap: "Posición de la UA en selectividad de admisión, por cohorte"
+d = leer("hallazgo_selectividad")
+if d is not None:
+    t = pd.DataFrame({
+        "Cohorte": d["cohorte"].astype(str), "Prueba": d["instrumento"],
+        "Puntaje UA": d["ua_puntaje"].map("{:,.0f}".format),
+        "Media del sistema": d["sistema_puntaje_medio"].map("{:,.0f}".format),
+        "Percentil UA": d["ua_percentil"].map("{:.0%}".format),
+        "Supera a": d["posicion_ua"].map("{:.0%}".format),
+        "Universidades": d["universidades"],
+        "Cobertura UA": d["ua_cobertura"].map("{:.0%}".format)})
+    d = t
+d
+```
+
+La UA **no recibe estudiantes mejores ni peores que el promedio** del sistema, y
+esa posición es estable en las cinco cohortes con dato. El hallazgo importa
+porque cierra una explicación fácil: sus resultados de continuidad y titulación
+no se explican por el perfil de entrada.
+
+::: {.callout-warning}
+## Dos advertencias que la cifra no lleva encima
+
+**El puntaje crudo no cruza 2023.** La Prueba de Transición se medía entre 150 y
+850 y la PAES entre 100 y 1000, así que la columna «Puntaje UA» salta unos noventa
+puntos entre 2022 y 2023 sin que haya cambiado nada. El percentil nacional sí es
+comparable, y es la columna que debe leerse en serie. Ver @sec-paes-escala.
+
+**Antes de 2021 no hay dato.** La PSU no está publicada como microdato abierto,
+así que catorce de las diecinueve cohortes del benchmark se comparan sin
+selectividad.
+:::
+
+## 4. Los dos indicadores de titulación apuntan en direcciones opuestas
+
+```{python}
+#| label: fig-contraste
+#| fig-cap: "Correlación de cada indicador de titulación con la selectividad de admisión y con los años de acreditación"
+d = leer("hallazgo_contraste_titulacion")
+if d is not None:
+    refs = [("paes_percentil_promedio", "Selectividad de admisión"),
+            ("acreditacion_anios", "Años de acreditación")]
+    refs = [(c, t) for c, t in refs if c in d.columns]
+    fig, axes = plt.subplots(1, len(refs), figsize=(7.2, 2.4), sharey=True)
+    axes = axes if len(refs) > 1 else [axes]
+    corto = [i.replace(" · ", "\n") for i in d["indicador"]]
+    for ax, (col, titulo) in zip(axes, refs):
+        colores = [NARANJA if t == "Transversal" else AZUL for t in d["tipo"]]
+        ax.barh(corto, d[col], color=colores, height=.6)
+        ax.axvline(0, color=GRIS, lw=1)
+        for y, v in enumerate(d[col]):
+            ax.text(v + (.02 if v >= 0 else -.02), y, f"{v:+.2f}", va="center",
+                    ha="left" if v >= 0 else "right", fontsize=8)
+        ax.set_xlim(-.6, .6); ax.set_title(titulo, fontsize=9, loc="left")
+        ax.set_xlabel("Correlación")
+    axes[0].invert_yaxis(); fig.tight_layout(); plt.show()
+```
+
+Sobre **las mismas universidades**, la titulación transversal correlaciona en
+sentido contrario a la titulación por cohorte. No es ruido: miden cosas
+distintas.
+
+- **La transversal mide velocidad, no logro.** Cuenta cuánto se demoró quien *sí*
+  se tituló, y eso lo determina la mezcla de carreras: una universidad con mucha
+  ingeniería aparece abajo porque esos programas se alargan, no porque enseñe
+  peor. Por eso correlaciona **negativo** con selectividad y con acreditación.
+- **La de cohorte mide cuántos llegan.** Toma a quienes entraron y los busca en
+  las bases de titulados por MRUN. Correlaciona **positivo** con ambas
+  referencias, que es como debe comportarse un indicador de resultado.
+
+::: {.callout-important}
+## Consecuencia para el uso institucional
+
+La titulación oportuna dejaba a la UA en el percentil 94 del sistema. **Ese
+número no debe presentarse como logro**: es en buena parte composición de oferta.
+El indicador por cohorte —donde la UA marca 61,4% frente a una mediana de
+50,9%— es el que sostiene una afirmación sobre desempeño. Ver @sec-cohortes.
+:::
+
+## 5. Las trampas de datos que cambiaron un resultado
+
+Esta es la parte del trabajo que no aparece en ningún gráfico y es la que
+sostiene todo lo demás. Cada fila es un error que los datos inducen con toda
+naturalidad y que habría producido una conclusión falsa.
+
+```{python}
+#| label: tbl-trampas
+#| tbl-cap: "Trampas encontradas, con el efecto medido de no corregirlas"
+d = leer("hallazgo_trampas")
+if d is not None:
+    d.columns = ["Fuente", "Qué trae el dato", "Qué pasa si no se corrige", "Estado"]
+d
+```
+
+«Límite permanente» significa que no hay corrección posible con datos abiertos:
+es una restricción de la fuente, no del pipeline.
+
+## 6. Qué aportó cada fuente
+
+```{python}
+#| label: tbl-fuentes-aporte
+#| tbl-cap: "Cobertura y aporte de cada fuente al perfil institucional"
+d = leer("hallazgo_fuentes")
+if d is not None:
+    d.columns = ["Fuente", "Grano", "Cobertura", "Qué aporta", "Variables en el perfil"]
+d
+```
+
+El conteo de variables se deriva del perfil generado, no de una lista escrita a
+mano: si se incorpora una fuente nueva, la cifra se mueve sola.
+
+---
+
 # Fuentes de datos {#sec-fuentes}
 
 ## Fuentes utilizadas

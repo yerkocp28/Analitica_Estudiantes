@@ -12,6 +12,14 @@ FILES = (
     "metrics_synthetic.parquet", "predictions_synthetic.parquet",
     "metrics_oulad.parquet", "predictions_oulad.parquet",
 )
+# Insumos del argumento central del proyecto. Van aparte porque son opcionales
+# —el resto de la app funciona sin ellos— y porque la ablacion la escribe
+# analyze_mineduc.py en documentacion/datos, no en data/results.
+OPCIONALES = {
+    "piso_preingreso_nacional.parquet": ROOT / "data/results/piso_preingreso_nacional.parquet",
+    "piso_preingreso_temporal.parquet": ROOT / "data/results/piso_preingreso_temporal.parquet",
+    "ablacion_piso.csv": ROOT / "documentacion/datos/ablacion_piso.csv",
+}
 
 
 def main() -> None:
@@ -36,8 +44,15 @@ def main() -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for name in FILES:
         shutil.copyfile(source / name, destination / name)
-    sizes = {name: (destination / name).stat().st_size for name in FILES}
-    print(f"Empaquetados {len(FILES)} archivos, {sum(sizes.values()) / 1e6:.2f} MB, en {destination}")
+    llevados = list(FILES)
+    for name, origen in OPCIONALES.items():
+        if origen.is_file():
+            shutil.copyfile(origen, destination / name)
+            llevados.append(name)
+        else:
+            print(f"  sin {name}; la vista de hallazgos lo dirá en vez de inventarlo")
+    sizes = {name: (destination / name).stat().st_size for name in llevados}
+    print(f"Empaquetados {len(llevados)} archivos, {sum(sizes.values()) / 1e6:.2f} MB, en {destination}")
 
 
 if __name__ == "__main__":

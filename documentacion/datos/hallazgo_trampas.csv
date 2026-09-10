@@ -1,0 +1,15 @@
+fuente,trampa,efecto,estado
+PAES / PDT,"El valor 0 significa «no rindió», no «obtuvo cero»",Tratarlo como puntaje hunde todas las medias institucionales,Corregido
+PAES / PDT,Cambio de escala en 2023 (150–850 → 100–1000),El promedio institucional salta ~90 puntos entre 2022 y 2023 sin cambio real,Corregido con percentil nacional
+Admisión,La PSU (2004–2020) no está publicada,14 de 19 cohortes no pueden medir selectividad,Límite permanente
+Matrícula,"Falta cod_carrera en 24,5% de 2007 y 20,9% de 2008","La continuidad de carrera aparece en 53,9% en vez de ~72% sin que nadie deserte",Detectado y advertido
+Matrícula,anio_ing_carr_ori usa 9999 y 9995 como centinela,Cohortes contaminadas con años imposibles,Corregido
+Titulados,"anio_ing_carr_ori usa 1900 como centinela, en 10,06% de los casos","La duración media pasa de 5 a 17,4 años, con máximos de 124",Corregido
+Titulados,Los planes de continuidad reconocen estudios previos,"Sobreduración 3,52 años contra 0,58 del plan regular",Corregido
+Titulados,La duración nominal viene en SEMESTRES,"Sin dividir por dos, toda sobreduración sale negativa por cinco años",Corregido
+Longitudinal,La censura por derecha también sesga por institución,"La UA aparecía primera del sistema en 2018 con 70,4% y percentil 98",Corregido con piso de cobertura
+Longitudinal,Filtrar por año después de agregar por clave,Un título previo anulaba al estudiante entero; aparecía sistema < universidad,Corregido
+Matrícula,valor_arancel mezcla pesos y UF en la misma columna,7.638 filas en UF (mediana 215) junto a 145.862 en pesos (mediana 4.986.900),Corregido
+Becas,La base de asignaciones no contiene el CAE,La variable salía constante en cero; la administra la Comisión Ingresa,Reemplazado por FSCU y beca de arancel
+CNED,"«Tradicional» marca pertenencia al CRUCH, no antigüedad","Desde la Ley 21.091 el CRUCH admite privadas; DP, UAH y U. Andes entraron en 2019",Corregido
+Clustering,La silueta elige siempre la partición que aísla atípicos,k=2 dejaba al 92% de las universidades —la UA incluida— en un solo grupo,Corregido con techo de concentración

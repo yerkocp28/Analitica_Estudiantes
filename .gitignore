@@ -25,7 +25,10 @@ data/results/
 !documentacion/assets/*.png
 
 # Artefactos públicos revisados para ejecutar la app sin bases individuales.
+# El CSV va explícito: la regla *.csv de arriba lo excluía, y sin él la app
+# desplegada no puede mostrar el argumento central del proyecto.
 !deploy/data/*.parquet
+!deploy/data/*.csv
 .streamlit/secrets.toml
 
 .env

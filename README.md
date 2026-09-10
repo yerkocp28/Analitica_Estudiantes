@@ -75,9 +75,10 @@ python scripts/generate_synthetic.py --students 500  # smoke test
 # 2. Datos reales de referencia (~45 MB comprimidos)
 python scripts/download_oulad.py
 
-# 2b. Bases abiertas de Mineduc/SIES (~2,5 GB comprimidos, 11 bases)
-python scripts/download_mineduc.py
+# 2b. Bases abiertas de Mineduc/SIES
+python scripts/download_mineduc.py     # escolares y socioeconómicas
 python scripts/analyze_mineduc.py      # retención UA + piso + ablación
+python scripts/build_findings.py       # hallazgos a CSV para el informe
 
 # 3. Curva de poder predictivo vs anticipación, sobre cualquier fuente
 python scripts/validate_lead_time.py --source synthetic --out data/results
@@ -91,16 +92,33 @@ python scripts/descriptive_stats.py
 quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
 quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
-pytest -q                                            # 58 tests
+pytest -q                                            # 142 tests
 ```
 
 ---
 
 ## La herramienta de visualización
 
-### Benchmark UA (vista inicial)
+### Hallazgos (vista inicial)
 
-La app abre con un benchmark centrado en la Universidad Autónoma. Los pares se
+La app abre en **Hallazgos**, que responde en vez de dejar preguntar. Reúne en
+una pantalla lo que el proyecto encontró: el argumento central, la posición real
+de la UA en continuidad y selectividad, el contraste entre los dos indicadores
+de titulación, y las trampas de datos que cambiaron un resultado.
+
+**Ninguna cifra está escrita en la vista.** Todas se calculan en
+[`modeling/findings.py`](src/student_analytics/modeling/findings.py) desde los
+mismos parquet que alimentan el informe metodológico, que las consume vía
+`scripts/build_findings.py`. Es la única forma de que el tablero y el documento
+no se contradigan cuando cambie una base — y ya pasó: la cifra escrita a mano
+sobre denominadores siguió ahí meses después de que el código cambiara.
+
+Cada función devuelve `None` cuando falta su insumo en vez de fallar, así que la
+vista funciona con el proyecto armado a medias y dice qué script correr.
+
+### Benchmark UA
+
+Desde la barra lateral. Los pares se
 identifican por perfil de ingreso **sin utilizar la retención como variable de
 clustering**. Se puede comparar con los cinco vecinos más cercanos, con el mismo
 cluster o con un conjunto manual; la UA permanece como referencia.
@@ -130,7 +148,7 @@ laboratorios y PC para estudiantes, bibliotecas, año de creación, pertenencia 
 CRUCH y años de acreditación.
 
 Con eso, más la selectividad de admisión y la titulación, el perfil llega a
-**99 variables**, de las cuales **42 son graficables** en el mapa de
+**101 variables**, de las cuales **43 son graficables** en el mapa de
 posicionamiento y **39 entran a la distancia**.
 
 Tres cosas que hay que saber de esta fuente:
@@ -588,8 +606,10 @@ src/student_analytics/
     modeling/
         lead_time.py        poder predictivo vs anticipacion
         benchmark.py        bloques, distancia y clusters de pares
+        findings.py         hallazgos, calculados una sola vez
     ui/
         app.py              cockpit Streamlit
+        hallazgos.py        vista de hallazgos (la inicial)
 scripts/
     generate_synthetic.py
     download_oulad.py
@@ -603,6 +623,7 @@ scripts/
     build_cohorts.py        seguimiento longitudinal por MRUN
     build_benchmark.py      perfiles universidad-cohorte
     build_inventory.py      inventario de variables (se regenera, no se edita)
+    build_findings.py       hallazgos a CSV para el informe
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)

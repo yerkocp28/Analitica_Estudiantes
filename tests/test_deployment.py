@@ -25,7 +25,15 @@ def test_app_distribuida_sin_data_local(tmp_path, monkeypatch):
     monkeypatch.setenv("STUDENT_ANALYTICS_RESULTS_DIR", str(tmp_path / "deploy/data"))
     app = AppTest.from_file(str(tmp_path / "streamlit_app.py"), default_timeout=180).run()
     assert not app.exception, [str(e.value) for e in app.exception]
+    # La sección se elige explícitamente: atarse a la vista por defecto hacía
+    # fallar este test al agregar «Hallazgos» delante, sin que nada del
+    # despliegue hubiera cambiado.
+    app.sidebar.radio[0].set_value("Benchmark UA").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
     assert "Benchmark" in app.title[0].value
+    app.sidebar.radio[0].set_value("Hallazgos").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
+    assert app.title[0].value == "Hallazgos"
     app.sidebar.radio[0].set_value("Retención universitaria").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert len(app.dataframe) >= 1

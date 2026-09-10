@@ -1,0 +1,5 @@
+indicador,variable,tipo,paes_percentil_promedio,n_paes_percentil_promedio,acreditacion_anios,n_acreditacion_anios,cohorte
+Transversal · se tituló dentro del plazo nominal,titulacion_oportuna,Transversal,-0.22737652229954577,49,-0.36333422429412193,49,2025
+Por cohorte · se tituló de la carrera que empezó,titulacion_cohorte_carrera,Por cohorte,0.21304741047865988,48,0.23550362754174228,48,2025
+Por cohorte · se tituló en su universidad,titulacion_cohorte_universidad,Por cohorte,0.3668725273845718,48,0.26004601892456114,48,2025
+Por cohorte · se tituló en alguna universidad,titulacion_cohorte_sistema,Por cohorte,0.45406295257881335,48,0.32257227443208425,48,2025
