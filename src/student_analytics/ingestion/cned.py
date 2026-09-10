@@ -76,22 +76,17 @@ def normalize_name(value: str) -> str:
 def _sum_columns(frame: pd.DataFrame, pattern: str) -> pd.Series:
     columns = [c for c in frame.columns if re.search(pattern, str(c), re.I)]
     if not columns:
-        return pd.Series(0.0, index=frame.index)
-    return frame[columns].apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+        return pd.Series(np.nan, index=frame.index)
+    return frame[columns].apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=len(columns))
 
 
 def _closest_year(frame: pd.DataFrame, column: str, year: int) -> pd.DataFrame:
-    """Filas del año pedido; si no existe, el año disponible más cercano.
-
-    Las hojas del CNED no siempre llegan hasta la cohorte más reciente. Se
-    prefiere el año más próximo antes que descartar la institución.
-    """
+    """Solo el año solicitado: jamás se sustituye por otro sin evidencia."""
     years = pd.to_numeric(frame[column], errors="coerce")
     frame = frame.assign(_anio=years).dropna(subset=["_anio"])
     if frame.empty:
         return frame
-    disponible = int(min(frame._anio.unique(), key=lambda y: (abs(y - year), -y)))
-    return frame.loc[frame._anio.eq(disponible)]
+    return frame.loc[frame._anio.eq(year)]
 
 
 def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
@@ -121,7 +116,12 @@ def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
         "acreditacion_cned": pd.to_numeric(inst[acred], errors="coerce") if acred else np.nan,
     })
     base["antiguedad"] = year - base.anio_creacion
-    base = base.drop_duplicates("clave")
+    if base.clave.duplicated().any():
+        raise ValueError("Nombres institucionales CNED ambiguos tras normalizar")
+    # Este atributo es una foto del catálogo, no una observación por cohorte.
+    fecha = re.search(r"\(([^)]+)\)", str(acred))
+    base["acreditacion_cned_fecha"] = fecha.group(1) if fecha else "Sin fecha"
+    base["recursos_anio"] = year
 
     # --- Cuerpo docente -------------------------------------------------
     doc = _closest_year(hojas[HOJA_DOCENTES], "Año Proceso", year).copy()
@@ -130,8 +130,8 @@ def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
         completa = _sum_columns(doc, r"^N.DocentesJornadaCompleta$")
         media = _sum_columns(doc, r"^N.DocentesJornadaMedia$")
         hora = _sum_columns(doc, r"^N.DocentesJornadaHora$")
-        # Convención habitual: media jornada cuenta 0,5 y por hora 0,25.
-        doc["_jce"] = completa.fillna(0) + .5 * media.fillna(0) + .25 * hora.fillna(0)
+        # Aproximación explícita del proyecto, no un JCE oficial del CNED.
+        doc["_jce"] = completa + .5 * media + .25 * hora
         doc["_total"] = pd.to_numeric(doc.get("N°Docentes"), errors="coerce")
         doc["_doctor"] = _sum_columns(doc, r"^N.Doctor(Jornada)?(Hora|Media|Completa)$")
         doc["_magister"] = _sum_columns(doc, r"^N.Magister(Jornada)?(Hora|Media|Completa)$")
@@ -139,6 +139,9 @@ def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
         doc["_mujeres"] = pd.to_numeric(doc.get("N°DocentesMujeres"), errors="coerce")
         agg = doc.groupby("clave")[["_jce", "_total", "_doctor", "_magister",
                                     "_completa", "_mujeres"]].sum(min_count=1)
+        observed = doc.groupby("clave")[agg.columns].count()
+        complete = observed.eq(doc.groupby("clave").size(), axis=0)
+        agg = agg.where(complete)
         total = agg._total.where(agg._total.gt(0))
         docentes = pd.DataFrame({
             "docentes_jce": agg._jce,
@@ -167,7 +170,7 @@ def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
     bib = hojas.get(HOJA_BIBLIOTECAS)
     if bib is not None:
         col_anio = next((c for c in bib.columns if "o" in str(c) and "roceso" in str(c)), None)
-        bib = _closest_year(bib, col_anio, year).copy() if col_anio else bib.copy()
+        bib = _closest_year(bib, col_anio, year).copy() if col_anio else bib.iloc[:0].copy()
         if not bib.empty:
             bib["clave"] = bib["Nombre Institución"].map(normalize_name)
             ejemplares = next((c for c in bib.columns if "jemplares" in str(c)), None)
@@ -184,15 +187,17 @@ def load_institutional(path: str | Path, year: int) -> pd.DataFrame:
 def attach_resources(profiles: pd.DataFrame, resources: pd.DataFrame) -> pd.DataFrame:
     """Une los recursos al perfil por nombre normalizado y calcula ratios.
 
-    Los ratios se calculan aquí, no en el CNED, porque necesitan el tamaño
-    de la cohorte del propio perfil.
+    Los ratios usan estudiantes únicos identificados en toda la matrícula
+    institucional del año (todos los niveles), nunca la cohorte de ingreso.
+    Si ese denominador falta, la razón queda ausente.
     """
     out = profiles.copy()
     out["clave"] = out.nomb_inst.map(normalize_name)
     columnas = [c for c in resources.columns if c != "cned_nombre"]
-    out = out.merge(resources[columnas], on="clave", how="left")
+    out = out.merge(resources[columnas], on="clave", how="left", validate="many_to_one")
 
-    alumnos = out.cohorte_total.where(out.cohorte_total.gt(0))
+    alumnos = out.get("estudiantes_total", pd.Series(np.nan, index=out.index))
+    alumnos = alumnos.where(alumnos.gt(0))
     if "docentes_jce" in out:
         out["docentes_por_100_alumnos"] = 100 * out.docentes_jce.div(alumnos)
     if "m2_construido" in out:

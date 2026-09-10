@@ -11,6 +11,8 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from student_analytics.ingestion.cned import attach_resources, load_institutional
+from student_analytics.ingestion.paes import (attach_selectivity, institutional_selectivity,
+                                              load_scores)
 from student_analytics.modeling.benchmark import build_profiles
 
 
@@ -35,10 +37,42 @@ def main() -> None:
         print(f"Perfil de ingreso {year}", flush=True)
         chunks = pd.read_csv(path, sep=";", encoding="utf-8", usecols=base + extra,
                              dtype={c: "string" for c in base + extra if c != "anio_ing_carr_ori"}, chunksize=100_000)
-        cohort = pd.concat([c.loc[c.anio_ing_carr_ori.eq(year) & c.nivel_global.eq("Pregrado")
-                                  & c.tipo_inst_1.eq("Universidades")] for c in chunks])
+        cohort_parts, enrollment_parts = [], []
+        for chunk in chunks:
+            universities = chunk.loc[chunk.tipo_inst_1.eq("Universidades")]
+            # Todos los niveles y años de ingreso para recursos institucionales.
+            enrollment_parts.append(universities[["cod_inst", "mrun"]])
+            cohort_parts.append(universities.loc[universities.anio_ing_carr_ori.eq(year)
+                                                & universities.nivel_global.eq("Pregrado")])
+        cohort = pd.concat(cohort_parts)
+        all_enrollment = pd.concat(enrollment_parts, ignore_index=True)
+        total = all_enrollment.groupby("cod_inst").agg(
+            estudiantes_total=("mrun", "nunique"),
+            matriculas_total=("cod_inst", "size"),
+            matriculas_sin_mrun=("mrun", lambda x: int(x.isna().sum())),
+        )
         cohort = cohort.drop_duplicates(subset=base)
         p = build_profiles(cohort, int(year), uf_clp=uf.get(int(year)))
+        p = p.merge(total, on="cod_inst", how="left", validate="one_to_one")
+
+        # Selectividad de admision: se calcula aqui porque la cohorte ya esta
+        # en memoria con mrun y cod_inst. No requiere descargas nuevas.
+        paes_dir = source / f"paes_{year}_puntajes"
+        paes_files = sorted(paes_dir.rglob("*.csv")) if paes_dir.exists() else []
+        if paes_files:
+            scores = load_scores(paes_files[0])
+            selectividad = institutional_selectivity(cohort, scores)
+            p = attach_selectivity(p, selectividad)
+            cobertura = p.paes_cobertura.median() if "paes_cobertura" in p else float("nan")
+            print(f"  selectividad PAES: cobertura mediana {cobertura:.0%}", flush=True)
+            sources.append({"cohorte": int(year), "archivo": paes_files[0].name,
+                            "bytes": paes_files[0].stat().st_size,
+                            "uso": "selectividad de admision"})
+            del scores
+        else:
+            print(f"  sin PAES {year}; se omite la selectividad", flush=True)
+
+        del all_enrollment, enrollment_parts, cohort_parts
         expected = retention.loc[retention.cohorte.eq(year)].groupby("cod_inst")[["n", "sin_mrun"]].sum().sum(axis=1)
         actual = p.set_index("cod_inst").cohorte_total
         if not actual.sort_index().equals(expected.reindex(actual.index).sort_index()):
@@ -72,7 +106,9 @@ def main() -> None:
     shares = [c for c in result if "::" in c]
     result[shares] = result[shares].fillna(0)
     result.to_parquet(out / "benchmark_profiles.parquet", index=False)
-    manifest = {"generado_utc": datetime.now(timezone.utc).isoformat(), "version": 1,
+    manifest = {"generado_utc": datetime.now(timezone.utc).isoformat(), "version": 2,
+                "recursos_denominador": "MRUN únicos por universidad y año, todos los niveles; excluye MRUN ausente",
+                "recursos_temporalidad": "solo año exacto; acreditación CNED conserva fecha del catálogo",
                 "fuentes": sources, "perfil": "cohorte de ingreso a carrera, pregrado universitario",
                 "retencion_sha256": hashlib.sha256((out / "retention_universities.parquet").read_bytes()).hexdigest(),
                 "perfiles_sha256": hashlib.sha256((out / "benchmark_profiles.parquet").read_bytes()).hexdigest()}

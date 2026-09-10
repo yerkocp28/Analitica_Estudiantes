@@ -121,6 +121,9 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
         raise AssertionError("No se encontro la tabla de pares")
 
     original_peers = peer_table(app)
+    for axis in ("docentes_por_100_alumnos", "m2_construido_por_alumno", "retencion"):
+        app.selectbox(key="bench_x").set_value(axis).run()
+        assert not app.exception, [str(e.value) for e in app.exception]
     app.selectbox(key="bench_metric").set_value("sistema").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert peer_table(app) == original_peers

@@ -12,6 +12,7 @@ import sklearn
 from sklearn.metrics import adjusted_rand_score
 
 from student_analytics.modeling.benchmark import compare_outcomes, fit_peers, neighbors, target_code
+from student_analytics.modeling.benchmark_reporting import sensitivity, continuity_breakdown, executive_html
 
 UA_RED = "#E2211C"
 BLUE = "#2a78d6"
@@ -39,7 +40,7 @@ AXES = {
     "distancia": ("Distancia al perfil de la UA", ".2f"),
     # Recursos institucionales del CNED. Aparecen solo si la base esta
     # descargada: `disponibles` filtra por columnas con dato.
-    "docentes_por_100_alumnos": ("Docentes JCE por 100 estudiantes", ".1f"),
+    "docentes_por_100_alumnos": ("Docentes JCE estimados por 100 estudiantes totales", ".1f"),
     "share_doctorado": ("Docentes con doctorado", "%"),
     "share_magister": ("Docentes con magíster o doctorado", "%"),
     "share_jornada_completa": ("Docentes con jornada completa", "%"),
@@ -48,7 +49,19 @@ AXES = {
     "pc_por_100_alumnos": ("PC para estudiantes por cada 100", ".1f"),
     "ejemplares_por_alumno": ("Ejemplares de biblioteca por estudiante", ".1f"),
     "anio_creacion": ("Año de creación", "d"),
-    "acreditacion_cned": ("Años de acreditación (CNED)", ","),
+    "acreditacion_cned": ("Acreditación CNED · foto del catálogo 2025", ","),
+    "estudiantes_total": ("Estudiantes identificados · toda la institución", ","),
+    # Selectividad de admisión, cruzando PAES por MRUN. `paes_cobertura` no es
+    # un indicador de calidad sino la advertencia que acompaña a los demás:
+    # donde la cobertura es baja, el promedio describe a una minoría de la
+    # cohorte y no al perfil de ingreso de la institución.
+    "paes_promedio": ("Puntaje PAES promedio de la cohorte", ".0f"),
+    "paes_p25": ("PAES percentil 25 de la cohorte", ".0f"),
+    "paes_p75": ("PAES percentil 75 de la cohorte", ".0f"),
+    "paes_rango_intercuartil": ("Dispersión PAES de la cohorte (p75 − p25)", ".0f"),
+    "nem_promedio": ("Puntaje NEM promedio", ".0f"),
+    "ranking_promedio": ("Puntaje ranking promedio", ".0f"),
+    "paes_cobertura": ("Cohorte con puntaje PAES · cobertura", "%"),
 }
 
 
@@ -189,6 +202,12 @@ def render_benchmark(results_dir: Path) -> None:
     st.title("Universidad Autónoma · Benchmark")
     st.markdown("**¿Cómo se sitúa la UA frente a universidades de perfil similar?**")
     st.caption("Cohortes de ingreso · Datos públicos Mineduc/SIES · Comparación descriptiva de continuidad al año siguiente")
+    with st.expander("Cómo usar este complemento del proyecto"):
+        st.markdown("**1. Compara la continuidad** de la UA y revisa el tamaño de las cohortes. "
+                    "**2. Examina los pares** y comprueba si la brecha cambia al ampliar el grupo. "
+                    "**3. Explora áreas y recursos** para formular preguntas de gestión. "
+                    "El benchmark aporta contexto institucional; el cockpit de alerta temprana es una "
+                    "demostración separada de predicción por estudiante y asignatura, con datos sintéticos y OULAD.")
     files = [results_dir / name for name in ["retention_universities.parquet", "benchmark_profiles.parquet", "benchmark_manifest.json"]]
     if not all(p.exists() for p in files):
         st.info("Aún no están preparados los perfiles para identificar universidades comparables.")
@@ -197,7 +216,8 @@ def render_benchmark(results_dir: Path) -> None:
     config_path = Path(__file__).resolve().parents[3] / "config/benchmark.yml"
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     try:
-        data, profiles, manifest = load_benchmark(str(results_dir), tuple(p.stat().st_mtime_ns for p in files))
+        data, profiles, manifest = load_benchmark(
+            str(results_dir), tuple(p.stat().st_mtime_ns for p in files))
     except ValueError as exc:
         st.warning(str(exc))
         st.code("python scripts/build_benchmark.py", language="bash")
@@ -260,6 +280,11 @@ def render_benchmark(results_dir: Path) -> None:
     st.caption("pp = puntos porcentuales. Las referencias de pares y del sistema excluyen a la UA. "
                f"El ajuste por áreas cubre {stats['cobertura']:.1%} de las inscripciones UA del filtro; "
                "su brecha usa la retención UA de esas mismas áreas comunes.")
+    small = shown.loc[shown.n.between(1, 29), "nomb_inst"].tolist()
+    if small:
+        st.warning("Comparaciones de tamaño reducido (menos de 30 inscripciones): " + "; ".join(small)
+                   + ". Interpreta sus porcentajes con el denominador a la vista.")
+    scenarios = sensitivity(data, int(year), code, nearest.cod_inst.tolist(), metric, area)
     position, mapa, similar, evolution, methodology = st.tabs(
         ["Posición de la UA", "Mapa de posicionamiento", "Por qué son comparables",
          "Evolución y áreas", "Método y cobertura"])
@@ -298,10 +323,33 @@ def render_benchmark(results_dir: Path) -> None:
                      hide_index=True, width="stretch")
         st.download_button("Descargar benchmark con contexto", export.to_csv(index=False).encode("utf-8-sig"),
                            file_name=f"benchmark_ua_{year}_{metric}.csv", mime="text/csv")
+        st.download_button("Descargar informe ejecutivo (HTML)",
+                           executive_html(int(year), area_name, LABELS[metric], mode, stats,
+                                          export[["Universidad", "Inscripciones", "Sin MRUN", "Continuidad (%)", "Brecha vs UA (pp)"]],
+                                          scenarios, manifest["generado_utc"]),
+                           file_name=f"informe_benchmark_ua_{year}.html", mime="text/html")
+        st.subheader("Permanencia y movilidad al año siguiente")
+        transitions = continuity_breakdown(shown)
+        states = ["Misma carrera", "Otra carrera en la institución", "Otra institución", "Sin matrícula observada"]
+        st.altair_chart(alt.Chart(transitions).mark_bar().encode(
+            y=alt.Y("Referencia:N", title=None),
+            x=alt.X("Proporción:Q", title="Distribución de la cohorte", axis=alt.Axis(format="%")),
+            color=alt.Color("Estado:N", sort=states, scale=alt.Scale(domain=states,
+                range=["#2a78d6", "#1baf7a", "#eda100", "#8a8880"]), legend=alt.Legend(orient="bottom")),
+            order="Orden:Q", tooltip=["Referencia", "Estado", "Inscripciones", alt.Tooltip("Proporción:Q", format=".1%")]
+        ).properties(height=140), width="stretch")
+        st.caption("Estados excluyentes por inscripción de origen. Un cambio de carrera o institución no es abandono. "
+                   "Esta descomposición muestra todos los estados, cualquiera sea el indicador elegido arriba.")
+        st.subheader("¿La brecha depende de escoger cinco pares?")
+        st.dataframe(scenarios.round(2), hide_index=True, width="stretch")
+        st.caption("Escenarios con los 3, 5, 8 y 10 vecinos más cercanos; conservan la cohorte, el área y el indicador. "
+                   "Reemplazan la selección manual o de cluster solo en esta tabla. No son intervalos de confianza.")
     with mapa:
         st.subheader("¿Dónde se sitúa la UA entre las universidades chilenas?")
-        st.caption("Cada punto es una universidad. Las líneas punteadas marcan la mediana del sistema "
+        st.caption("Cada punto es una universidad. Las líneas punteadas marcan la mediana de las universidades con dato en ambos ejes "
                    "y dividen el gráfico en cuadrantes. Sólo la UA y sus pares llevan nombre.")
+        st.caption("El filtro de área afecta la continuidad; los costos, recursos y distribuciones describen el perfil completo "
+                   "o toda la institución. No son recursos exclusivos del área seleccionada.")
         frame = positioning_frame(model, nearest, data, int(year), metric, area, code, peer_ids)
         disponibles = [k for k in AXES if k in frame.columns and frame[k].notna().any()]
         ex, ey = st.columns(2)
@@ -312,6 +360,8 @@ def render_benchmark(results_dir: Path) -> None:
                              if "retencion" in disponibles else 0,
                              format_func=lambda k: AXES[k][0], key="bench_y")
         grafico, n_puntos = scatter(frame, x_var, y_var)
+        if x_var == y_var:
+            st.info("Elegiste el mismo indicador en ambos ejes; cambia uno para realizar una comparación útil.")
         if grafico is None:
             st.info("No hay universidades con datos en ambas variables para este filtro.")
         else:
@@ -319,17 +369,20 @@ def render_benchmark(results_dir: Path) -> None:
             faltan = len(frame) - n_puntos
             if faltan:
                 st.caption(f"{n_puntos} universidades con dato en ambos ejes; {faltan} quedan fuera por dato ausente.")
+            target_row = frame.loc[frame.cod_inst.eq(code)]
+            if target_row[[x_var, y_var]].isna().any(axis=None):
+                st.warning("La UA no tiene dato en alguno de los ejes; su punto no aparece en este gráfico.")
 
         st.subheader("¿Las universidades parecidas obtienen resultados parecidos?")
-        st.caption("Distancia de perfil frente a continuidad. Si el parecido de perfil explicara el resultado, "
-                   "los puntos caerían sobre una pendiente; la dispersión indica cuánto queda sin explicar.")
+        st.caption("Distancia al perfil de la UA frente a continuidad. La asociación describe esta cohorte; "
+                   "no mide cuánto explica el perfil ni identifica un efecto causal.")
         rel, _ = scatter(frame, "distancia", "retencion", quadrants=False)
         if rel is None:
             st.info("Sin datos suficientes para relacionar perfil y resultado.")
         else:
             st.altair_chart(rel, width="stretch")
             pares = frame.loc[frame.distancia.notna() & frame.retencion.notna() & frame.distancia.gt(0)]
-            if len(pares) > 5:
+            if len(pares) > 5 and pares.distancia.nunique() > 1 and pares.retencion.nunique() > 1:
                 # La lectura se deriva del valor observado. Un texto fijo se
                 # vuelve falso en cuanto cambian los datos o el filtro.
                 r = float(np.corrcoef(pares.distancia, pares.retencion)[0, 1])
@@ -345,7 +398,7 @@ def render_benchmark(results_dir: Path) -> None:
                     f"Correlación entre distancia de perfil y continuidad: **{r:+.2f}** "
                     f"(Spearman {rs:+.2f}) sobre {len(pares)} universidades: relación **{fuerza}**. "
                     + (f"Con ese signo, {sentido}. " if abs(r) >= .2 else
-                       "El perfil de ingreso, por sí solo, no anticipa el resultado. "))
+                       "En esta cohorte no se observa una asociación lineal clara con la distancia a la UA. "))
                 st.caption("La distancia se mide desde la UA, así que esto describe su vecindario y no una "
                            "regularidad del sistema. Tampoco implica causalidad: perfil y resultado pueden "
                            "compartir causas que no están en el modelo, como selectividad de admisión o "
@@ -359,8 +412,9 @@ def render_benchmark(results_dir: Path) -> None:
             if serie.empty or valor.empty or not np.isfinite(valor.iloc[0]):
                 continue
             v = float(valor.iloc[0])
-            filas.append({"Variable": AXES[clave][0], "UA": v,
-                          "Mediana del sistema": float(serie.median()),
+            multiplier = 100 if AXES[clave][1] == "%" else 1
+            filas.append({"Variable": AXES[clave][0] + (" (%)" if multiplier == 100 else ""), "UA": multiplier * v,
+                          "Mediana de universidades con dato": multiplier * float(serie.median()),
                           "Percentil UA": round(100 * float((serie < v).mean()), 0),
                           "Universidades con dato": int(serie.size)})
         if filas:
@@ -374,9 +428,11 @@ def render_benchmark(results_dir: Path) -> None:
                     "jornada y modalidad**. Cada uno de los cuatro bloques tiene el mismo peso. "
                     "La retención no participa en la distancia ni en los clusters.")
         st.caption("Se describe el perfil de las cohortes de ingreso a carrera, no la totalidad de la universidad. "
-                   "Los recursos institucionales y el cuerpo docente (base INDICES del CNED) están disponibles "
-                   "como variables descriptivas en el mapa de posicionamiento, pero **no participan** en la "
-                   "distancia ni en los clusters. Siguen sin incorporarse selectividad de admisión e investigación.")
+                   "Los recursos institucionales y el cuerpo docente (base INDICES del CNED) y la selectividad "
+                   "de admisión (PAES cruzada por MRUN) están disponibles como variables descriptivas en el "
+                   "mapa de posicionamiento, pero **no participan** en la distancia ni en los clusters. "
+                   "La selectividad describe solo a quienes rindieron la PAES: revisa su cobertura antes de "
+                   "interpretarla. Sigue sin incorporarse actividad de investigación.")
         peers = nearest.loc[nearest.cod_inst.isin(peer_ids)]
         table = peers[["nomb_inst", "cohorte_total", "sedes", "grupo", "distancia", "mismo_grupo_ua"]].rename(columns={
             "nomb_inst": "Universidad", "cohorte_total": "Tamaño de cohorte", "sedes": "Sedes",
@@ -490,6 +546,17 @@ def render_benchmark(results_dir: Path) -> None:
             except ValueError as exc:
                 st.caption(f"Estabilidad temporal no disponible: {exc}")
         st.subheader("Cobertura y trazabilidad")
+        resource_fields = [c for c in ["nomb_inst", "estudiantes_total", "matriculas_sin_mrun", "recursos_anio",
+                                       "docentes_por_100_alumnos", "share_doctorado", "m2_construido_por_alumno",
+                                       "pc_por_100_alumnos", "ejemplares_por_alumno", "acreditacion_cned_fecha"] if c in cohort]
+        st.markdown("**Recursos institucionales.** Las razones usan estudiantes únicos identificados en toda la matrícula "
+                    "del año, incluidos todos los niveles. Se excluyen MRUN ausentes del denominador y se informa su cantidad. "
+                    "Los recursos se toman solo del mismo año; no se sustituyen por observaciones futuras. "
+                    "El JCE es una aproximación del proyecto: completa + 0,5 × media + 0,25 × por hora. "
+                    "La acreditación CNED es una foto del catálogo, con fecha explícita, y no una serie histórica.")
+        st.dataframe(cohort[resource_fields].rename(columns={"nomb_inst": "Universidad"}), hide_index=True, width="stretch")
+        st.caption("Los aranceles están ponderados por inscripciones de ingreso; montos en UF se convierten "
+                   "con factores anuales aproximados. Los recursos institucionales no intervienen en el clustering.")
         st.write(f"Universidades con perfil en la cohorte: **{len(cohort)}**. "
                  f"Incluidas en el agrupamiento: **{len(model.universities)}**, "
                  f"con al menos {config['minimum_cohort']} inscripciones de ingreso.")

@@ -82,6 +82,9 @@ def _add_descriptive(cohort: pd.DataFrame, result: pd.DataFrame, uf_clp: float |
         arancel = _numeric(cohort.valor_arancel)
         matricula = _numeric(cohort.get("valor_matricula", pd.Series(index=cohort.index)))
         formato = cohort.get("formato_valores", pd.Series("", index=cohort.index)).astype("string")
+        known = formato.str.contains("UF|Pesos", case=False, na=False)
+        arancel = arancel.where(known & arancel.ge(0))
+        matricula = matricula.where(known & matricula.ge(0))
         en_uf = formato.str.contains("UF", case=False, na=False)
         if uf_clp:
             arancel = arancel.where(~en_uf, arancel * uf_clp)
@@ -104,9 +107,10 @@ def _add_descriptive(cohort: pd.DataFrame, result: pd.DataFrame, uf_clp: float |
     if "dur_total_carr" in cohort:
         result["duracion_media"] = _numeric(cohort.dur_total_carr).groupby(by).mean()
     if "forma_ingreso" in cohort:
-        forma = cohort.forma_ingreso.astype("string").fillna("")
+        forma = cohort.forma_ingreso.astype("string").str.strip().replace("", pd.NA)
         result["ingreso_no_regular"] = (~forma.str.startswith("1-")).groupby(by).mean()
-        result["ingreso_pace"] = forma.str.contains("PACE", case=False, na=False).groupby(by).mean()
+        result["ingreso_pace"] = forma.str.contains("PACE", case=False).groupby(by).mean()
+        result["cobertura_ingreso"] = forma.notna().groupby(by).mean()
 
 
 def profile_matrix(profiles: pd.DataFrame, weights: dict) -> tuple[np.ndarray, dict[str, list[str]]]:

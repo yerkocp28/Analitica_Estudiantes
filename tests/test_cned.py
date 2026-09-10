@@ -10,6 +10,8 @@ from student_analytics.ingestion.cned import (
     attach_resources,
     load_institutional,
     normalize_name,
+    _closest_year,
+    _sum_columns,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -119,12 +121,28 @@ def test_union_con_el_perfil_no_pierde_universidades(recursos):
 
 
 @pytestmark_base
-def test_ratios_usan_el_tamano_del_perfil(recursos):
-    """Los ratios por alumno se calculan con la cohorte, no vienen del CNED."""
+def test_ratios_usan_matricula_institucional_no_cohorte(recursos):
     p = pd.DataFrame({"cod_inst": ["1"], "nomb_inst": ["U. DE CHILE"],
-                      "cohorte_total": [1000]})
+                      "cohorte_total": [1000], "estudiantes_total": [10000]})
     unido = attach_resources(p, recursos)
     fila = unido.iloc[0]
     if pd.notna(fila.get("docentes_jce")):
-        esperado = 100 * fila.docentes_jce / 1000
+        esperado = 100 * fila.docentes_jce / 10000
         assert fila.docentes_por_100_alumnos == pytest.approx(esperado)
+
+
+def test_recursos_sin_denominador_no_usa_cohorte():
+    p = pd.DataFrame({"nomb_inst": ["U. A"], "cohorte_total": [100]})
+    r = pd.DataFrame({"clave": [normalize_name("U. A")], "docentes_jce": [50.]})
+    assert pd.isna(attach_resources(p, r).docentes_por_100_alumnos.iloc[0])
+
+
+def test_no_sustituye_anio_por_observaciones_futuras():
+    data = pd.DataFrame({"year": [2022, 2024], "value": [1, 9]})
+    assert _closest_year(data, "year", 2023).empty
+    assert _closest_year(data, "year", 2024).value.tolist() == [9]
+
+
+def test_ausencia_de_dotacion_no_se_convierte_en_cero():
+    data = pd.DataFrame({"otra": [3]})
+    assert _sum_columns(data, "Docentes").isna().all()

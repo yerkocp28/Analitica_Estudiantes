@@ -104,6 +104,11 @@ def capacity_curve(y: np.ndarray, score: np.ndarray, points: int = 60) -> pd.Dat
 st.sidebar.image(str(REPO_ROOT / "documentacion" / "assets" / "logo-ua.png"),
                  width="stretch")
 st.sidebar.title("Student Analytics UA")
+st.sidebar.caption("Proyecto de analítica estudiantil · Benchmark institucional complementario")
+with st.sidebar.expander("Acerca de esta herramienta"):
+    st.write("Datos públicos para comparar instituciones y una demostración de alerta temprana. "
+             "Sin acceso a Banner/Canvas de la UA. La comparación institucional no predice riesgo individual.")
+    st.link_button("Documentación del proyecto", "https://github.com/yerkocp28/Analitica_Estudiantes")
 
 section = st.sidebar.radio("Sección", ["Benchmark UA", "Alerta temprana", "Retención universitaria"])
 if section == "Benchmark UA":
@@ -175,6 +180,8 @@ tab_cockpit, tab_360, tab_modelo = st.tabs(
 # Cockpit
 # ----------------------------------------------------------------------
 with tab_cockpit:
+    st.caption("Demostración retrospectiva. Cada caso corresponde a estudiante × asignatura × período; "
+               "una persona puede aparecer en varios casos. La captura se calcula con resultados ya observados.")
     y = view["y_true"].to_numpy()
     s = view["risk_score"].to_numpy()
     curve = capacity_curve(y, s)
@@ -247,6 +254,9 @@ with tab_cockpit:
                         "mean_grade", "n_grades", "activity_mean")
             if c in view.columns]
     tabla = view.nlargest(n_rev, "risk_score")[cols].copy()
+    for proportion in ("attendance_cum", "submission_rate"):
+        if proportion in tabla:
+            tabla[proportion] *= 100
     tabla.insert(0, "", tabla["band"].map(BAND_ICONS))
     st.dataframe(
         tabla, width="stretch", hide_index=True,
@@ -377,6 +387,8 @@ with tab_modelo:
     tabla_m = metrics.copy()
     tabla_m.columns = ["Semana", "Semanas restantes", "N train", "N test",
                        "Prevalencia", "AUC", "Brier", "Top 5%", "Top 10%", "Top 20%"]
+    for proportion in ("Prevalencia", "Top 5%", "Top 10%", "Top 20%"):
+        tabla_m[proportion] *= 100
     st.dataframe(tabla_m, width="stretch", hide_index=True,
                  column_config={
                      c: st.column_config.NumberColumn(c, format="%.1f%%")

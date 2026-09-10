@@ -80,3 +80,10 @@ def test_advierte_sobre_la_naturaleza_de_los_datos(app):
     """Ninguna vista puede presentar estas cifras como hallazgos reales."""
     avisos = " ".join([w.value for w in app.warning] + [i.value for i in app.info]).lower()
     assert "sintetic" in avisos or "oulad" in avisos
+
+
+def test_porcentajes_de_la_tabla_coinciden_con_metricas(app):
+    import pandas as pd
+    expected = pd.read_parquet(RESULTS / "metrics_synthetic.parquet")
+    table = next(d.value for d in app.dataframe if "Prevalencia" in d.value.columns)
+    assert table["Prevalencia"].tolist() == pytest.approx((100 * expected.prevalence).tolist())
