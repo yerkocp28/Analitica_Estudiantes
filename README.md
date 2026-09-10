@@ -555,6 +555,9 @@ Complementan el informe:
 
 - [`documentacion/benchmark_universitario.md`](documentacion/benchmark_universitario.md)
   — metodología del benchmark: bloques, distancia, clusters y sus límites.
+- [`documentacion/plan_sin_datos_internos.md`](documentacion/plan_sin_datos_internos.md)
+  — qué se puede cumplir mientras el acceso a Banner/Canvas siga retrasado, y
+  cómo dejar el esquema listo para conectarlos sin reescribir nada.
 - `documentacion/datos/inventario_perfil_benchmark.csv` — **una fila por
   variable del perfil**, con su origen, si entra al clustering, si es graficable
   y las advertencias que no se deducen del dato (escalas no comparables,
