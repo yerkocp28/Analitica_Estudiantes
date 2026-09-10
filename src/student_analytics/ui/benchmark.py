@@ -72,6 +72,16 @@ AXES = {
     "titulacion_oportuna": ("Se tituló dentro de la duración nominal", "%"),
     "titulacion_oportuna_holgada": ("Se tituló dentro de la nominal más un año", "%"),
     "titulacion_cobertura": ("Titulados con duración calculable · cobertura", "%"),
+    # Titulacion POR COHORTE DE INGRESO: seguimiento longitudinal por MRUN.
+    # Esta si es una tasa —de los que entraron, cuantos se titularon— pero
+    # de una cohorte ANTIGUA, la ultima cuyo plazo alcanzo a cumplirse. Los
+    # tres niveles estan anidados: carrera <= universidad <= sistema, y la
+    # brecha entre ellos es cambio de carrera y traslado, no desercion.
+    "titulacion_cohorte_carrera": ("Se tituló de la carrera que empezó · cohorte", "%"),
+    "titulacion_cohorte_universidad": ("Se tituló en su universidad de ingreso · cohorte", "%"),
+    "titulacion_cohorte_sistema": ("Se tituló en alguna universidad · cohorte", "%"),
+    "titulacion_cohorte_anios": ("Años medianos hasta el título · cohorte", ".1f"),
+    "titulacion_cohorte_n": ("Ingresantes con horizonte observable · cohorte", ","),
 }
 
 
@@ -281,6 +291,21 @@ def render_benchmark(results_dir: Path) -> None:
     if stats["pares_disponibles"] < len(peer_ids):
         st.warning(f"Solo {stats['pares_disponibles']} de {len(peer_ids)} pares tienen resultados en esta área. "
                    "Las referencias usan únicamente los pares con denominador disponible.")
+    # En 2007 y 2008 falta `cod_carrera` en una quinta parte de la matricula.
+    # Sin codigo la fila no puede calzar a nivel de carrera aunque la persona
+    # haya seguido en la misma, asi que ese indicador aparece hundido sin que
+    # nadie haya desertado. Los niveles de universidad y sistema no dependen
+    # de ese campo y si son comparables en esos anios.
+    if metric == "misma_carrera" and "con_cod_carrera" in data.columns:
+        cohorte = data.loc[data.cohorte.eq(int(year))]
+        total = cohorte.n.sum()
+        cobertura = cohorte.con_cod_carrera.sum() / total if total else 1.0
+        if cobertura < 0.95:
+            st.warning(f"En la cohorte {year} solo el {cobertura:.0%} de las inscripciones trae "
+                       "código de carrera, así que la continuidad **de carrera** aparece más baja "
+                       "de lo que fue: sin código la fila no puede calzar aunque el estudiante "
+                       "haya seguido en la misma carrera. Usa continuidad en la misma universidad "
+                       "o en el sistema, que no dependen de ese campo.")
     a, b, c, d = st.columns(4)
     a.metric("Continuidad UA", percent(stats["ua"]))
     a.caption(f"{stats['ua_n']:,} inscripciones con seguimiento")
@@ -605,6 +630,23 @@ def render_benchmark(results_dir: Path) -> None:
                     "el puntaje PAES de ingreso y −0,19 con los años de acreditación: depende sobre todo de "
                     "la mezcla de carreras. Las universidades con fuerte peso de ingeniería aparecen abajo "
                     "porque esos programas se alargan, no porque enseñen peor.")
+        st.markdown("**Titulación por cohorte de ingreso.** Es la contraparte longitudinal de lo anterior y "
+                    "sí es una tasa: se toma la cohorte que ingresó en un año y se la busca en las bases de "
+                    "titulados de los años siguientes cruzando por MRUN, que es un identificador enmascarado "
+                    "pero estable entre bases. Se mide en tres niveles anidados —se tituló de la carrera que "
+                    "empezó, se tituló en su universidad de ingreso, se tituló en alguna universidad—. La "
+                    "brecha entre el primero y el segundo es cambio de carrera; entre el segundo y el "
+                    "tercero, traslado a otra institución. Sin el tercer nivel, todo traslado se contaría "
+                    "como fracaso.")
+        st.markdown("**Por qué la cohorte de referencia es antigua.** Una cohorte solo puede evaluarse cuando "
+                    "su plazo se cumplió, y una carrera de cinco años con dos de holgura necesita siete años "
+                    "de datos posteriores. De la cohorte del perfil todavía no se titula nadie, así que se "
+                    "muestra la última cohorte con horizonte completo y la app indica de qué año viene. Cada "
+                    "estudiante entra al denominador solo si su propio horizonte —su duración nominal más la "
+                    "holgura— cabe en los datos disponibles; quien no alcanza a ser observado ese tiempo "
+                    "queda fuera del denominador en vez de contarse como si hubiera desertado. Sin esa "
+                    "corrección por censura, las cohortes recientes parecen catastróficas por el solo hecho "
+                    "de ser recientes.")
         st.markdown("**Denominadores.** Son inscripciones de ingreso a carrera de pregrado universitario, "
                     "no necesariamente personas que ingresan por primera vez a educación superior. Una persona puede "
                     "contar en varias carreras. Se eliminan duplicados de las columnas canónicas. La retención excluye "

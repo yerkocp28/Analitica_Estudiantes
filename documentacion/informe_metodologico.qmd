@@ -160,7 +160,8 @@ proyecto es la continuación operativa de esa recomendación.
 
 | Fuente | Grano | Licencia | Rol en el proyecto |
 |---|---|---|---|
-| [Matrícula en Educación Superior](https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/) 2023, 2024, 2025 | Individual (MRUN) | Datos abiertos de gobierno | Retención real UA; población de los modelos |
+| [Matrícula en Educación Superior](https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/) 2007–2026 | Individual (MRUN) | Datos abiertos de gobierno | Retención real UA; población de los modelos; cohortes de ingreso del seguimiento longitudinal |
+| [Titulados en Educación Superior](https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/) 2007–2025 | Individual (MRUN) | Datos abiertos de gobierno | Titulación de la promoción que egresa y titulación por cohorte de ingreso |
 | [Pruebas de admisión (PAES)](https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Variables previas al ingreso |
 | [Asistencia anual por estudiante](https://datosabiertos.mineduc.cl/asistencia-anual-por-estudiante/) 2022, 2023 | Individual (MRUN + RBD), tasa mensual | Datos abiertos de gobierno | Asistencia de enseñanza media y su pendiente |
 | [Alumnos SEP](https://datosabiertos.mineduc.cl/alumnos-preferentes-prioritarios-y-beneficiarios-sep/) 2022, 2023 | Individual (MRUN + RBD) | Datos abiertos de gobierno | Vulnerabilidad individual: prioritario / preferente |
@@ -557,6 +558,117 @@ La brecha entre la sede con mayor y menor retención supera los **14 puntos**. C
 esos tamaños muestrales no es ruido. La sede debe entrar al modelo como variable,
 no quedarse como filtro del tablero.
 :::
+
+## Titulación por cohorte de ingreso {#sec-cohortes}
+
+Con la matrícula histórica descargada (2007 en adelante) se puede seguir a cada
+cohorte de ingreso contra las bases de titulados de los años siguientes,
+cruzando por MRUN. Esto responde una pregunta que los indicadores transversales
+no pueden responder: de quienes **entraron** en un año, qué proporción llegó a
+titularse. La versión transversal describe a la promoción que **egresa** —cuánto
+se demoró quien sí se tituló— y es una cohorte distinta.
+
+Se mide en tres niveles anidados. La brecha entre el primero y el segundo es
+cambio de carrera dentro de la misma universidad; entre el segundo y el tercero,
+traslado a otra institución. **Sin el tercer nivel, todo traslado se contabiliza
+como fracaso.**
+
+```{python}
+#| label: tbl-cohortes-nacional
+#| tbl-cap: "Titulación por cohorte de ingreso, sistema universitario nacional (plazo = duración nominal + 2 años)"
+r = leer("cohortes_titulacion_nacional")
+if r is not None:
+    for c in ("cobertura", "titulacion_carrera", "titulacion_universidad",
+              "titulacion_sistema"):
+        r[c] = r[c].map("{:.1%}".format)
+    for c in ("ingresantes", "observables"):
+        r[c] = r[c].map("{:,}".format)
+    r.columns = ["Cohorte", "Ingresantes", "Observables", "Cobertura",
+                 "De su carrera", "En su universidad", "En alguna universidad"]
+r
+```
+
+```{python}
+#| label: tbl-cohortes-ua
+#| tbl-cap: "Titulación por cohorte de ingreso — Universidad Autónoma de Chile"
+r = leer("cohortes_titulacion_ua")
+if r is not None:
+    for c in ("titulacion_cohorte_cobertura", "titulacion_cohorte_carrera",
+              "titulacion_cohorte_universidad", "titulacion_cohorte_sistema"):
+        if c in r:
+            r[c] = r[c].map(lambda v: "—" if pd.isna(v) else f"{v:.1%}")
+    if "titulacion_cohorte_n" in r:
+        r["titulacion_cohorte_n"] = r["titulacion_cohorte_n"].map("{:,.0f}".format)
+    if "titulacion_cohorte_anios" in r:
+        r["titulacion_cohorte_anios"] = r["titulacion_cohorte_anios"].map(
+            lambda v: "—" if pd.isna(v) else f"{v:.1f}")
+    r.columns = ["Cohorte", "Observables", "Cobertura", "De su carrera",
+                 "En su universidad", "En alguna universidad", "Años al título"]
+r
+```
+
+### Censura por derecha: el problema central
+
+Una cohorte sólo puede evaluarse cuando su plazo se cumplió. Una carrera de cinco
+años con dos de holgura necesita siete años de datos posteriores, y de la cohorte
+del perfil todavía no se ha titulado nadie. Comparar cohortes sin corregir esto
+hace que las recientes parezcan catastróficas por el solo hecho de ser recientes.
+
+El tratamiento tiene **dos niveles**, y el segundo apareció al auditar el
+resultado del primero:
+
+1. **Por estudiante.** Cada ingresante entra al denominador sólo si su propio
+   horizonte —su duración nominal más la holgura— cabe en los datos disponibles.
+   Quien no alcanzó a ser observado ese tiempo queda fuera del denominador, en
+   vez de contarse como si hubiera desertado.
+
+2. **Por institución.** Corregir el tiempo no corrige la **composición**. Cuando
+   quedan pocos años de seguimiento, las carreras largas caen primero, así que una
+   universidad con mucha medicina o ingeniería queda descrita sólo por sus
+   carreras cortas y su tasa sube sin que haya titulado mejor. Se exige que al
+   menos el 90% de los ingresantes de esa institución sea observable; bajo ese
+   umbral la tasa se anula y se conserva la cobertura, que explica por qué.
+
+::: {.callout-warning}
+## Este filtro cambió el resultado de la UA, no sólo la teoría
+
+Sin el piso por institución, la UA aparecía **primera del sistema** en la cohorte
+2018 con 70,4% y percentil 98. Esa cohorte tenía 81% de observabilidad nacional
+pero sólo 80% en la UA, que concentra 15,7% de carreras de seis años o más contra
+12,1% del sistema: el filtro le recortaba justamente sus carreras largas. Con el
+piso aplicado, la última cohorte comparable pasa a ser **2017**, donde la UA
+marca 61,4% frente a una mediana de 50,9%. Sigue siendo una posición alta, pero
+es la que resiste auditoría.
+
+La composición de la UA es **más exigente** que la del sistema, no más fácil:
+1,1% de sus ingresantes está en carreras de tres años o menos, contra 13,3%
+nacional. Su ventaja no viene de ofrecer programas cortos.
+:::
+
+::: {.callout-note}
+## Una cohorte común para todas
+
+La cohorte de referencia que se une al perfil es **la misma para todas las
+universidades**. Si cada una trajera su última cohorte con dato, la más reciente
+quedaría representada sólo por las que alcanzan a cerrarla —las de carreras
+cortas— y el benchmark compararía a unas instituciones en un año contra otras en
+otro. Se exige que la cohorte elegida tenga tasa utilizable en al menos el 80%
+del sistema.
+:::
+
+### Un error que las tasas anidadas dejaron a la vista
+
+La primera versión tomaba el primer título por clave y recién después descartaba
+los anteriores al ingreso. Un título previo de otra carrera ganaba el mínimo y
+anulaba al estudiante entero, escondiendo el título posterior que sí correspondía
+a esa cohorte. Como el nivel *sistema* agrega más títulos por persona, se
+envenenaba más que los otros, y aparecían universidades con titulación en el
+sistema **menor** que en su propia institución, lo que es imposible por
+construcción.
+
+El orden correcto es descartar por año **antes** de agregar por clave. La
+propiedad de anidamiento —carrera ≤ universidad ≤ sistema— se verifica hoy como
+test sobre los datos reales, no sólo sobre casos sintéticos.
 
 ## Piso predictivo de las variables previas al ingreso
 

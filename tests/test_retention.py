@@ -25,6 +25,35 @@ def test_movilidad_duplicados_y_mrun_ausente():
     assert result["sistema"] == 3
 
 
+def test_la_cobertura_de_cod_carrera_queda_registrada():
+    """En 2007-2008 falta el código en ~20% de la matrícula.
+
+    Sin código, la fila no puede calzar a nivel de carrera aunque la persona
+    haya seguido en la misma, y la continuidad de carrera aparece hundida sin
+    que nadie haya desertado. La cobertura se cuenta para poder descartar esos
+    años en vez de leer la caída como un hecho.
+    """
+    current = pd.DataFrame({
+        "mrun": ["1", "2", "3", "4"],
+        "cod_inst": ["A"] * 4, "cod_carrera": ["C", "C", None, None],
+        "nomb_inst": ["Universidad A"] * 4, "nomb_sede": ["Centro"] * 4,
+        "nomb_carrera": ["Carrera C"] * 4, "area_conocimiento": ["Salud"] * 4,
+        "nivel_global": ["Pregrado"] * 4, "tipo_inst_1": ["Universidades"] * 4,
+        "anio_ing_carr_ori": [2007] * 4,
+    })
+    following = pd.DataFrame({"mrun": ["1", "2", "3", "4"], "cod_inst": ["A"] * 4,
+                              "cod_carrera": ["C", "C", "C", "C"]})
+    result = aggregate_retention(current, following, 2007).iloc[0]
+    assert result["n"] == 4
+    assert result["con_cod_carrera"] == 2
+    # Los cuatro siguen en la misma universidad; solo dos pueden calzar carrera.
+    assert result["misma_universidad"] == 4
+    assert result["misma_carrera"] == 2
+    resumen = summarize_retention(
+        aggregate_retention(current, following, 2007), ["cohorte"]).iloc[0]
+    assert resumen["cobertura_cod_carrera"] == pytest.approx(.5)
+
+
 def test_tasas_ponderadas_y_denominador_cero():
     data = pd.DataFrame({"universidad": ["A", "A", "B"], "n": [10, 90, 0],
                          "misma_carrera": [10, 45, 0], "misma_universidad": [10, 60, 0],

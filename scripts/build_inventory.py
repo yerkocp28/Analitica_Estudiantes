@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from student_analytics.ingestion.cned import RESOURCE_LABELS  # noqa: E402
+from student_analytics.ingestion.cohortes import COHORT_LABELS  # noqa: E402
 from student_analytics.ingestion.paes import SELECTIVITY_LABELS  # noqa: E402
 from student_analytics.modeling.benchmark import (NUMERIC_BLOCKS,  # noqa: E402
                                                   SHARE_BLOCKS)
@@ -46,10 +47,18 @@ NOTAS = {
     "paes_promedio": "Promedio de Competencia Lectora y Matemática M1 de quienes rindieron; revisar paes_cobertura.",
     "paes_cobertura": "Fracción de la cohorte con puntaje PAES. Donde es baja, los promedios describen una minoría.",
     "estudiantes_total": "MRUN únicos por universidad y año, todos los niveles; excluye registros sin MRUN.",
+    "titulacion_oportuna": "Describe a la promoción que EGRESA, no a la cohorte del perfil. No ordena por calidad: correlaciona -0,08 con PAES y -0,19 con acreditación.",
+    "titulacion_cohorte_anio": "Cohorte de ingreso a la que se refieren los indicadores de titulación longitudinal; es la misma para todas las universidades.",
+    "titulacion_cohorte_carrera": "Tasa sobre ingresantes con horizonte observable, no sobre la cohorte completa.",
+    "titulacion_cohorte_universidad": "Incluye a quien cambió de carrera dentro de la misma universidad.",
+    "titulacion_cohorte_sistema": "Incluye traslados a otra universidad; sin este nivel, todo traslado se contaría como deserción.",
+    "titulacion_cohorte_cobertura": "Fracción de la cohorte cuyo horizonte (nominal + holgura) cabe en los datos. Bajo 0,90 se anulan las tasas: quedarían descritas sólo por las carreras cortas.",
 }
 
 ORIGEN = {**{k: "CNED institucional" for k in RESOURCE_LABELS},
-          **{k: "PAES × matrícula (MRUN)" for k in SELECTIVITY_LABELS}}
+          **{k: "PAES × matrícula (MRUN)" for k in SELECTIVITY_LABELS},
+          **{k: "Matrícula × titulados (MRUN, longitudinal)" for k in COHORT_LABELS},
+          "titulacion_cohorte_anio": "Matrícula × titulados (MRUN, longitudinal)"}
 
 
 def describir(columna: str) -> str:
@@ -59,6 +68,10 @@ def describir(columna: str) -> str:
         return RESOURCE_LABELS[columna]
     if columna in SELECTIVITY_LABELS:
         return SELECTIVITY_LABELS[columna]
+    if columna in COHORT_LABELS:
+        return COHORT_LABELS[columna]
+    if columna == "titulacion_cohorte_anio":
+        return "Cohorte de ingreso de referencia para la titulación longitudinal"
     for prefijo, etiqueta in [("area::", "Distribución por área"),
                               ("region::", "Distribución regional"),
                               ("jornada::", "Distribución por jornada"),

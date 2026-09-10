@@ -1,9 +1,201 @@
 {
-  "generado_utc": "2026-09-10T13:47:06.035142+00:00",
+  "generado_utc": "2026-09-10T14:49:30.830533+00:00",
   "version": 2,
   "recursos_denominador": "MRUN únicos por universidad y año, todos los niveles; excluye MRUN ausente",
   "recursos_temporalidad": "solo año exacto; acreditación CNED conserva fecha del catálogo",
   "fuentes": [
+    {
+      "cohorte": 2007,
+      "archivo": "20260817_Titulados_Ed_Superior_2007_WEB.csv",
+      "bytes": 49257027,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2007,
+      "archivo": "20260810_Matrícula_Ed_Superior_2007_PUBL_MRUN.csv",
+      "bytes": 422388293,
+      "modificado_utc": "2026-09-01T16:57:28.420371+00:00"
+    },
+    {
+      "cohorte": 2008,
+      "archivo": "20260817_Titulados_Ed_Superior_2008_WEB.csv",
+      "bytes": 61832127,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2008,
+      "archivo": "20260810_Matrícula_Ed_Superior_2008_PUBL_MRUN.csv",
+      "bytes": 445517725,
+      "modificado_utc": "2026-09-01T16:57:34.406318+00:00"
+    },
+    {
+      "cohorte": 2009,
+      "archivo": "20260817_Titulados_Ed_Superior_2009_WEB.csv",
+      "bytes": 65741183,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2009,
+      "archivo": "20260810_Matrícula_Ed_Superior_2009_PUBL_MRUN.csv",
+      "bytes": 485242594,
+      "modificado_utc": "2026-09-01T16:57:40.982548+00:00"
+    },
+    {
+      "cohorte": 2010,
+      "archivo": "20260817_Titulados_Ed_Superior_2010_WEB.csv",
+      "bytes": 64708995,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2010,
+      "archivo": "20260810_Matrícula_Ed_Superior_2010_PUBL_MRUN.csv",
+      "bytes": 533129831,
+      "modificado_utc": "2026-09-01T16:57:48.138972+00:00"
+    },
+    {
+      "cohorte": 2011,
+      "archivo": "20260817_Titulados_Ed_Superior_2011_WEB.csv",
+      "bytes": 74449822,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2011,
+      "archivo": "20260810_Matrícula_Ed_Superior_2011_PUBL_MRUN.csv",
+      "bytes": 612687676,
+      "modificado_utc": "2026-09-01T16:57:57.540465+00:00"
+    },
+    {
+      "cohorte": 2012,
+      "archivo": "20260817_Titulados_Ed_Superior_2012_WEB.csv",
+      "bytes": 85455027,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2012,
+      "archivo": "20260810_Matrícula_Ed_Superior_2012_PUBL_MRUN.csv",
+      "bytes": 651087665,
+      "modificado_utc": "2026-09-01T16:58:06.252423+00:00"
+    },
+    {
+      "cohorte": 2013,
+      "archivo": "20260817_Titulados_Ed_Superior_2013_WEB.csv",
+      "bytes": 99415465,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2013,
+      "archivo": "20260810_Matrícula_Ed_Superior_2013_PUBL_MRUN.csv",
+      "bytes": 681341303,
+      "modificado_utc": "2026-09-01T16:58:16.379797+00:00"
+    },
+    {
+      "cohorte": 2014,
+      "archivo": "20260817_Titulados_Ed_Superior_2014_WEB.csv",
+      "bytes": 107677155,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2014,
+      "archivo": "20260810_Matrícula_Ed_Superior_2014_PUBL_MRUN.csv",
+      "bytes": 704948337,
+      "modificado_utc": "2026-09-01T16:58:25.900590+00:00"
+    },
+    {
+      "cohorte": 2015,
+      "archivo": "20260817_Titulados_Ed_Superior_2015_WEB.csv",
+      "bytes": 118044827,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2015,
+      "archivo": "20260810_Matrícula_Ed_Superior_2015_PUBL_MRUN.csv",
+      "bytes": 767848470,
+      "modificado_utc": "2026-09-01T16:58:36.283318+00:00"
+    },
+    {
+      "cohorte": 2016,
+      "archivo": "20260817_Titulados_Ed_Superior_2016_WEB.csv",
+      "bytes": 126344107,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2016,
+      "archivo": "20260810_Matrícula_Ed_Superior_2016_PUBL_MRUN.csv",
+      "bytes": 779697105,
+      "modificado_utc": "2026-09-01T16:58:47.881022+00:00"
+    },
+    {
+      "cohorte": 2017,
+      "archivo": "20260817_Titulados_Ed_Superior_2017_WEB.csv",
+      "bytes": 133831033,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2017,
+      "archivo": "20260810_Matrícula_Ed_Superior_2017_PUBL_MRUN.csv",
+      "bytes": 782522035,
+      "modificado_utc": "2026-09-01T16:58:58.313749+00:00"
+    },
+    {
+      "cohorte": 2018,
+      "archivo": "20260817_Titulados_Ed_Superior_2017_WEB.csv",
+      "bytes": 133831033,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2018,
+      "archivo": "20260810_Matrícula_Ed_Superior_2018_PUBL_MRUN.csv",
+      "bytes": 832539024,
+      "modificado_utc": "2026-09-01T16:59:09.410371+00:00"
+    },
+    {
+      "cohorte": 2019,
+      "archivo": "20260817_Titulados_Ed_Superior_2019_WEB.csv",
+      "bytes": 137697118,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2019,
+      "archivo": "20260810_Matrícula_Ed_Superior_2019_PUBL_MRUN.csv",
+      "bytes": 838151045,
+      "modificado_utc": "2026-09-01T16:59:20.514462+00:00"
+    },
+    {
+      "cohorte": 2020,
+      "archivo": "20260817_Titulados_Ed_Superior_2020_WEB.csv",
+      "bytes": 115159342,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2020,
+      "archivo": "20260810_Matrícula_Ed_Superior_2020_PUBL_MRUN.csv",
+      "bytes": 806805409,
+      "modificado_utc": "2026-09-01T16:59:32.250281+00:00"
+    },
+    {
+      "cohorte": 2021,
+      "archivo": "20260817_Titulados_Ed_Superior_2021_WEB.csv",
+      "bytes": 156700712,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2021,
+      "archivo": "20260810_Matrícula_Ed_Superior_2021_PUBL_MRUN.csv",
+      "bytes": 855805215,
+      "modificado_utc": "2026-09-01T16:59:43.399907+00:00"
+    },
+    {
+      "cohorte": 2022,
+      "archivo": "20260817_Titulados_Ed_Superior_2022_WEB.csv",
+      "bytes": 162179632,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2022,
+      "archivo": "20260810_Matrícula_Ed_Superior_2022_PUBL_MRUN.csv",
+      "bytes": 880253587,
+      "modificado_utc": "2026-09-01T16:59:55.540847+00:00"
+    },
     {
       "cohorte": 2023,
       "archivo": "A_INSCRITOS_PUNTAJES_2023_PAES_PUB_MRUN.csv",
@@ -41,12 +233,30 @@
       "modificado_utc": "2026-09-01T17:00:19.803810+00:00"
     },
     {
+      "cohorte": 2025,
+      "archivo": "20260817_Titulados_Ed_Superior_2025_WEB.csv",
+      "bytes": 184111674,
+      "uso": "titulacion de la promocion que egresa"
+    },
+    {
+      "cohorte": 2025,
+      "archivo": "20260810_Matrícula_Ed_Superior_2025_PUBL_MRUN.csv",
+      "bytes": 988063330,
+      "modificado_utc": "2026-09-01T17:00:32.398431+00:00"
+    },
+    {
       "fuente": "CNED INDICES Institucional",
       "archivo": "INDICES_Institucional_2005-2025.xlsx",
       "bytes": 3321254
+    },
+    {
+      "fuente": "Titulacion por cohorte de ingreso",
+      "archivo": "cohort_completion.parquet",
+      "bytes": 43673,
+      "uso": "seguimiento longitudinal por MRUN"
     }
   ],
   "perfil": "cohorte de ingreso a carrera, pregrado universitario",
-  "retencion_sha256": "c6ff9791d91324f1a90774c296a8f8b92d9b14b9cef8f668d8671d47b14aee07",
-  "perfiles_sha256": "2d66762f5fc97dcaf714e78d1d126c3acaba7fc5a7c6eed22c113adb0fbf1209"
+  "retencion_sha256": "67d1c08ea1c5f882a7a868c9f44c94792339f453175cc204fcaeba9fbc7edfbb",
+  "perfiles_sha256": "56ac71cc2b89dbc389c276860186d794b03d4f3f7c6bbb9c245cacb1e69614cd"
 }

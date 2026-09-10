@@ -11,6 +11,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from student_analytics.ingestion.cned import attach_resources, load_institutional
+from student_analytics.ingestion.cohortes import adjuntar_cohorte
 from student_analytics.ingestion.paes import (attach_selectivity, institutional_selectivity,
                                               load_scores)
 from student_analytics.ingestion.titulados import (attach_completion,
@@ -121,6 +122,29 @@ def main() -> None:
     else:
         print("  sin base CNED; se omiten los recursos institucionales "
               "(python scripts/download_cned.py)", flush=True)
+
+    # Titulacion POR COHORTE DE INGRESO, si ya se corrio build_cohorts.py.
+    # Es la contraparte longitudinal de la titulacion transversal de arriba:
+    # aquella describe a la promocion que egresa, esta a la cohorte que entra.
+    # No puede calcularse para la cohorte del perfil —2023/2024 todavia no se
+    # titula nadie— asi que se trae la ultima cohorte con horizonte completo
+    # y se guarda de que anio viene, para que la app pueda decirlo.
+    cohortes_path = out / "cohort_completion.parquet"
+    if cohortes_path.exists():
+        cohortes = pd.read_parquet(cohortes_path)
+        result = adjuntar_cohorte(result, cohortes)
+        con_dato = result.titulacion_cohorte_universidad.notna().sum()
+        anios = result.titulacion_cohorte_anio.dropna()
+        print(f"  titulacion por cohorte: {con_dato} universidad-cohorte con dato, "
+              f"cohortes de referencia {int(anios.min())}-{int(anios.max())}"
+              if len(anios) else "  titulacion por cohorte: sin calce", flush=True)
+        sources.append({"fuente": "Titulacion por cohorte de ingreso",
+                        "archivo": cohortes_path.name,
+                        "bytes": cohortes_path.stat().st_size,
+                        "uso": "seguimiento longitudinal por MRUN"})
+    else:
+        print("  sin titulacion por cohorte; se omite "
+              "(python scripts/build_cohorts.py)", flush=True)
 
     shares = [c for c in result if "::" in c]
     result[shares] = result[shares].fillna(0)

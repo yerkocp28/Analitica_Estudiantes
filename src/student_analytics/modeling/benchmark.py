@@ -142,12 +142,18 @@ def profile_matrix(profiles: pd.DataFrame, weights: dict) -> tuple[np.ndarray, d
     for block, columns in NUMERIC_BLOCKS.items():
         if block not in weights:
             continue
-        presentes = [c for c in columns if c in profiles.columns]
+        # Una columna presente pero enteramente vacia para esta cohorte no es
+        # informacion: imputarla con la mediana la deja constante, aporta cero
+        # a la distancia y aun asi consume el peso del bloque. Peor: la app
+        # informaria que la selectividad participa cuando no lo hace. Las
+        # cohortes anteriores a 2023 no tienen PAES descargada y caen aqui.
+        presentes = [c for c in columns
+                     if c in profiles.columns and profiles[c].notna().any()]
         if not presentes:
             # Perfil generado sin esa fuente: se omite el bloque y su peso se
             # reparte, en vez de romper. Asi la app sigue funcionando con
             # artefactos parciales, avisando en el log.
-            log.warning("Bloque '%s' sin variables en el perfil; se omite", block)
+            log.warning("Bloque '%s' sin datos en esta cohorte; se omite", block)
             continue
         groups[block] = presentes
     for block, prefixes in SHARE_BLOCKS.items():

@@ -60,6 +60,30 @@ def test_pocas_universidades_no_inventa_clusters(profiles, config):
         target_code(profiles.iloc[1:], config["target_name"])
 
 
+def test_un_bloque_vacio_en_la_cohorte_no_participa_ni_consume_peso(profiles, config):
+    """Las cohortes anteriores a 2023 no tienen PAES descargada.
+
+    Con la columna presente pero toda vacía, imputarla con la mediana la deja
+    constante: aporta cero a la distancia y aun así se lleva su peso, y la app
+    informaría que la selectividad participa cuando no lo hace. El bloque debe
+    omitirse y su peso repartirse entre los demás.
+    """
+    sin_paes = profiles.assign(paes_promedio=np.nan, paes_rango_intercuartil=np.nan)
+    matriz, bloques = profile_matrix(sin_paes, config["block_weights"])
+    assert "selectividad" not in bloques
+    # Con la selectividad ausente, las distancias son las mismas que si la
+    # columna nunca hubiera existido.
+    base, bloques_base = profile_matrix(profiles, config["block_weights"])
+    assert bloques == bloques_base
+    assert np.allclose(matriz, base)
+
+    con_paes = profiles.assign(
+        paes_promedio=np.linspace(400, 800, len(profiles)),
+        paes_rango_intercuartil=np.linspace(50, 150, len(profiles)))
+    _, con = profile_matrix(con_paes, config["block_weights"])
+    assert "selectividad" in con
+
+
 def test_pesos_invalidos_no_producen_distancias_arbitrarias(profiles, config):
     config["block_weights"]["escala"] = -1
     with pytest.raises(ValueError, match="pesos"):
@@ -120,6 +144,12 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
                 return frame.value["Universidad"].tolist()
         raise AssertionError("No se encontro la tabla de pares")
 
+    # La cohorte se fija explicitamente antes de tomar la referencia. Atarla al
+    # valor por defecto ataba el test a cual es la ultima cohorte disponible:
+    # al bajar la matricula historica el desplegable pasó a abrir en 2025 y el
+    # baseline quedaba tomado en un anio y comparado en otro.
+    app.selectbox(key="bench_year").set_value(2024).run()
+    assert not app.exception, [str(e.value) for e in app.exception]
     original_peers = peer_table(app)
     for axis in ("docentes_por_100_alumnos", "m2_construido_por_alumno", "retencion"):
         app.selectbox(key="bench_x").set_value(axis).run()
@@ -127,11 +157,13 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
     app.selectbox(key="bench_metric").set_value("sistema").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert peer_table(app) == original_peers
+    app.selectbox(key="bench_area").set_value("Administración y Comercio").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
+    assert peer_table(app) == original_peers
+    # Cambiar de cohorte SI puede cambiar los pares: es otro perfil de ingreso.
     app.selectbox(key="bench_year").set_value(2023).run()
     assert not app.exception, [str(e.value) for e in app.exception]
     app.selectbox(key="bench_year").set_value(2024).run()
-    assert not app.exception, [str(e.value) for e in app.exception]
-    app.selectbox(key="bench_area").set_value("Administración y Comercio").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert peer_table(app) == original_peers
     app.radio(key="bench_mode").set_value("Mismo cluster que la UA").run()

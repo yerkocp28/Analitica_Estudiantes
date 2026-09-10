@@ -1,92 +1,100 @@
-﻿variable,descripcion,origen,entra_clustering,eje_disponible_app,nota,universidades_con_dato_2023,universidades_total_2023,universidades_con_dato_2024,universidades_total_2024
-cod_inst,cod_inst,Matrícula SIES / derivada,False,False,,52,52,51,51
-cohorte,cohorte,Matrícula SIES / derivada,False,False,,52,52,51,51
-nomb_inst,nomb_inst,Matrícula SIES / derivada,False,False,,52,52,51,51
-cohorte_total,Inscripciones de ingreso,Matrícula SIES / derivada,False,True,,52,52,51,51
-sedes,Número de sedes,Matrícula SIES / derivada,False,True,,52,52,51,51
-log_cohorte,log_cohorte,Matrícula SIES / derivada,True,False,,52,52,51,51
-log_sedes,log_sedes,Matrícula SIES / derivada,True,False,,52,52,51,51
-arancel_mediano,Arancel anual mediano (CLP),Matrícula SIES / derivada,False,True,Registros en UF convertidos a CLP con factores anuales aproximados de config/benchmark.yml.,52,52,51,51
-matricula_mediana,Matrícula anual mediana (CLP),Matrícula SIES / derivada,False,True,Registros en UF convertidos a CLP con factores anuales aproximados de config/benchmark.yml.,52,52,51,51
-cobertura_arancel,Fracción de registros con dato: arancel,Matrícula SIES / derivada,False,False,,52,52,51,51
-acreditacion_anios,Años de acreditación institucional,Matrícula SIES / derivada,False,True,,50,52,50,51
-carreras_acreditadas,Inscripciones en carreras acreditadas,Matrícula SIES / derivada,False,True,Proporción de inscripciones en carreras acreditadas; no proporción de carreras únicas.,52,52,51,51
-duracion_media,Duración nominal media (semestres),Matrícula SIES / derivada,False,True,,52,52,51,51
-ingreso_no_regular,Ingreso por vías no regulares,Matrícula SIES / derivada,False,True,,52,52,51,51
-ingreso_pace,Ingreso vía PACE,Matrícula SIES / derivada,False,True,,52,52,51,51
-cobertura_ingreso,Fracción de registros con dato: ingreso,Matrícula SIES / derivada,False,False,,52,52,51,51
-area::Administración y Comercio,Distribución por área: Administración y Comercio (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Agropecuaria,Distribución por área: Agropecuaria (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Arte y Arquitectura,Distribución por área: Arte y Arquitectura (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Ciencias Básicas,Distribución por área: Ciencias Básicas (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Ciencias Sociales,Distribución por área: Ciencias Sociales (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Derecho,Distribución por área: Derecho (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Educación,Distribución por área: Educación (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Humanidades,Distribución por área: Humanidades (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Salud,Distribución por área: Salud (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-area::Tecnología,Distribución por área: Tecnología (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-cobertura_area,Fracción de registros con dato: area,Matrícula SIES / derivada,False,False,,52,52,51,51
-region::Antofagasta,Distribución regional: Antofagasta (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Arica y Parinacota,Distribución regional: Arica y Parinacota (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Atacama,Distribución regional: Atacama (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Aysén,Distribución regional: Aysén (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Biobío,Distribución regional: Biobío (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Coquimbo,Distribución regional: Coquimbo (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::La Araucanía,Distribución regional: La Araucanía (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Lib. Gral. B. O'Higgins,Distribución regional: Lib. Gral. B. O'Higgins (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Los Lagos,Distribución regional: Los Lagos (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Los Ríos,Distribución regional: Los Ríos (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Magallanes,Distribución regional: Magallanes (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Maule,Distribución regional: Maule (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Metropolitana,Distribución regional: Metropolitana (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Tarapacá,Distribución regional: Tarapacá (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Valparaíso,Distribución regional: Valparaíso (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-region::Ñuble,Distribución regional: Ñuble (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-cobertura_region,Fracción de registros con dato: region,Matrícula SIES / derivada,False,False,,52,52,51,51
-jornada::A Distancia,Distribución por jornada: A Distancia (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-jornada::Diurna,Distribución por jornada: Diurna (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-jornada::Semipresencial,Distribución por jornada: Semipresencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-jornada::Vespertina,Distribución por jornada: Vespertina (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-cobertura_jornada,Fracción de registros con dato: jornada,Matrícula SIES / derivada,False,False,,52,52,51,51
-modalidad::No Presencial,Distribución por modalidad: No Presencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-modalidad::Presencial,Distribución por modalidad: Presencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-modalidad::Semipresencial,Distribución por modalidad: Semipresencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,52,52,51,51
-cobertura_modalidad,Fracción de registros con dato: modalidad,Matrícula SIES / derivada,False,False,,52,52,51,51
-concentracion_areas,Concentración de áreas (HHI),Matrícula SIES / derivada,False,True,,52,52,51,51
-regiones_presencia,Regiones con presencia,Matrícula SIES / derivada,False,True,,52,52,51,51
-tamano_por_sede,Inscripciones por sede,Matrícula SIES / derivada,False,True,,52,52,51,51
-estudiantes_total,Estudiantes identificados · toda la institución,Matrícula SIES / derivada,False,True,"MRUN únicos por universidad y año, todos los niveles; excluye registros sin MRUN.",52,52,51,51
-matriculas_total,matriculas_total,Matrícula SIES / derivada,False,False,,52,52,51,51
-matriculas_sin_mrun,matriculas_sin_mrun,Matrícula SIES / derivada,False,False,,52,52,51,51
-paes_promedio,Puntaje PAES promedio de la cohorte,PAES × matrícula (MRUN),True,True,Promedio de Competencia Lectora y Matemática M1 de quienes rindieron; revisar paes_cobertura.,51,52,50,51
-paes_p25,PAES percentil 25 de la cohorte,PAES × matrícula (MRUN),False,True,,51,52,50,51
-paes_p75,PAES percentil 75 de la cohorte,PAES × matrícula (MRUN),False,True,,51,52,50,51
-paes_cobertura,Cohorte con puntaje PAES · cobertura,PAES × matrícula (MRUN),False,True,"Fracción de la cohorte con puntaje PAES. Donde es baja, los promedios describen una minoría.",52,52,51,51
-nem_promedio,Puntaje NEM promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
-ranking_promedio,Puntaje ranking promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
-paes_rango_intercuartil,Dispersión PAES de la cohorte (p75 − p25),PAES × matrícula (MRUN),True,True,,51,52,50,51
-titulacion_duracion_mediana,Años hasta titularse · promoción que egresa,Matrícula SIES / derivada,False,True,,51,52,51,51
-titulacion_sobreduracion,Sobreduración mediana · promoción que egresa,Matrícula SIES / derivada,False,True,,51,52,51,51
-titulacion_oportuna,Se tituló dentro de la duración nominal,Matrícula SIES / derivada,False,True,,51,52,51,51
-titulacion_oportuna_holgada,Se tituló dentro de la nominal más un año,Matrícula SIES / derivada,False,True,,51,52,51,51
-titulacion_cobertura,Titulados con duración calculable · cobertura,Matrícula SIES / derivada,False,True,,52,52,51,51
-titulados_total,Titulados de pregrado en el año,Matrícula SIES / derivada,False,True,,52,52,51,51
-titulados_por_100_estudiantes,Titulados por 100 estudiantes · flujo de salida,Matrícula SIES / derivada,False,True,,52,52,51,51
-anio_creacion,Año de creación,CNED institucional,False,True,,52,52,51,51
-cruch,Pertenece al CRUCH,CNED institucional,False,False,El CRUCH admite privadas desde la Ley 21.091; pertenecer a él ya no equivale a ser 'tradicional'.,52,52,51,51
-acreditacion_cned,Acreditación CNED · foto del catálogo 2025,Matrícula SIES / derivada,False,True,"Foto del catálogo CNED, no una serie histórica por cohorte.",50,52,50,51
-antiguedad,Años desde la creación,CNED institucional,False,False,,52,52,51,51
-acreditacion_cned_fecha,acreditacion_cned_fecha,Matrícula SIES / derivada,False,False,,52,52,51,51
-recursos_anio,recursos_anio,Matrícula SIES / derivada,False,False,,52,52,51,51
-docentes_jce,Docentes jornada completa equivalente,CNED institucional,False,False,"Derivado: jornada completa + 0,5 media + 0,25 por hora.",52,52,50,51
-share_doctorado,Docentes con doctorado,CNED institucional,False,True,,52,52,50,51
-share_magister,Docentes con magíster o doctorado,CNED institucional,False,True,,52,52,50,51
-share_jornada_completa,Docentes con jornada completa,CNED institucional,False,True,,52,52,50,51
-share_docentes_mujeres,Docentes mujeres,CNED institucional,False,True,,52,52,50,51
-m2_construido,m2_construido,Matrícula SIES / derivada,False,False,,52,52,51,51
-pc_alumnos,pc_alumnos,Matrícula SIES / derivada,False,False,,50,52,49,51
-ejemplares,ejemplares,Matrícula SIES / derivada,False,False,,52,52,51,51
-docentes_por_100_alumnos,Docentes JCE estimados por 100 estudiantes totales,CNED institucional,False,True,"Denominador: MRUN únicos de toda la institución y todos los niveles, no la cohorte de ingreso.",52,52,50,51
-m2_construido_por_alumno,M² construidos por estudiante,CNED institucional,False,True,Denominador: matrícula total institucional.,52,52,51,51
-pc_por_100_alumnos,PC para estudiantes por cada 100,CNED institucional,False,True,Denominador: matrícula total institucional.,50,52,49,51
-ejemplares_por_alumno,Ejemplares de biblioteca por estudiante,CNED institucional,False,True,Denominador: matrícula total institucional.,52,52,51,51
+﻿variable,descripcion,origen,entra_clustering,eje_disponible_app,nota,universidades_con_dato_2007,universidades_total_2007,universidades_con_dato_2008,universidades_total_2008,universidades_con_dato_2009,universidades_total_2009,universidades_con_dato_2010,universidades_total_2010,universidades_con_dato_2011,universidades_total_2011,universidades_con_dato_2012,universidades_total_2012,universidades_con_dato_2013,universidades_total_2013,universidades_con_dato_2014,universidades_total_2014,universidades_con_dato_2015,universidades_total_2015,universidades_con_dato_2016,universidades_total_2016,universidades_con_dato_2017,universidades_total_2017,universidades_con_dato_2018,universidades_total_2018,universidades_con_dato_2019,universidades_total_2019,universidades_con_dato_2020,universidades_total_2020,universidades_con_dato_2021,universidades_total_2021,universidades_con_dato_2022,universidades_total_2022,universidades_con_dato_2023,universidades_total_2023,universidades_con_dato_2024,universidades_total_2024,universidades_con_dato_2025,universidades_total_2025
+cod_inst,cod_inst,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cohorte,cohorte,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+nomb_inst,nomb_inst,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cohorte_total,Inscripciones de ingreso,Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+sedes,Número de sedes,Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+log_cohorte,log_cohorte,Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+log_sedes,log_sedes,Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+arancel_mediano,Arancel anual mediano (CLP),Matrícula SIES / derivada,False,True,Registros en UF convertidos a CLP con factores anuales aproximados de config/benchmark.yml.,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,48,52,52,52,51,51,51,51
+matricula_mediana,Matrícula anual mediana (CLP),Matrícula SIES / derivada,False,True,Registros en UF convertidos a CLP con factores anuales aproximados de config/benchmark.yml.,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,48,52,52,52,51,51,51,51
+cobertura_arancel,Fracción de registros con dato: arancel,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+acreditacion_anios,Años de acreditación institucional,Matrícula SIES / derivada,False,True,,1,61,1,59,1,58,1,58,51,58,50,59,48,59,45,59,44,58,45,58,46,59,46,56,45,55,46,55,45,54,47,52,50,52,50,51,49,51
+carreras_acreditadas,Inscripciones en carreras acreditadas,Matrícula SIES / derivada,False,True,Proporción de inscripciones en carreras acreditadas; no proporción de carreras únicas.,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+duracion_media,Duración nominal media (semestres),Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+ingreso_no_regular,Ingreso por vías no regulares,Matrícula SIES / derivada,False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+ingreso_pace,Ingreso vía PACE,Matrícula SIES / derivada,False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cobertura_ingreso,Fracción de registros con dato: ingreso,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Administración y Comercio,Distribución por área: Administración y Comercio (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Agropecuaria,Distribución por área: Agropecuaria (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Arte y Arquitectura,Distribución por área: Arte y Arquitectura (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Ciencias Básicas,Distribución por área: Ciencias Básicas (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Ciencias Sociales,Distribución por área: Ciencias Sociales (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Derecho,Distribución por área: Derecho (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Educación,Distribución por área: Educación (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Humanidades,Distribución por área: Humanidades (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Salud,Distribución por área: Salud (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+area::Tecnología,Distribución por área: Tecnología (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cobertura_area,Fracción de registros con dato: area,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Antofagasta,Distribución regional: Antofagasta (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Arica y Parinacota,Distribución regional: Arica y Parinacota (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Atacama,Distribución regional: Atacama (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Aysén,Distribución regional: Aysén (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Biobío,Distribución regional: Biobío (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Coquimbo,Distribución regional: Coquimbo (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::La Araucanía,Distribución regional: La Araucanía (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Lib. Gral. B. O'Higgins,Distribución regional: Lib. Gral. B. O'Higgins (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Los Lagos,Distribución regional: Los Lagos (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Los Ríos,Distribución regional: Los Ríos (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Magallanes,Distribución regional: Magallanes (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Maule,Distribución regional: Maule (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Metropolitana,Distribución regional: Metropolitana (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Tarapacá,Distribución regional: Tarapacá (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Valparaíso,Distribución regional: Valparaíso (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+region::Ñuble,Distribución regional: Ñuble (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cobertura_region,Fracción de registros con dato: region,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+jornada::A Distancia,Distribución por jornada: A Distancia (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+jornada::Diurna,Distribución por jornada: Diurna (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+jornada::Otra,Distribución por jornada: Otra (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+jornada::Semipresencial,Distribución por jornada: Semipresencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+jornada::Vespertina,Distribución por jornada: Vespertina (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cobertura_jornada,Fracción de registros con dato: jornada,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+modalidad::Sin información,Distribución por modalidad: Sin información (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cobertura_modalidad,Fracción de registros con dato: modalidad,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+concentracion_areas,Concentración de áreas (HHI),Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+regiones_presencia,Regiones con presencia,Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+tamano_por_sede,Inscripciones por sede,Matrícula SIES / derivada,False,True,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+estudiantes_total,Estudiantes identificados · toda la institución,Matrícula SIES / derivada,False,True,"MRUN únicos por universidad y año, todos los niveles; excluye registros sin MRUN.",61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+matriculas_total,matriculas_total,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+matriculas_sin_mrun,matriculas_sin_mrun,Matrícula SIES / derivada,False,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+titulacion_duracion_mediana,Años hasta titularse · promoción que egresa,Matrícula SIES / derivada,False,True,,57,61,54,59,56,58,56,58,56,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,53,54,51,52,51,52,51,51,51,51
+titulacion_sobreduracion,Sobreduración mediana · promoción que egresa,Matrícula SIES / derivada,False,True,,57,61,54,59,56,58,56,58,56,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,53,54,51,52,51,52,51,51,51,51
+titulacion_oportuna,Se tituló dentro de la duración nominal,Matrícula SIES / derivada,False,True,"Describe a la promoción que EGRESA, no a la cohorte del perfil. No ordena por calidad: correlaciona -0,08 con PAES y -0,19 con acreditación.",57,61,54,59,56,58,56,58,56,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,53,54,51,52,51,52,51,51,51,51
+titulacion_oportuna_holgada,Se tituló dentro de la nominal más un año,Matrícula SIES / derivada,False,True,,57,61,54,59,56,58,56,58,56,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,53,54,51,52,51,52,51,51,51,51
+titulacion_cobertura,Titulados con duración calculable · cobertura,Matrícula SIES / derivada,False,True,,58,61,58,59,57,58,58,58,57,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,54,54,52,52,52,52,51,51,51,51
+titulados_total,Titulados de pregrado en el año,Matrícula SIES / derivada,False,True,,58,61,58,59,57,58,58,58,57,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,54,54,52,52,52,52,51,51,51,51
+titulados_por_100_estudiantes,Titulados por 100 estudiantes · flujo de salida,Matrícula SIES / derivada,False,True,,58,61,58,59,57,58,58,58,57,58,58,59,58,59,58,59,57,58,58,58,56,59,54,56,52,55,52,55,54,54,52,52,52,52,51,51,51,51
+modalidad::No Presencial,Distribución por modalidad: No Presencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+modalidad::Presencial,Distribución por modalidad: Presencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+modalidad::Semipresencial,Distribución por modalidad: Semipresencial (proporción de inscripciones),Matrícula SIES / derivada,True,False,,61,61,59,59,58,58,58,58,58,58,59,59,59,59,59,59,58,58,58,58,59,59,56,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+paes_promedio,Puntaje PAES promedio de la cohorte,PAES × matrícula (MRUN),True,True,Promedio de Competencia Lectora y Matemática M1 de quienes rindieron; revisar paes_cobertura.,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+paes_p25,PAES percentil 25 de la cohorte,PAES × matrícula (MRUN),False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+paes_p75,PAES percentil 75 de la cohorte,PAES × matrícula (MRUN),False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+paes_cobertura,Cohorte con puntaje PAES · cobertura,PAES × matrícula (MRUN),False,True,"Fracción de la cohorte con puntaje PAES. Donde es baja, los promedios describen una minoría.",0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,52,52,51,51,0,51
+nem_promedio,Puntaje NEM promedio,PAES × matrícula (MRUN),False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+ranking_promedio,Puntaje ranking promedio,PAES × matrícula (MRUN),False,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+paes_rango_intercuartil,Dispersión PAES de la cohorte (p75 − p25),PAES × matrícula (MRUN),True,True,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,0,55,0,55,0,54,0,52,51,52,50,51,0,51
+anio_creacion,Año de creación,CNED institucional,False,True,,54,61,53,59,52,58,53,58,53,58,53,59,54,59,54,59,53,58,54,58,56,59,55,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+cruch,Pertenece al CRUCH,CNED institucional,False,False,El CRUCH admite privadas desde la Ley 21.091; pertenecer a él ya no equivale a ser 'tradicional'.,54,61,53,59,52,58,53,58,53,58,53,59,54,59,54,59,53,58,54,58,56,59,55,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+acreditacion_cned,Acreditación CNED · foto del catálogo 2025,Matrícula SIES / derivada,False,True,"Foto del catálogo CNED, no una serie histórica por cohorte.",48,61,48,59,47,58,47,58,47,58,47,59,48,59,48,59,48,58,48,58,50,59,50,56,50,55,50,55,50,54,50,52,50,52,50,51,50,51
+antiguedad,Años desde la creación,CNED institucional,False,False,,54,61,53,59,52,58,53,58,53,58,53,59,54,59,54,59,53,58,54,58,56,59,55,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+acreditacion_cned_fecha,acreditacion_cned_fecha,Matrícula SIES / derivada,False,False,,54,61,53,59,52,58,53,58,53,58,53,59,54,59,54,59,53,58,54,58,56,59,55,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+recursos_anio,recursos_anio,Matrícula SIES / derivada,False,False,,54,61,53,59,52,58,53,58,53,58,53,59,54,59,54,59,53,58,54,58,56,59,55,56,55,55,55,55,54,54,52,52,52,52,51,51,51,51
+docentes_jce,Docentes jornada completa equivalente,CNED institucional,False,False,"Derivado: jornada completa + 0,5 media + 0,25 por hora.",49,61,44,59,48,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+share_doctorado,Docentes con doctorado,CNED institucional,False,True,,49,61,44,59,47,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+share_magister,Docentes con magíster o doctorado,CNED institucional,False,True,,49,61,44,59,47,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+share_jornada_completa,Docentes con jornada completa,CNED institucional,False,True,,49,61,44,59,47,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+share_docentes_mujeres,Docentes mujeres,CNED institucional,False,True,,49,61,44,59,47,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+m2_construido,m2_construido,Matrícula SIES / derivada,False,False,,50,61,47,59,45,58,43,58,39,58,43,59,51,59,49,59,48,58,51,58,52,59,53,56,52,55,53,55,53,54,52,52,52,52,51,51,51,51
+pc_alumnos,pc_alumnos,Matrícula SIES / derivada,False,False,,44,61,42,59,35,58,36,58,34,58,37,59,45,59,44,59,46,58,47,58,50,59,52,56,48,55,51,55,50,54,50,52,50,52,49,51,47,51
+docentes_por_100_alumnos,Docentes JCE estimados por 100 estudiantes totales,CNED institucional,False,True,"Denominador: MRUN únicos de toda la institución y todos los niveles, no la cohorte de ingreso.",49,61,44,59,48,58,44,58,43,58,45,59,49,59,49,59,50,58,51,58,53,59,53,56,52,55,52,55,53,54,52,52,52,52,50,51,51,51
+m2_construido_por_alumno,M² construidos por estudiante,CNED institucional,False,True,Denominador: matrícula total institucional.,50,61,47,59,45,58,43,58,39,58,43,59,51,59,49,59,48,58,51,58,52,59,53,56,52,55,53,55,53,54,52,52,52,52,51,51,51,51
+pc_por_100_alumnos,PC para estudiantes por cada 100,CNED institucional,False,True,Denominador: matrícula total institucional.,44,61,42,59,35,58,36,58,34,58,37,59,45,59,44,59,46,58,47,58,50,59,52,56,48,55,51,55,50,54,50,52,50,52,49,51,47,51
+ejemplares,ejemplares,Matrícula SIES / derivada,False,False,,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,52,55,52,55,53,54,52,52,52,52,51,51,51,51
+ejemplares_por_alumno,Ejemplares de biblioteca por estudiante,CNED institucional,False,True,Denominador: matrícula total institucional.,0,61,0,59,0,58,0,58,0,58,0,59,0,59,0,59,0,58,0,58,0,59,0,56,52,55,52,55,53,54,52,52,52,52,51,51,51,51
+titulacion_cohorte_anio,Cohorte de ingreso de referencia para la titulación longitudinal,"Matrícula × titulados (MRUN, longitudinal)",False,False,Cohorte de ingreso a la que se refieren los indicadores de titulación longitudinal; es la misma para todas las universidades.,55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51
+titulacion_cohorte_n,Ingresantes con horizonte observable · cohorte,"Matrícula × titulados (MRUN, longitudinal)",False,True,,55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51
+titulacion_cohorte_carrera,Se tituló de la carrera que empezó · cohorte,"Matrícula × titulados (MRUN, longitudinal)",False,True,"Tasa sobre ingresantes con horizonte observable, no sobre la cohorte completa.",55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51
+titulacion_cohorte_universidad,Se tituló en su universidad de ingreso · cohorte,"Matrícula × titulados (MRUN, longitudinal)",False,True,Incluye a quien cambió de carrera dentro de la misma universidad.,55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51
+titulacion_cohorte_sistema,Se tituló en alguna universidad · cohorte,"Matrícula × titulados (MRUN, longitudinal)",False,True,"Incluye traslados a otra universidad; sin este nivel, todo traslado se contaría como deserción.",55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51
+titulacion_cohorte_anios,Años medianos hasta el título · cohorte,"Matrícula × titulados (MRUN, longitudinal)",False,True,,55,61,54,59,53,58,54,58,54,58,54,59,55,59,55,59,55,58,55,58,57,59,55,56,54,55,54,55,53,54,51,52,51,52,50,51,50,51

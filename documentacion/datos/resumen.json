@@ -41,5 +41,13 @@
     "inscritos_2024": 309350,
     "rindio_lectora": 0.8842,
     "rindio_m1": 0.874
+  },
+  "cohortes": {
+    "cohorte_referencia": 2017,
+    "universidades_con_dato": 57,
+    "ua_titulacion_universidad": 0.613934,
+    "mediana_sistema": 0.512333,
+    "percentil_ua": 0.8772,
+    "cohortes_calculadas": 12
   }
 }

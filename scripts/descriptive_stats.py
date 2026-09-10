@@ -213,6 +213,56 @@ def stats_resultados(meta: dict) -> None:
     # analyze_mineduc.py directamente en documentacion/datos/.
 
 
+def stats_cohortes(meta: dict) -> None:
+    """Titulación por cohorte de ingreso (seguimiento longitudinal por MRUN)."""
+    detalle = RESULTS / "cohort_tracking.parquet"
+    perfil = RESULTS / "cohort_completion.parquet"
+    if not detalle.exists() or not perfil.exists():
+        log.info("Sin titulación por cohorte; corre scripts/build_cohorts.py")
+        return
+    log.info("Titulación por cohorte de ingreso")
+
+    d = pd.read_parquet(detalle)
+    nacional = pd.DataFrame({
+        "cohorte": d.cohorte,
+        "ingresantes": d.ingresantes,
+        "observables": d.observables,
+        "cobertura": d.observables / d.ingresantes,
+        "titulacion_carrera": d.carrera / d.observables,
+        "titulacion_universidad": d.universidad / d.observables,
+        "titulacion_sistema": d.sistema / d.observables,
+    })
+    _save("cohortes_titulacion_nacional", nacional.round(6))
+
+    p = pd.read_parquet(perfil)
+    ua = p.loc[p.nomb_inst.str.contains("AUTONOMA", na=False)]
+    cols = ["cohorte", "titulacion_cohorte_n", "titulacion_cohorte_cobertura",
+            "titulacion_cohorte_carrera", "titulacion_cohorte_universidad",
+            "titulacion_cohorte_sistema", "titulacion_cohorte_anios"]
+    _save("cohortes_titulacion_ua", ua[[c for c in cols if c in ua]].round(6))
+
+    # Posición de la UA en la última cohorte con dato para el grueso del
+    # sistema. Es la cifra que la app muestra en el perfil.
+    con_dato = p.dropna(subset=["titulacion_cohorte_universidad"])
+    if not con_dato.empty and not ua.empty:
+        ultima = int(ua.dropna(subset=["titulacion_cohorte_universidad"]).cohorte.max())
+        corte = con_dato.loc[con_dato.cohorte.eq(ultima)]
+        v = corte.loc[corte.nomb_inst.str.contains("AUTONOMA", na=False),
+                      "titulacion_cohorte_universidad"]
+        if len(v):
+            valor = float(v.iloc[0])
+            meta["cohortes"] = {
+                "cohorte_referencia": ultima,
+                "universidades_con_dato": int(len(corte)),
+                "ua_titulacion_universidad": round(valor, 6),
+                "mediana_sistema": round(
+                    float(corte.titulacion_cohorte_universidad.median()), 6),
+                "percentil_ua": round(
+                    float((corte.titulacion_cohorte_universidad < valor).mean()), 4),
+                "cohortes_calculadas": int(p.cohorte.nunique()),
+            }
+
+
 def main() -> int:
     meta: dict = {}
     stats_sinteticos(meta)
@@ -220,6 +270,7 @@ def main() -> int:
     stats_mineduc(meta)
     stats_paes(meta)
     stats_resultados(meta)
+    stats_cohortes(meta)
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "resumen.json").write_text(

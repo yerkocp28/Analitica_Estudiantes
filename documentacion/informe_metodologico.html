@@ -2397,10 +2397,15 @@ table { break-inside: avoid; }
   <li><a href="#sec-resultados" id="toc-sec-resultados" class="nav-link" data-scroll-target="#sec-resultados"><span class="header-section-number">6</span> Resultados</a>
   <ul class="collapse">
   <li><a href="#sec-retencion" id="toc-sec-retencion" class="nav-link" data-scroll-target="#sec-retencion"><span class="header-section-number">6.1</span> Retención real de la Universidad Autónoma</a></li>
-  <li><a href="#piso-predictivo-de-las-variables-previas-al-ingreso" id="toc-piso-predictivo-de-las-variables-previas-al-ingreso" class="nav-link" data-scroll-target="#piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.2</span> Piso predictivo de las variables previas al ingreso</a></li>
-  <li><a href="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" id="toc-ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="nav-link" data-scroll-target="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.3</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</a></li>
-  <li><a href="#curva-de-anticipación-sobre-oulad" id="toc-curva-de-anticipación-sobre-oulad" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.4</span> Curva de anticipación sobre OULAD</a></li>
-  <li><a href="#curva-de-anticipación-sobre-datos-sintéticos" id="toc-curva-de-anticipación-sobre-datos-sintéticos" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.5</span> Curva de anticipación sobre datos sintéticos</a></li>
+  <li><a href="#sec-cohortes" id="toc-sec-cohortes" class="nav-link" data-scroll-target="#sec-cohortes"><span class="header-section-number">6.2</span> Titulación por cohorte de ingreso</a>
+  <ul class="collapse">
+  <li><a href="#censura-por-derecha-el-problema-central" id="toc-censura-por-derecha-el-problema-central" class="nav-link" data-scroll-target="#censura-por-derecha-el-problema-central"><span class="header-section-number">6.2.1</span> Censura por derecha: el problema central</a></li>
+  <li><a href="#un-error-que-las-tasas-anidadas-dejaron-a-la-vista" id="toc-un-error-que-las-tasas-anidadas-dejaron-a-la-vista" class="nav-link" data-scroll-target="#un-error-que-las-tasas-anidadas-dejaron-a-la-vista"><span class="header-section-number">6.2.2</span> Un error que las tasas anidadas dejaron a la vista</a></li>
+  </ul></li>
+  <li><a href="#piso-predictivo-de-las-variables-previas-al-ingreso" id="toc-piso-predictivo-de-las-variables-previas-al-ingreso" class="nav-link" data-scroll-target="#piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.3</span> Piso predictivo de las variables previas al ingreso</a></li>
+  <li><a href="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" id="toc-ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="nav-link" data-scroll-target="#ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.4</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</a></li>
+  <li><a href="#curva-de-anticipación-sobre-oulad" id="toc-curva-de-anticipación-sobre-oulad" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.5</span> Curva de anticipación sobre OULAD</a></li>
+  <li><a href="#curva-de-anticipación-sobre-datos-sintéticos" id="toc-curva-de-anticipación-sobre-datos-sintéticos" class="nav-link" data-scroll-target="#curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.6</span> Curva de anticipación sobre datos sintéticos</a></li>
   </ul></li>
   <li><a href="#sec-argumento" id="toc-sec-argumento" class="nav-link" data-scroll-target="#sec-argumento"><span class="header-section-number">7</span> El argumento central</a></li>
   <li><a href="#sec-limitaciones" id="toc-sec-limitaciones" class="nav-link" data-scroll-target="#sec-limitaciones"><span class="header-section-number">8</span> Limitaciones y supuestos abiertos</a>
@@ -2445,7 +2450,7 @@ table { break-inside: avoid; }
     <div>
     <div class="quarto-title-meta-heading">Fecha de publicación</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">8 de septiembre de 2026</p>
+      <p class="date">10 de septiembre de 2026</p>
     </div>
   </div>
   
@@ -2580,54 +2585,60 @@ table { break-inside: avoid; }
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/">Matrícula en Educación Superior</a> 2023, 2024, 2025</td>
+<td><a href="https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/">Matrícula en Educación Superior</a> 2007–2026</td>
 <td>Individual (MRUN)</td>
 <td>Datos abiertos de gobierno</td>
-<td>Retención real UA; población de los modelos</td>
+<td>Retención real UA; población de los modelos; cohortes de ingreso del seguimiento longitudinal</td>
 </tr>
 <tr class="even">
+<td><a href="https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/">Titulados en Educación Superior</a> 2007–2025</td>
+<td>Individual (MRUN)</td>
+<td>Datos abiertos de gobierno</td>
+<td>Titulación de la promoción que egresa y titulación por cohorte de ingreso</td>
+</tr>
+<tr class="odd">
 <td><a href="https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/">Pruebas de admisión (PAES)</a> 2023, 2024</td>
 <td>Individual (MRUN)</td>
 <td>Datos abiertos de gobierno</td>
 <td>Variables previas al ingreso</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="https://datosabiertos.mineduc.cl/asistencia-anual-por-estudiante/">Asistencia anual por estudiante</a> 2022, 2023</td>
 <td>Individual (MRUN + RBD), tasa mensual</td>
 <td>Datos abiertos de gobierno</td>
 <td>Asistencia de enseñanza media y su pendiente</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="https://datosabiertos.mineduc.cl/alumnos-preferentes-prioritarios-y-beneficiarios-sep/">Alumnos SEP</a> 2022, 2023</td>
 <td>Individual (MRUN + RBD)</td>
 <td>Datos abiertos de gobierno</td>
 <td>Vulnerabilidad individual: prioritario / preferente</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="https://datosabiertos.mineduc.cl/asignaciones-de-becas-y-creditos-en-educacion-superior/">Asignaciones de Becas y Créditos</a> 2023, 2024</td>
 <td>Individual (MRUN)</td>
 <td>Datos abiertos de gobierno</td>
 <td>Quintil, decil DFE, gratuidad, FSCU, beca de arancel</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="https://analyse.kmi.open.ac.uk/open_dataset">OULAD</a></td>
 <td>Estudiante × módulo × semana</td>
 <td>CC-BY 4.0</td>
 <td>Validar la metodología con datos reales de comportamiento</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="https://developerdocs.instructure.com/services/dap/dataset">Canvas Data 2 — esquema</a></td>
 <td>Documentación</td>
 <td>Pública</td>
 <td>Nombres reales de tablas y columnas</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="https://tech.wayne.edu/depdocs/banner-ods-handbook-8-4.pdf">Banner ODS Handbook</a></td>
 <td>Documentación</td>
 <td>Publicada por Wayne State University</td>
 <td>Nombres reales de tablas Banner</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Generador sintético</td>
 <td>Estudiante × asignatura × semana</td>
 <td>Propio</td>
@@ -2724,7 +2735,7 @@ table { break-inside: avoid; }
 Tabla 1: Volumen de las bases de matrícula en educación superior
 </figcaption>
 <div aria-describedby="tbl-mineduc-volumen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="107">
+<div class="cell-output cell-output-display" data-execution_count="2">
 <div>
 
 
@@ -2762,7 +2773,7 @@ Tabla 1: Volumen de las bases de matrícula en educación superior
 </div>
 </div>
 <div id="cell-mineduc-resumen" class="cell" data-execution_count="3">
-<div id="mineduc-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="108">
+<div id="mineduc-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="3">
 <p>De la base 2024 (1,386,084 filas), la Universidad Autónoma registra <strong>29,889 matriculados de pregrado</strong>, de los cuales <strong>6,475 son cohorte de ingreso 2024</strong>.</p>
 <p>Sedes identificadas: CAMPUS EL LLANO, CAMPUS PROVIDENCIA, CASA CENTRAL (TEMUCO), SEDE TALCA.</p>
 </div>
@@ -2774,7 +2785,7 @@ Tabla 1: Volumen de las bases de matrícula en educación superior
 Tabla 2: Matriculados 2024 de la UA en el área Administración y Comercio
 </figcaption>
 <div aria-describedby="tbl-ua-carreras-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="109">
+<div class="cell-output cell-output-display" data-execution_count="4">
 <div>
 
 
@@ -2828,7 +2839,7 @@ Tabla 2: Matriculados 2024 de la UA en el área Administración y Comercio
 Tabla 3: Puntajes y expediente escolar — PAES 2024 (excluyendo a quienes no rindieron)
 </figcaption>
 <div aria-describedby="tbl-paes-desc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="110">
+<div class="cell-output cell-output-display" data-execution_count="5">
 <div>
 
 
@@ -2943,7 +2954,7 @@ Tabla 3: Puntajes y expediente escolar — PAES 2024 (excluyendo a quienes no r
 Tabla 4: Dependencia del establecimiento de egreso
 </figcaption>
 <div aria-describedby="tbl-paes-dep-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="111">
+<div class="cell-output cell-output-display" data-execution_count="6">
 <div>
 
 
@@ -3051,7 +3062,7 @@ Tabla 4: Dependencia del establecimiento de egreso
 Tabla 5: Trayectoria escolar — cohorte de ingreso 2024
 </figcaption>
 <div aria-describedby="tbl-trayectoria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="112">
+<div class="cell-output cell-output-display" data-execution_count="7">
 <div>
 
 
@@ -3205,7 +3216,7 @@ Tabla 5: Trayectoria escolar — cohorte de ingreso 2024
 <section id="oulad" class="level2" data-number="4.4">
 <h2 data-number="4.4" class="anchored" data-anchor-id="oulad"><span class="header-section-number">4.4</span> OULAD</h2>
 <div id="cell-oulad-resumen" class="cell" data-execution_count="8">
-<div id="oulad-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="113">
+<div id="oulad-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="8">
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
@@ -3249,7 +3260,7 @@ Tabla 5: Trayectoria escolar — cohorte de ingreso 2024
 Tabla 6: Distribución del resultado final en OULAD
 </figcaption>
 <div aria-describedby="tbl-oulad-resultado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="114">
+<div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 
 
@@ -3313,7 +3324,7 @@ Nota
 <section id="datos-sintéticos" class="level2" data-number="4.5">
 <h2 data-number="4.5" class="anchored" data-anchor-id="datos-sintéticos"><span class="header-section-number">4.5</span> Datos sintéticos</h2>
 <div id="cell-sint-resumen" class="cell" data-execution_count="10">
-<div id="sint-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="115">
+<div id="sint-resumen" class="cell-output cell-output-display cell-output-markdown" data-execution_count="10">
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
@@ -3377,7 +3388,7 @@ Nota
 Tabla 7: Reprobación por perfil latente de estudiante
 </figcaption>
 <div aria-describedby="tbl-sint-perfil-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="116">
+<div class="cell-output cell-output-display" data-execution_count="11">
 <div>
 
 
@@ -3449,7 +3460,7 @@ Tabla 7: Reprobación por perfil latente de estudiante
 Tabla 8: Reprobación por nivel de dificultad de la asignatura
 </figcaption>
 <div aria-describedby="tbl-sint-dificultad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="117">
+<div class="cell-output cell-output-display" data-execution_count="12">
 <div>
 
 
@@ -3497,7 +3508,7 @@ Tabla 8: Reprobación por nivel de dificultad de la asignatura
 Tabla 9: Distribución sintética por sede
 </figcaption>
 <div aria-describedby="tbl-sint-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="118">
+<div class="cell-output cell-output-display" data-execution_count="13">
 <div>
 
 
@@ -3604,7 +3615,7 @@ Tabla 9: Distribución sintética por sede
 Tabla 10: Retención al segundo año, cohorte 2024
 </figcaption>
 <div aria-describedby="tbl-retencion-resumen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="119">
+<div class="cell-output cell-output-display" data-execution_count="14">
 <div>
 
 
@@ -3656,7 +3667,7 @@ Tabla 10: Retención al segundo año, cohorte 2024
 Tabla 11: Retención por sede — área Administración y Comercio, cohorte 2024
 </figcaption>
 <div aria-describedby="tbl-retencion-sede-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="120">
+<div class="cell-output cell-output-display" data-execution_count="15">
 <div>
 
 
@@ -3715,7 +3726,7 @@ Tabla 11: Retención por sede — área Administración y Comercio, cohorte 202
 Tabla 12: Retención por carrera — área Administración y Comercio
 </figcaption>
 <div aria-describedby="tbl-retencion-carrera-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="121">
+<div class="cell-output cell-output-display" data-execution_count="16">
 <div>
 
 
@@ -3774,17 +3785,371 @@ Tabla 12: Retención por carrera — área Administración y Comercio
 </div>
 </div>
 </section>
-<section id="piso-predictivo-de-las-variables-previas-al-ingreso" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.2</span> Piso predictivo de las variables previas al ingreso</h2>
-<p>Modelo: regresión logística sobre NEM, ranking, promedio de notas de enseñanza media, puntajes PAES (Competencia Lectora, Matemática M1 y M2, Historia, Ciencias), dependencia del establecimiento, sexo y años desde el egreso. Objetivo: no continuar en la misma carrera al año siguiente.</p>
+<section id="sec-cohortes" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-cohortes"><span class="header-section-number">6.2</span> Titulación por cohorte de ingreso</h2>
+<p>Con la matrícula histórica descargada (2007 en adelante) se puede seguir a cada cohorte de ingreso contra las bases de titulados de los años siguientes, cruzando por MRUN. Esto responde una pregunta que los indicadores transversales no pueden responder: de quienes <strong>entraron</strong> en un año, qué proporción llegó a titularse. La versión transversal describe a la promoción que <strong>egresa</strong> —cuánto se demoró quien sí se tituló— y es una cohorte distinta.</p>
+<p>Se mide en tres niveles anidados. La brecha entre el primero y el segundo es cambio de carrera dentro de la misma universidad; entre el segundo y el tercero, traslado a otra institución. <strong>Sin el tercer nivel, todo traslado se contabiliza como fracaso.</strong></p>
 <div class="cell" data-execution_count="17">
-<div id="tbl-piso" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="17">
+<div id="tbl-cohortes-nacional" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="17">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-cohortes-nacional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 13: Titulación por cohorte de ingreso, sistema universitario nacional (plazo = duración nominal + 2 años)
+</figcaption>
+<div aria-describedby="tbl-cohortes-nacional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="17">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Cohorte</th>
+<th data-quarto-table-cell-role="th">Ingresantes</th>
+<th data-quarto-table-cell-role="th">Observables</th>
+<th data-quarto-table-cell-role="th">Cobertura</th>
+<th data-quarto-table-cell-role="th">De su carrera</th>
+<th data-quarto-table-cell-role="th">En su universidad</th>
+<th data-quarto-table-cell-role="th">En alguna universidad</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>2007</td>
+<td>123,088</td>
+<td>122,849</td>
+<td>99.8%</td>
+<td>30.8%</td>
+<td>42.7%</td>
+<td>47.9%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2008</td>
+<td>128,642</td>
+<td>128,616</td>
+<td>100.0%</td>
+<td>33.0%</td>
+<td>43.2%</td>
+<td>48.3%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>2009</td>
+<td>137,962</td>
+<td>137,962</td>
+<td>100.0%</td>
+<td>38.9%</td>
+<td>44.8%</td>
+<td>49.8%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>2010</td>
+<td>147,862</td>
+<td>147,816</td>
+<td>100.0%</td>
+<td>38.8%</td>
+<td>44.3%</td>
+<td>48.9%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>2011</td>
+<td>149,954</td>
+<td>149,895</td>
+<td>100.0%</td>
+<td>37.7%</td>
+<td>42.6%</td>
+<td>47.9%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>2012</td>
+<td>150,290</td>
+<td>150,262</td>
+<td>100.0%</td>
+<td>39.4%</td>
+<td>44.0%</td>
+<td>49.0%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>2013</td>
+<td>143,917</td>
+<td>143,757</td>
+<td>99.9%</td>
+<td>38.1%</td>
+<td>42.8%</td>
+<td>47.2%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>2014</td>
+<td>139,376</td>
+<td>139,311</td>
+<td>100.0%</td>
+<td>39.8%</td>
+<td>44.2%</td>
+<td>48.6%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>2015</td>
+<td>141,102</td>
+<td>141,035</td>
+<td>100.0%</td>
+<td>42.0%</td>
+<td>46.7%</td>
+<td>51.7%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>2016</td>
+<td>145,859</td>
+<td>145,727</td>
+<td>99.9%</td>
+<td>45.3%</td>
+<td>49.3%</td>
+<td>54.0%</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>2017</td>
+<td>147,300</td>
+<td>144,767</td>
+<td>98.3%</td>
+<td>46.2%</td>
+<td>50.2%</td>
+<td>54.5%</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>2018</td>
+<td>146,189</td>
+<td>117,946</td>
+<td>80.7%</td>
+<td>47.9%</td>
+<td>50.5%</td>
+<td>54.2%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell" data-execution_count="18">
+<div id="tbl-cohortes-ua" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="18">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-cohortes-ua-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 14: Titulación por cohorte de ingreso — Universidad Autónoma de Chile
+</figcaption>
+<div aria-describedby="tbl-cohortes-ua-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="18">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Cohorte</th>
+<th data-quarto-table-cell-role="th">Observables</th>
+<th data-quarto-table-cell-role="th">Cobertura</th>
+<th data-quarto-table-cell-role="th">De su carrera</th>
+<th data-quarto-table-cell-role="th">En su universidad</th>
+<th data-quarto-table-cell-role="th">En alguna universidad</th>
+<th data-quarto-table-cell-role="th">Años al título</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>2007</td>
+<td>3,672</td>
+<td>100.0%</td>
+<td>39.0%</td>
+<td>44.3%</td>
+<td>46.6%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2008</td>
+<td>4,300</td>
+<td>100.0%</td>
+<td>41.4%</td>
+<td>48.9%</td>
+<td>51.4%</td>
+<td>4.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>2009</td>
+<td>4,890</td>
+<td>100.0%</td>
+<td>43.6%</td>
+<td>51.3%</td>
+<td>54.4%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>2010</td>
+<td>5,266</td>
+<td>100.0%</td>
+<td>40.5%</td>
+<td>53.3%</td>
+<td>55.7%</td>
+<td>5.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>2011</td>
+<td>4,728</td>
+<td>100.0%</td>
+<td>46.4%</td>
+<td>55.0%</td>
+<td>57.8%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>2012</td>
+<td>5,189</td>
+<td>100.0%</td>
+<td>51.2%</td>
+<td>53.4%</td>
+<td>56.6%</td>
+<td>5.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>2013</td>
+<td>4,020</td>
+<td>100.0%</td>
+<td>49.9%</td>
+<td>52.2%</td>
+<td>55.2%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>2014</td>
+<td>3,763</td>
+<td>100.0%</td>
+<td>53.0%</td>
+<td>54.7%</td>
+<td>57.5%</td>
+<td>5.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>2015</td>
+<td>4,228</td>
+<td>100.0%</td>
+<td>58.6%</td>
+<td>60.5%</td>
+<td>64.0%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>2016</td>
+<td>5,216</td>
+<td>98.0%</td>
+<td>57.5%</td>
+<td>59.6%</td>
+<td>62.2%</td>
+<td>5.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>2017</td>
+<td>5,354</td>
+<td>98.0%</td>
+<td>60.0%</td>
+<td>61.4%</td>
+<td>64.7%</td>
+<td>5.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>2018</td>
+<td>4,247</td>
+<td>79.8%</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<section id="censura-por-derecha-el-problema-central" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="censura-por-derecha-el-problema-central"><span class="header-section-number">6.2.1</span> Censura por derecha: el problema central</h3>
+<p>Una cohorte sólo puede evaluarse cuando su plazo se cumplió. Una carrera de cinco años con dos de holgura necesita siete años de datos posteriores, y de la cohorte del perfil todavía no se ha titulado nadie. Comparar cohortes sin corregir esto hace que las recientes parezcan catastróficas por el solo hecho de ser recientes.</p>
+<p>El tratamiento tiene <strong>dos niveles</strong>, y el segundo apareció al auditar el resultado del primero:</p>
+<ol type="1">
+<li><p><strong>Por estudiante.</strong> Cada ingresante entra al denominador sólo si su propio horizonte —su duración nominal más la holgura— cabe en los datos disponibles. Quien no alcanzó a ser observado ese tiempo queda fuera del denominador, en vez de contarse como si hubiera desertado.</p></li>
+<li><p><strong>Por institución.</strong> Corregir el tiempo no corrige la <strong>composición</strong>. Cuando quedan pocos años de seguimiento, las carreras largas caen primero, así que una universidad con mucha medicina o ingeniería queda descrita sólo por sus carreras cortas y su tasa sube sin que haya titulado mejor. Se exige que al menos el 90% de los ingresantes de esa institución sea observable; bajo ese umbral la tasa se anula y se conserva la cobertura, que explica por qué.</p></li>
+</ol>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Advertencia</span>Este filtro cambió el resultado de la UA, no sólo la teoría
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Sin el piso por institución, la UA aparecía <strong>primera del sistema</strong> en la cohorte 2018 con 70,4% y percentil 98. Esa cohorte tenía 81% de observabilidad nacional pero sólo 80% en la UA, que concentra 15,7% de carreras de seis años o más contra 12,1% del sistema: el filtro le recortaba justamente sus carreras largas. Con el piso aplicado, la última cohorte comparable pasa a ser <strong>2017</strong>, donde la UA marca 61,4% frente a una mediana de 50,9%. Sigue siendo una posición alta, pero es la que resiste auditoría.</p>
+<p>La composición de la UA es <strong>más exigente</strong> que la del sistema, no más fácil: 1,1% de sus ingresantes está en carreras de tres años o menos, contra 13,3% nacional. Su ventaja no viene de ofrecer programas cortos.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Una cohorte común para todas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La cohorte de referencia que se une al perfil es <strong>la misma para todas las universidades</strong>. Si cada una trajera su última cohorte con dato, la más reciente quedaría representada sólo por las que alcanzan a cerrarla —las de carreras cortas— y el benchmark compararía a unas instituciones en un año contra otras en otro. Se exige que la cohorte elegida tenga tasa utilizable en al menos el 80% del sistema.</p>
+</div>
+</div>
+</section>
+<section id="un-error-que-las-tasas-anidadas-dejaron-a-la-vista" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="un-error-que-las-tasas-anidadas-dejaron-a-la-vista"><span class="header-section-number">6.2.2</span> Un error que las tasas anidadas dejaron a la vista</h3>
+<p>La primera versión tomaba el primer título por clave y recién después descartaba los anteriores al ingreso. Un título previo de otra carrera ganaba el mínimo y anulaba al estudiante entero, escondiendo el título posterior que sí correspondía a esa cohorte. Como el nivel <em>sistema</em> agrega más títulos por persona, se envenenaba más que los otros, y aparecían universidades con titulación en el sistema <strong>menor</strong> que en su propia institución, lo que es imposible por construcción.</p>
+<p>El orden correcto es descartar por año <strong>antes</strong> de agregar por clave. La propiedad de anidamiento —carrera ≤ universidad ≤ sistema— se verifica hoy como test sobre los datos reales, no sólo sobre casos sintéticos.</p>
+</section>
+</section>
+<section id="piso-predictivo-de-las-variables-previas-al-ingreso" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="piso-predictivo-de-las-variables-previas-al-ingreso"><span class="header-section-number">6.3</span> Piso predictivo de las variables previas al ingreso</h2>
+<p>Modelo: regresión logística sobre NEM, ranking, promedio de notas de enseñanza media, puntajes PAES (Competencia Lectora, Matemática M1 y M2, Historia, Ciencias), dependencia del establecimiento, sexo y años desde el egreso. Objetivo: no continuar en la misma carrera al año siguiente.</p>
+<div class="cell" data-execution_count="19">
+<div id="tbl-piso" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="19">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-piso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 13: Piso predictivo — comparación de esquemas de validación
+Tabla 15: Piso predictivo — comparación de esquemas de validación
 </figcaption>
 <div aria-describedby="tbl-piso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="122">
+<div class="cell-output cell-output-display" data-execution_count="19">
 <div>
 
 
@@ -3865,17 +4230,17 @@ Tabla 13: Piso predictivo — comparación de esquemas de validación
 </table>
 <p><strong>El AUC con validación temporal (0,615) es idéntico al del split aleatorio (0,615).</strong> El piso es estable y el resultado se sostiene sobre cohortes futuras.</p>
 </section>
-<section id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.3</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</h2>
+<section id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="ablación-cuánto-sube-el-piso-con-la-trayectoria-escolar-completa"><span class="header-section-number">6.4</span> Ablación: ¿cuánto sube el piso con la trayectoria escolar completa?</h2>
 <p>La pregunta que corresponde antes de incorporar variables socioeconómicas a un modelo que prioriza estudiantes no es “¿predicen?” sino <strong>“¿cuánto añaden por encima de lo que ya tenemos?”</strong>. Población: solo universidades, validación temporal 2023 → 2024.</p>
-<div class="cell" data-execution_count="18">
-<div id="tbl-ablacion" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="18">
+<div class="cell" data-execution_count="20">
+<div id="tbl-ablacion" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="20">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ablacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 14: Valor incremental de cada bloque de variables previas al ingreso
+Tabla 16: Valor incremental de cada bloque de variables previas al ingreso
 </figcaption>
 <div aria-describedby="tbl-ablacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="123">
+<div class="cell-output cell-output-display" data-execution_count="20">
 <div>
 
 
@@ -3945,16 +4310,16 @@ Tabla 14: Valor incremental de cada bloque de variables previas al ingreso
 <p><strong>Las variables socioeconómicas aportan +0,014.</strong> Es poco, y ese “poco” resuelve empíricamente el dilema ético: excluirlas del scoring cuesta casi nada en desempeño. La decisión de usarlas o no deja de ser un intercambio entre equidad y precisión.</p>
 <p><strong>Todo junto llega a 0,636.</strong> Con el expediente escolar íntegro —asistencia mensual, decil de ingreso oficial, condición de prioritario, tipo de financiamiento— el piso sigue por debajo de lo que un baseline conductual alcanza en la semana 4.</p>
 </section>
-<section id="curva-de-anticipación-sobre-oulad" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.4</span> Curva de anticipación sobre OULAD</h2>
-<div class="cell" data-execution_count="19">
-<div id="tbl-oulad-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="19">
+<section id="curva-de-anticipación-sobre-oulad" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="curva-de-anticipación-sobre-oulad"><span class="header-section-number">6.5</span> Curva de anticipación sobre OULAD</h2>
+<div class="cell" data-execution_count="21">
+<div id="tbl-oulad-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="21">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-oulad-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 15: Poder predictivo vs anticipación — OULAD, cohorte fija
+Tabla 17: Poder predictivo vs anticipación — OULAD, cohorte fija
 </figcaption>
 <div aria-describedby="tbl-oulad-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="124">
+<div class="cell-output cell-output-display" data-execution_count="21">
 <div>
 
 
@@ -4028,16 +4393,16 @@ Tabla 15: Poder predictivo vs anticipación — OULAD, cohorte fija
 </div>
 </div>
 </section>
-<section id="curva-de-anticipación-sobre-datos-sintéticos" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.5</span> Curva de anticipación sobre datos sintéticos</h2>
-<div class="cell" data-execution_count="20">
-<div id="tbl-sint-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="20">
+<section id="curva-de-anticipación-sobre-datos-sintéticos" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="curva-de-anticipación-sobre-datos-sintéticos"><span class="header-section-number">6.6</span> Curva de anticipación sobre datos sintéticos</h2>
+<div class="cell" data-execution_count="22">
+<div id="tbl-sint-leadtime" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="22">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sint-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla 16: Poder predictivo vs anticipación — datos sintéticos
+Tabla 18: Poder predictivo vs anticipación — datos sintéticos
 </figcaption>
 <div aria-describedby="tbl-sint-leadtime-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display" data-execution_count="125">
+<div class="cell-output cell-output-display" data-execution_count="22">
 <div>
 
 
@@ -4206,8 +4571,8 @@ Tabla 16: Poder predictivo vs anticipación — datos sintéticos
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render documentacion/informe_metodologico.qmd</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
 <p>El generador sintético es determinista dado su semilla (<code>config/synthetic.yml: seed</code>). La suite de pruebas incluye una verificación de reproducibilidad que falla si dos ejecuciones con la misma semilla difieren.</p>
-<div id="cell-entorno" class="cell" data-execution_count="21">
-<div id="entorno" class="cell-output cell-output-display cell-output-markdown" data-execution_count="126">
+<div id="cell-entorno" class="cell" data-execution_count="23">
+<div id="entorno" class="cell-output cell-output-display cell-output-markdown" data-execution_count="23">
 <table class="caption-top table table-sm table-striped small">
 <tbody>
 <tr class="odd">
@@ -4224,7 +4589,7 @@ Tabla 16: Poder predictivo vs anticipación — datos sintéticos
 </tr>
 <tr class="even">
 <td>Generado</td>
-<td>2026-09-08 16:30</td>
+<td>2026-09-10 12:04</td>
 </tr>
 </tbody>
 </table>
