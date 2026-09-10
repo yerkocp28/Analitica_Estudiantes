@@ -246,7 +246,13 @@ propia comparación.
 #| label: tbl-sede
 #| tbl-cap: "Continuidad por sede — área del piloto, última cohorte disponible"
 d = leer("hallazgo_retencion_sede")
+# La brecha se calcula, no se afirma: la tabla muestra la ultima cohorte
+# disponible y su rango cambia cada vez que se agrega un anio de matricula.
+brecha_sede, cohorte_sede, n_sede = "—", "—", 0
 if d is not None:
+    brecha_sede = f"{100 * (d.retencion_misma_carrera.max() - d.retencion_misma_carrera.min()):.1f}"
+    cohorte_sede = int(d.cohorte.iloc[0])
+    n_sede = int(d.n.min())
     d = d[["nomb_sede", "n", "retencion_misma_carrera",
            "retencion_misma_universidad", "retencion_sistema"]].copy()
     for c in d.columns[2:]:
@@ -258,11 +264,16 @@ d
 ::: {.callout-tip}
 ## La sede debe ser variable del modelo, no filtro del tablero
 
-La distancia entre la sede con mayor y menor continuidad supera los diez puntos
-porcentuales, con tamaños que no admiten leerla como ruido. Una institución que
-está **sobre** el promedio nacional contiene internamente un rango que el
-promedio esconde: es exactamente el tipo de heterogeneidad que un modelo debe
-capturar y un indicador agregado no.
+En la cohorte `{python} cohorte_sede` la distancia entre la sede con mayor y
+menor continuidad es de **`{python} brecha_sede` puntos porcentuales**, con la
+sede más pequeña aportando `{python} n_sede` inscripciones. En la cohorte 2024,
+que es la que se analiza en detalle en @sec-retencion, esa brecha llegó a 14
+puntos.
+
+El rango se mueve de un año a otro, pero el punto no depende de su magnitud
+exacta: una institución que está **sobre** el promedio nacional contiene
+internamente una dispersión que el promedio esconde. Es el tipo de
+heterogeneidad que un modelo debe capturar y un indicador agregado no.
 :::
 
 ## 3. La UA es del montón en selectividad, y no se mueve
@@ -345,7 +356,7 @@ distintas.
 La titulación oportuna dejaba a la UA en el percentil 94 del sistema. **Ese
 número no debe presentarse como logro**: es en buena parte composición de oferta.
 El indicador por cohorte —donde la UA marca 61,4% frente a una mediana de
-50,9%— es el que sostiene una afirmación sobre desempeño. Ver @sec-cohortes.
+51,2%— es el que sostiene una afirmación sobre desempeño. Ver @sec-cohortes.
 :::
 
 ## 5. Las trampas de datos que cambiaron un resultado
@@ -842,9 +853,20 @@ r
 ::: {.callout-tip}
 ## Implicación de diseño
 
-La brecha entre la sede con mayor y menor retención supera los **14 puntos**. Con
-esos tamaños muestrales no es ruido. La sede debe entrar al modelo como variable,
-no quedarse como filtro del tablero.
+La brecha entre la sede con mayor y menor retención llega a **14 puntos** en esta
+cohorte. La sede debe entrar al modelo como variable, no quedarse como filtro del
+tablero.
+
+**Pero el orden entre sedes no es estable, y conviene decirlo.** Con las tres
+cohortes disponibles del área, la brecha va de 14,1 puntos en 2024 a 10,2 en 2023
+y 6,9 en 2025, y las sedes se reordenan: El Llano marca 80,7%, 74,7% y 79,6% en
+esos tres años. Con del orden de cien inscripciones por sede, parte de ese
+movimiento **sí es ruido muestral**.
+
+Lo que sostiene el argumento es la *dispersión persistente*, no el ranking de un
+año: en las tres cohortes hay varios puntos entre la mejor y la peor sede. Leer
+«El Llano es la sede con problemas» a partir de una sola cohorte sería
+exactamente el error que este informe intenta evitar.
 :::
 
 ## Titulación por cohorte de ingreso {#sec-cohortes}
@@ -925,7 +947,7 @@ Sin el piso por institución, la UA aparecía **primera del sistema** en la coho
 pero sólo 80% en la UA, que concentra 15,7% de carreras de seis años o más contra
 12,1% del sistema: el filtro le recortaba justamente sus carreras largas. Con el
 piso aplicado, la última cohorte comparable pasa a ser **2017**, donde la UA
-marca 61,4% frente a una mediana de 50,9%. Sigue siendo una posición alta, pero
+marca 61,4% frente a una mediana de 51,2%. Sigue siendo una posición alta, pero
 es la que resiste auditoría.
 
 La composición de la UA es **más exigente** que la del sistema, no más fácil:

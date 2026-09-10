@@ -28,8 +28,11 @@ from ..logging_setup import get_logger
 log = get_logger(__name__)
 
 UA = "AUTONOMA"
-# Cohortes en que falta el codigo de carrera en una quinta parte de la
-# matricula. Medido, no supuesto: 24,5% en 2007 y 20,9% en 2008.
+# Cohortes en que falta el codigo de carrera en buena parte de las
+# inscripciones de ingreso. Medido sobre la COHORTE, que es el denominador de
+# la serie de retencion: 24,5% en 2007 y 17,7% en 2008, contra 2,2% en 2009.
+# (Sobre toda la educacion superior las cifras son 28,5% y 20,9%; conviene no
+# mezclarlas, que es de donde salio una inconsistencia en la documentacion.)
 COHORTES_SIN_CODIGO = (2007, 2008)
 
 
@@ -259,7 +262,7 @@ def trampas_datos(results: Path, profiles: pd.DataFrame | None) -> pd.DataFrame:
         {"fuente": "Admisión", "trampa": "La PSU (2004–2020) no está publicada",
          "efecto": "14 de 19 cohortes no pueden medir selectividad",
          "estado": "Límite permanente"},
-        {"fuente": "Matrícula", "trampa": "Falta cod_carrera en 24,5% de 2007 y 20,9% de 2008",
+        {"fuente": "Matrícula", "trampa": "Falta cod_carrera en 24,5% de la cohorte 2007 y 17,7% de la 2008",
          "efecto": "La continuidad de carrera aparece en 53,9% en vez de ~72% sin que nadie deserte",
          "estado": "Detectado y advertido"},
         {"fuente": "Matrícula", "trampa": "anio_ing_carr_ori usa 9999 y 9995 como centinela",

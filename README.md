@@ -92,7 +92,7 @@ python scripts/descriptive_stats.py
 quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
 quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
-pytest -q                                            # 142 tests
+pytest -q                                            # 143 tests
 ```
 
 ---
@@ -247,7 +247,7 @@ IP/CFT).
 
 Al mirar la serie completa hay que tener presente que **la continuidad de
 carrera no es comparable antes de 2009**: falta `cod_carrera` en el 24,5% de la
-matrícula 2007 y el 20,9% de la de 2008, y sin código la fila no puede calzar
+cohorte 2007 y el 17,7% de la de 2008, y sin código la fila no puede calzar
 aunque la persona haya seguido en la misma carrera. Los otros dos niveles no
 dependen de ese campo. La app avisa cuando se elige ese indicador en una cohorte
 con cobertura baja.
@@ -418,6 +418,14 @@ Por sede, dentro del área del piloto:
 La brecha de **14 puntos entre Providencia y El Llano** es un hallazgo real, no
 simulado, y sugiere que el modelo debería considerar la sede explícitamente.
 
+**El orden entre sedes no es estable de un año a otro.** Con las tres cohortes
+disponibles del área la brecha va de 14,1 puntos (2024) a 10,2 (2023) y 6,9
+(2025), y El Llano marca 80,7%, 74,7% y 79,6% en esos años. Con cerca de cien
+inscripciones por sede, parte de ese movimiento es ruido muestral. Lo que
+sostiene el argumento es la dispersión persistente, no el ranking de un año:
+concluir «El Llano es la sede con problemas» desde una sola cohorte sería un
+error.
+
 ### La serie larga: 19 transiciones de continuidad (2007→2008 … 2025→2026)
 
 Con la matrícula histórica completa, la retención deja de ser una foto y pasa a
@@ -432,7 +440,7 @@ buscara solo entre universidades, quien se cambia a un CFT o a un IP se contarí
 como deserción.
 
 **Una trampa que había que resolver:** `cod_carrera` falta en el **24,5% de la
-matrícula 2007** y el **20,9% de la de 2008**, y bajo el 2% desde 2009. Sin
+cohorte 2007** y el **17,7% de la de 2008**, y bajo el 2% desde 2009. Sin
 código, la fila no puede calzar a nivel de carrera aunque la persona haya
 seguido en la misma, así que la continuidad *de carrera* aparece en 53,9% en vez
 de ~72% sin que nadie hubiera desertado. Los niveles de universidad (76,5%) y de
