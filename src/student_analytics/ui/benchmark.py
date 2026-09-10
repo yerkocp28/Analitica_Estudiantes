@@ -424,13 +424,21 @@ def render_benchmark(results_dir: Path) -> None:
 
     with similar:
         st.subheader("Similitud institucional explicada")
+        bloques_activos = [b for b in model.groups]
         st.markdown("La cercanía combina **tamaño de cohorte y sedes, mezcla de áreas, presencia regional, "
-                    "jornada y modalidad**. Cada uno de los cuatro bloques tiene el mismo peso. "
+                    "jornada y modalidad**, y —cuando hay datos PAES— **el nivel y la dispersión de los "
+                    "puntajes de ingreso**. Todos los bloques pesan igual. "
                     "La retención no participa en la distancia ni en los clusters.")
+        if "selectividad" in bloques_activos:
+            st.info("**La selectividad participa en la distancia.** Los pares no son solo universidades que "
+                    "ofrecen carreras parecidas, sino que además reciben estudiantes con puntajes parecidos. "
+                    "Eso excluye del grupo a instituciones de oferta similar pero admisión mucho más o menos "
+                    "selectiva. Se configura en `block_weights` de config/benchmark.yml.")
         st.caption("Se describe el perfil de las cohortes de ingreso a carrera, no la totalidad de la universidad. "
                    "Los recursos institucionales y el cuerpo docente (base INDICES del CNED) y la selectividad "
                    "de admisión (PAES cruzada por MRUN) están disponibles como variables descriptivas en el "
-                   "mapa de posicionamiento, pero **no participan** en la distancia ni en los clusters. "
+                   "mapa de posicionamiento. Los recursos y el cuerpo docente **no participan** en la "
+                   "distancia; la selectividad sí, si está activada en la configuración. "
                    "La selectividad describe solo a quienes rindieron la PAES: revisa su cobertura antes de "
                    "interpretarla. Sigue sin incorporarse actividad de investigación.")
         peers = nearest.loc[nearest.cod_inst.isin(peer_ids)]
@@ -444,8 +452,10 @@ def render_benchmark(results_dir: Path) -> None:
         st.markdown("**¿En qué se parecen y en qué difieren?**")
         dimensions = peers[["nomb_inst", *[f"distancia_{b}" for b in model.groups]]].melt(
             id_vars="nomb_inst", var_name="bloque", value_name="distancia")
-        dimensions["bloque"] = dimensions.bloque.map({"distancia_escala": "Tamaño y sedes", "distancia_areas": "Áreas",
-                                                       "distancia_regiones": "Regiones", "distancia_docencia": "Jornada y modalidad"})
+        dimensions["bloque"] = dimensions.bloque.map(
+            {"distancia_escala": "Tamaño y sedes", "distancia_areas": "Áreas",
+             "distancia_regiones": "Regiones", "distancia_docencia": "Jornada y modalidad",
+             "distancia_selectividad": "Selectividad"}).fillna(dimensions.bloque)
         st.altair_chart(alt.Chart(dimensions).mark_rect().encode(
             x=alt.X("bloque:N", title=None), y=alt.Y("nomb_inst:N", title=None, axis=alt.Axis(labelLimit=340)),
             color=alt.Color("distancia:Q", title="Distancia", scale=alt.Scale(scheme="blues", domainMin=0)),
@@ -565,7 +575,10 @@ def render_benchmark(results_dir: Path) -> None:
         st.caption("Coberturas expresadas entre 0 y 1. La categoría «Sin información» se mantiene explícita en el perfil.")
         st.markdown("**Cómo se construye la distancia.** Tamaño y sedes se transforman con log(1+x). "
                     "Las distribuciones usan raíz cuadrada de las proporciones; cada bloque se normaliza por su "
-                    "varianza total y recibe un peso de 25%. Las universidades pesan igual al ajustar los clusters. "
+                    "varianza total y recibe el peso declarado en la configuración. La selectividad, si "
+                    "participa, se estandariza como el bloque de escala; un dato ausente se imputa con la "
+                    "mediana y no con cero, para no inventar una universidad de puntaje mínimo. "
+                    "Las universidades pesan igual al ajustar los clusters. "
                     "Cambiar estas variables o pesos puede cambiar los pares.")
         st.markdown("**Selección de la partición.** Se exige un tamaño mínimo de grupo y que ninguno concentre "
                     f"más del {config['maximum_group_share']:.0%} de las universidades. Solo entre las soluciones "

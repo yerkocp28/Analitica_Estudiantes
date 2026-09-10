@@ -17,13 +17,15 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from student_analytics.ingestion.cned import RESOURCE_LABELS  # noqa: E402
 from student_analytics.ingestion.paes import SELECTIVITY_LABELS  # noqa: E402
-from student_analytics.modeling.benchmark import SHARE_BLOCKS  # noqa: E402
+from student_analytics.modeling.benchmark import (NUMERIC_BLOCKS,  # noqa: E402
+                                                  SHARE_BLOCKS)
 from student_analytics.ui.benchmark import AXES  # noqa: E402
 
 OUT = ROOT / "documentacion" / "datos"
@@ -68,14 +70,33 @@ def describir(columna: str) -> str:
     return columna
 
 
+def _columnas_del_clustering(d: pd.DataFrame) -> set[str]:
+    """Qué variables entran hoy a la distancia, según la configuración.
+
+    Se deriva de `block_weights` y no de una lista fija: cuando se activó el
+    bloque de selectividad, una lista fija habría seguido informando los
+    bloques antiguos sin que nada avisara.
+    """
+    pesos = yaml.safe_load((ROOT / "config/benchmark.yml").read_text(encoding="utf-8"))
+    activos = set((pesos or {}).get("block_weights") or {})
+    columnas: set[str] = set()
+    for bloque, variables in NUMERIC_BLOCKS.items():
+        if bloque in activos:
+            columnas |= {v for v in variables if v in d.columns}
+    for bloque, prefijos in SHARE_BLOCKS.items():
+        if bloque in activos:
+            columnas |= {c for c in d.columns
+                         if any(c.startswith(p + "::") for p in prefijos)}
+    return columnas
+
+
 def perfil() -> pd.DataFrame:
     d = pd.read_parquet(PROFILES)
     cohortes = sorted(d.cohorte.unique())
-    # Entran a la distancia solo escala y las distribuciones con "::".
-    prefijos = tuple(p + "::" for lista in SHARE_BLOCKS.values() for p in lista)
+    del_clustering = _columnas_del_clustering(d)
     filas = []
     for c in d.columns:
-        entra = c in ("log_cohorte", "log_sedes") or c.startswith(prefijos)
+        entra = c in del_clustering
         fila = {"variable": c, "descripcion": describir(c),
                 "origen": ORIGEN.get(c, "Matrícula SIES / derivada"),
                 "entra_clustering": bool(entra),

@@ -58,13 +58,13 @@ tamano_por_sede,Inscripciones por sede,Matrícula SIES / derivada,False,True,,52
 estudiantes_total,Estudiantes identificados · toda la institución,Matrícula SIES / derivada,False,True,"MRUN únicos por universidad y año, todos los niveles; excluye registros sin MRUN.",52,52,51,51
 matriculas_total,matriculas_total,Matrícula SIES / derivada,False,False,,52,52,51,51
 matriculas_sin_mrun,matriculas_sin_mrun,Matrícula SIES / derivada,False,False,,52,52,51,51
-paes_promedio,Puntaje PAES promedio de la cohorte,PAES × matrícula (MRUN),False,True,Promedio de Competencia Lectora y Matemática M1 de quienes rindieron; revisar paes_cobertura.,51,52,50,51
+paes_promedio,Puntaje PAES promedio de la cohorte,PAES × matrícula (MRUN),True,True,Promedio de Competencia Lectora y Matemática M1 de quienes rindieron; revisar paes_cobertura.,51,52,50,51
 paes_p25,PAES percentil 25 de la cohorte,PAES × matrícula (MRUN),False,True,,51,52,50,51
 paes_p75,PAES percentil 75 de la cohorte,PAES × matrícula (MRUN),False,True,,51,52,50,51
 paes_cobertura,Cohorte con puntaje PAES · cobertura,PAES × matrícula (MRUN),False,True,"Fracción de la cohorte con puntaje PAES. Donde es baja, los promedios describen una minoría.",52,52,51,51
 nem_promedio,Puntaje NEM promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
 ranking_promedio,Puntaje ranking promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
-paes_rango_intercuartil,Dispersión PAES de la cohorte (p75 − p25),PAES × matrícula (MRUN),False,True,,51,52,50,51
+paes_rango_intercuartil,Dispersión PAES de la cohorte (p75 − p25),PAES × matrícula (MRUN),True,True,,51,52,50,51
 anio_creacion,Año de creación,CNED institucional,False,True,,52,52,51,51
 cruch,Pertenece al CRUCH,CNED institucional,False,False,El CRUCH admite privadas desde la Ley 21.091; pertenecer a él ya no equivale a ser 'tradicional'.,52,52,51,51
 acreditacion_cned,Acreditación CNED · foto del catálogo 2025,Matrícula SIES / derivada,False,True,"Foto del catálogo CNED, no una serie histórica por cohorte.",50,52,50,51

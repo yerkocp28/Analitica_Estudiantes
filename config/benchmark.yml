@@ -16,11 +16,22 @@ nearest_peers: 5
 #
 # La silueta mide separacion, no utilidad. Este umbral aporta lo segundo.
 maximum_group_share: 0.5
+# Peso de cada bloque en la distancia entre universidades. Deben sumar 1.
+#
+# `selectividad` cambia el significado de "comparable": sin ella los pares son
+# universidades que OFRECEN carreras parecidas; con ella, ademas, universidades
+# que RECIBEN estudiantes parecidos. Es la comparacion que suelen querer las
+# direcciones de carrera, pero no es neutra: acerca a la UA a instituciones de
+# puntaje similar aunque su oferta difiera.
+#
+# Para volver al criterio anterior basta con quitar la linea `selectividad` y
+# repartir su peso; el codigo renormaliza los bloques que queden.
 block_weights:
-  escala: 0.25
-  areas: 0.25
-  regiones: 0.25
-  docencia: 0.25
+  escala: 0.20
+  areas: 0.20
+  regiones: 0.20
+  docencia: 0.20
+  selectividad: 0.20
 
 # Valor promedio anual de la UF en pesos, para homologar aranceles.
 #

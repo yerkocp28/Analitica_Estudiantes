@@ -12,8 +12,23 @@ from sklearn.metrics import silhouette_score
 from sklearn.mixture import GaussianMixture
 
 from student_analytics.ingestion.retention import summarize_retention
+from student_analytics.logging_setup import get_logger
+
+log = get_logger(__name__)
 
 SHARE_BLOCKS = {"areas": ["area"], "regiones": ["region"], "docencia": ["jornada", "modalidad"]}
+
+# Bloques de variables numericas: se estandarizan, no se transforman con raiz.
+# A diferencia de las proporciones, aqui un dato ausente NO es un cero: un
+# `fillna(0)` en un puntaje PAES pondria a esa universidad 600 puntos por
+# debajo de todas y la convertiria en el atipico que define la particion.
+NUMERIC_BLOCKS = {
+    "escala": ["log_cohorte", "log_sedes"],
+    # Nivel y dispersion de los puntajes de ingreso. Con este bloque activo,
+    # "comparable" deja de significar "ofrece carreras parecidas" y pasa a
+    # significar tambien "recibe estudiantes parecidos".
+    "selectividad": ["paes_promedio", "paes_rango_intercuartil"],
+}
 
 # Variables numericas descriptivas, para posicionar en graficos. NO entran en
 # la distancia ni en los clusters: profile_matrix solo toma log_cohorte,
@@ -119,28 +134,60 @@ def profile_matrix(profiles: pd.DataFrame, weights: dict) -> tuple[np.ndarray, d
     No estandariza cada categoría por separado: una categoría rara no recibe
     un peso extremo. Lista positiva de variables excluye todos los resultados.
     """
-    if (set(weights) != {"escala", *SHARE_BLOCKS}
-            or any(not np.isfinite(w) or w <= 0 for w in weights.values())
+    if (any(not np.isfinite(w) or w <= 0 for w in weights.values())
             or not np.isclose(sum(weights.values()), 1)):
-        raise ValueError("Los cuatro pesos de bloques deben ser positivos y sumar 1.")
-    groups = {"escala": ["log_cohorte", "log_sedes"]}
-    groups.update({block: sorted(c for c in profiles if any(c.startswith(p + "::") for p in prefixes))
-                   for block, prefixes in SHARE_BLOCKS.items()})
+        raise ValueError("Los pesos de bloques deben ser positivos y sumar 1.")
+
+    groups: dict[str, list[str]] = {}
+    for block, columns in NUMERIC_BLOCKS.items():
+        if block not in weights:
+            continue
+        presentes = [c for c in columns if c in profiles.columns]
+        if not presentes:
+            # Perfil generado sin esa fuente: se omite el bloque y su peso se
+            # reparte, en vez de romper. Asi la app sigue funcionando con
+            # artefactos parciales, avisando en el log.
+            log.warning("Bloque '%s' sin variables en el perfil; se omite", block)
+            continue
+        groups[block] = presentes
+    for block, prefixes in SHARE_BLOCKS.items():
+        if block not in weights:
+            continue
+        groups[block] = sorted(c for c in profiles
+                               if any(c.startswith(p + "::") for p in prefixes))
+        if not groups[block]:
+            raise ValueError(f"Faltan variables del bloque {block}")
+    if not groups:
+        raise ValueError("Ningún bloque del perfil tiene variables disponibles.")
+
+    # Si algun bloque se omitio, los pesos restantes se renormalizan para que
+    # sigan sumando 1 y conserven su proporcion relativa.
+    total = sum(weights[b] for b in groups)
+    pesos = {b: weights[b] / total for b in groups}
+
     matrices = []
     for block, columns in groups.items():
-        if not columns:
-            raise ValueError(f"Faltan variables del bloque {block}")
-        x = profiles[columns].fillna(0).to_numpy(dtype=float)
-        if not np.isfinite(x).all() or (block != "escala" and (x < 0).any()):
-            raise ValueError("Perfil institucional inválido")
-        if block != "escala":
-            x = np.sqrt(x)
-        else:
+        crudo = profiles[columns]
+        if block in NUMERIC_BLOCKS:
+            # Ausente se imputa con la mediana del propio bloque: deja a esa
+            # universidad en el centro en vez de en un extremo inventado.
+            faltan = int(crudo.isna().sum().sum())
+            if faltan:
+                log.warning("Bloque '%s': %d valores ausentes imputados con la mediana",
+                            block, faltan)
+            x = crudo.fillna(crudo.median()).fillna(0).to_numpy(dtype=float)
+            if not np.isfinite(x).all():
+                raise ValueError(f"Perfil institucional inválido en el bloque {block}")
             sd = x.std(axis=0)
             x = (x - x.mean(axis=0)) / np.where(sd > 1e-12, sd, 1)
+        else:
+            x = crudo.fillna(0).to_numpy(dtype=float)
+            if not np.isfinite(x).all() or (x < 0).any():
+                raise ValueError(f"Perfil institucional inválido en el bloque {block}")
+            x = np.sqrt(x)
         x = x - x.mean(axis=0)
         scale = np.sqrt(np.var(x, axis=0).sum())
-        matrices.append(x / (scale if scale > 1e-12 else 1) * np.sqrt(weights[block]))
+        matrices.append(x / (scale if scale > 1e-12 else 1) * np.sqrt(pesos[block]))
     return np.concatenate(matrices, axis=1), groups
 
 
