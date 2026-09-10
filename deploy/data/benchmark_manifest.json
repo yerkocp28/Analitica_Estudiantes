@@ -1,5 +1,5 @@
 {
-  "generado_utc": "2026-09-10T14:49:30.830533+00:00",
+  "generado_utc": "2026-09-10T16:12:30.471677+00:00",
   "version": 2,
   "recursos_denominador": "MRUN únicos por universidad y año, todos los niveles; excluye MRUN ausente",
   "recursos_temporalidad": "solo año exacto; acreditación CNED conserva fecha del catálogo",
@@ -174,6 +174,12 @@
     },
     {
       "cohorte": 2021,
+      "archivo": "A_INSCRITOS_PUNTAJES_PDT_2021_PUB_MRUN.csv",
+      "bytes": 110572083,
+      "uso": "selectividad de admision"
+    },
+    {
+      "cohorte": 2021,
       "archivo": "20260817_Titulados_Ed_Superior_2021_WEB.csv",
       "bytes": 156700712,
       "uso": "titulacion de la promocion que egresa"
@@ -183,6 +189,12 @@
       "archivo": "20260810_Matrícula_Ed_Superior_2021_PUBL_MRUN.csv",
       "bytes": 855805215,
       "modificado_utc": "2026-09-01T16:59:43.399907+00:00"
+    },
+    {
+      "cohorte": 2022,
+      "archivo": "A_INSCRITOS_PUNTAJES_PDT_2022_PUB_MRUN.csv",
+      "bytes": 113894526,
+      "uso": "selectividad de admision"
     },
     {
       "cohorte": 2022,
@@ -234,6 +246,12 @@
     },
     {
       "cohorte": 2025,
+      "archivo": "A_INSCRITOS_PUNTAJES_PAES_2025_PUB_MRUN.csv",
+      "bytes": 234075499,
+      "uso": "selectividad de admision"
+    },
+    {
+      "cohorte": 2025,
       "archivo": "20260817_Titulados_Ed_Superior_2025_WEB.csv",
       "bytes": 184111674,
       "uso": "titulacion de la promocion que egresa"
@@ -258,5 +276,5 @@
   ],
   "perfil": "cohorte de ingreso a carrera, pregrado universitario",
   "retencion_sha256": "67d1c08ea1c5f882a7a868c9f44c94792339f453175cc204fcaeba9fbc7edfbb",
-  "perfiles_sha256": "56ac71cc2b89dbc389c276860186d794b03d4f3f7c6bbb9c245cacb1e69614cd"
+  "perfiles_sha256": "83e582656cb6b2ffeb774c5b45830f3b7a39ac67af2733166f40ca1e8fae6d96"
 }

@@ -162,7 +162,7 @@ proyecto es la continuación operativa de esa recomendación.
 |---|---|---|---|
 | [Matrícula en Educación Superior](https://datosabiertos.mineduc.cl/matricula-en-educacion-superior/) 2007–2026 | Individual (MRUN) | Datos abiertos de gobierno | Retención real UA; población de los modelos; cohortes de ingreso del seguimiento longitudinal |
 | [Titulados en Educación Superior](https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/) 2007–2025 | Individual (MRUN) | Datos abiertos de gobierno | Titulación de la promoción que egresa y titulación por cohorte de ingreso |
-| [Pruebas de admisión (PAES)](https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Variables previas al ingreso |
+| [Pruebas de admisión (PDT y PAES)](https://datosabiertos.mineduc.cl/pruebas-de-admision-a-la-educacion-superior/) 2021–2026 | Individual (MRUN) | Datos abiertos de gobierno | Variables previas al ingreso; selectividad de admisión |
 | [Asistencia anual por estudiante](https://datosabiertos.mineduc.cl/asistencia-anual-por-estudiante/) 2022, 2023 | Individual (MRUN + RBD), tasa mensual | Datos abiertos de gobierno | Asistencia de enseñanza media y su pendiente |
 | [Alumnos SEP](https://datosabiertos.mineduc.cl/alumnos-preferentes-prioritarios-y-beneficiarios-sep/) 2022, 2023 | Individual (MRUN + RBD) | Datos abiertos de gobierno | Vulnerabilidad individual: prioritario / preferente |
 | [Asignaciones de Becas y Créditos](https://datosabiertos.mineduc.cl/asignaciones-de-becas-y-creditos-en-educacion-superior/) 2023, 2024 | Individual (MRUN) | Datos abiertos de gobierno | Quintil, decil DFE, gratuidad, FSCU, beca de arancel |
@@ -199,7 +199,8 @@ origen, comuna), y por tanto candidatas legítimas a features:
 | [JUNAEB — IVE](http://junaebabierta.junaeb.cl/catalogo-de-datos/indicadores-de-vulnerabilidad/) | RBD | Índice de vulnerabilidad del colegio (0–100) |
 | Agencia de Calidad — SIMCE | RBD | Rendimiento histórico del establecimiento |
 | [Rendimiento por estudiante](https://datosabiertos.mineduc.cl/rendimiento-por-estudiante-2/) | MRUN + RBD | Notas y promoción año a año en enseñanza media |
-| [Titulados en Educación Superior](https://datosabiertos.mineduc.cl/titulados-en-educacion-superior/) | MRUN | Titulación efectiva: el desenlace de largo plazo |
+| [Matrícula longitudinal](https://datosabiertos.mineduc.cl/matricula-longitudinal/) | MRUN | Trayectoria escolar ya encadenada por el Mineduc |
+| [Notas de enseñanza media y percentil](https://datosabiertos.mineduc.cl/notas-de-ensenanza-media-y-percentil-jovenes/) | MRUN | NEM y percentil de egreso; podría cubrir cohortes anteriores a 2021 |
 | [Postulaciones a Becas y Créditos](https://datosabiertos.mineduc.cl/postulaciones-a-becas-y-creditos-en-educacion-superior/) | MRUN | Datos FUAS: composición del hogar, ingresos declarados |
 | Matrícula ES (calculado) | RBD | Persistencia en educación superior de los egresados de ese colegio |
 | CASEN | comuna | Contexto socioeconómico |
@@ -295,6 +296,65 @@ if d is not None:
     d.columns = ["Dependencia", "n", "Proporción"]
 d
 ```
+
+### Qué años hay, y el corte de escala de 2023 {#sec-paes-escala}
+
+El portal publica los puntajes **desde 2021**, con tres nombres distintos para
+la misma base según el año: *Prueba de Transición Universitaria* (2021–2022),
+*Prueba de Acceso a la Educación Superior* (2023) y *PAES* (2024 en adelante).
+Por eso el descargador lee el catálogo de la página y reconoce por patrón, en
+vez de fijar rutas.
+
+```{python}
+#| label: tbl-admision-escala
+#| tbl-cap: "Instrumento, escala y cobertura por año de admisión"
+d = leer("admision_escala")
+if d is not None:
+    if "Cobertura" in d:
+        d["Cobertura"] = d["Cobertura"].map("{:.1%}".format)
+    for c in ("Inscritos", "Rindieron", "Mínimo", "Media", "Máximo"):
+        if c in d:
+            d[c] = d[c].map("{:,.0f}".format)
+    d["Año de admisión"] = d["Año de admisión"].astype(str)
+d
+```
+
+::: {.callout-important}
+## Los puntajes no son comparables entre 2022 y 2023
+
+La PDT se medía entre **150 y 850** con media 500; la PAES pasó a **100 y 1000**
+con media cercana a 610, y además separó Matemática M1 de M2. Un promedio
+institucional salta unos cien puntos entre ambas cohortes sin que haya cambiado
+nada real. Cualquier serie que cruce ese corte con el puntaje crudo está
+inventando una tendencia.
+
+El pipeline lo resuelve de dos maneras. Reconstruye para la PDT el mismo
+promedio que la PAES trae calculado —se verificó que `PROMEDIO_CM_MAX` es
+exactamente la media de Competencia Lectora y Matemática, tomando el mejor
+puntaje entre el año y el anterior— y expone además
+`paes_percentil_promedio`, el percentil nacional dentro de cada cohorte. El
+percentil **sí** cruza el corte: quedar sobre el 70% del país significa lo mismo
+con cualquiera de las dos pruebas.
+
+Para el agrupamiento de pares el corte es inocuo, porque cada cohorte se
+estandariza y se agrupa por separado.
+:::
+
+::: {.callout-warning}
+## La PSU no está en datos abiertos
+
+La serie **no puede extenderse antes de 2021**. La PSU (2004–2020) no aparece en
+la página de admisión ni en ninguna de las 48 secciones del portal del Mineduc;
+quien la necesite debe pedirla al DEMRE por su proceso de acceso a datos de
+investigación.
+
+La consecuencia práctica es concreta: de las 19 cohortes del benchmark, solo
+seis pueden medir selectividad de admisión. En las trece anteriores el bloque se
+omite y su peso se reparte entre los demás, de modo que «universidades
+comparables» significa allí *ofrece carreras parecidas* pero no necesariamente
+*recibe estudiantes parecidos*. La aplicación deja de afirmar que la
+selectividad participa cuando no lo hace.
+:::
 
 ## Trayectoria escolar previa al ingreso
 

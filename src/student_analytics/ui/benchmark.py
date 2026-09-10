@@ -62,6 +62,10 @@ AXES = {
     "nem_promedio": ("Puntaje NEM promedio", ".0f"),
     "ranking_promedio": ("Puntaje ranking promedio", ".0f"),
     "paes_cobertura": ("Cohorte con puntaje PAES · cobertura", "%"),
+    # El puntaje crudo NO se puede comparar entre cohortes: 2021-2022 rindieron
+    # la PDT (150-850) y desde 2023 es la PAES (100-1000). El percentil nacional
+    # sí cruza ese corte, y es el eje correcto para mirar la serie.
+    "paes_percentil_promedio": ("Percentil nacional promedio de la cohorte · comparable entre años", "%"),
     # Titulacion de la PROMOCION QUE EGRESA, no de la cohorte de ingreso. Las
     # etiquetas lo dicen para que nadie las lea como tasa de titulacion de
     # quienes entraron ese anio: de esos todavia no se titula nadie.
@@ -581,6 +585,16 @@ def render_benchmark(results_dir: Path) -> None:
                 st.info(f"Estabilidad de vecinos: {overlap} de los {int(number)} pares más cercanos de {year} "
                         f"también están entre los más cercanos de {previous}. "
                         "Se recalculan perfiles y escalas en cada cohorte; esta medida no valida causalidad.")
+                # Los bloques activos NO son los mismos en todos los anios: la
+                # selectividad solo existe desde 2021. Una caida de estabilidad
+                # en ese borde puede ser el cambio de bloques y no un cambio
+                # real del sistema, asi que hay que decirlo antes del numero.
+                distintos = set(model.groups) ^ set(other_model.groups)
+                if distintos:
+                    st.warning(f"Las dos cohortes no se comparan con los mismos bloques: "
+                               f"{', '.join(sorted(distintos))} solo está disponible en una de "
+                               "ellas. Parte de la diferencia de estabilidad es ese cambio de "
+                               "variables, no un cambio en el sistema universitario.")
                 common = model.universities[["cod_inst", "grupo"]].merge(
                     other_model.universities[["cod_inst", "grupo"]], on="cod_inst", suffixes=("_actual", "_otra"))
                 if model.k and other_model.k and len(common) > 1:
@@ -630,7 +644,16 @@ def render_benchmark(results_dir: Path) -> None:
                     "el puntaje PAES de ingreso y −0,19 con los años de acreditación: depende sobre todo de "
                     "la mezcla de carreras. Las universidades con fuerte peso de ingeniería aparecen abajo "
                     "porque esos programas se alargan, no porque enseñen peor.")
-        st.markdown("**Titulación por cohorte de ingreso.** Es la contraparte longitudinal de lo anterior y "
+        st.markdown("**Los puntajes de admisión cambian de escala en 2023.** Las cohortes 2021 y 2022 "
+                    "rindieron la Prueba de Transición, que iba de 150 a 850 con media 500; desde 2023 "
+                    "la PAES va de 100 a 1000 con media cercana a 610. El puntaje crudo **no es "
+                    "comparable** entre ambos lados: un promedio institucional salta unos cien puntos "
+                    "sin que haya cambiado nada real. Para mirar la serie hay que usar el **percentil "
+                    "nacional**, que sí cruza el corte. Los pares no se ven afectados: cada cohorte se "
+                    "estandariza y se agrupa por separado. Antes de 2021 no hay dato — la PSU no está "
+                    "publicada como microdato abierto — y en esas cohortes el bloque de selectividad "
+                    "se omite y su peso se reparte entre los demás.")
+        st.markdown("**Titulación por cohorte de ingreso.** Es la contraparte longitudinal de lo anterior y"
                     "sí es una tasa: se toma la cohorte que ingresó en un año y se la busca en las bases de "
                     "titulados de los años siguientes cruzando por MRUN, que es un identificador enmascarado "
                     "pero estable entre bases. Se mide en tres niveles anidados —se tituló de la carrera que "

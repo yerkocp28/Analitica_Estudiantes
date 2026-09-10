@@ -213,6 +213,44 @@ def stats_resultados(meta: dict) -> None:
     # analyze_mineduc.py directamente en documentacion/datos/.
 
 
+def stats_admision(meta: dict) -> None:
+    """Instrumento, escala y cobertura de cada año de admisión disponible.
+
+    Existe para dejar el corte de escala de 2023 documentado con números y no
+    de memoria: la PDT y la PAES no se miden en el mismo rango.
+    """
+    from student_analytics.ingestion.paes import load_scores
+
+    carpetas = sorted(MINEDUC.glob("paes_*_puntajes"))
+    filas = []
+    for carpeta in carpetas:
+        csvs = sorted(carpeta.rglob("*.csv"))
+        if not csvs:
+            continue
+        anio = int(carpeta.name.split("_")[1])
+        try:
+            d = load_scores(max(csvs, key=lambda p: p.stat().st_size))
+        except Exception as exc:                      # base con otro formato
+            log.warning("  %s: %s", carpeta.name, exc)
+            continue
+        p = d.paes.dropna()
+        if p.empty:
+            continue
+        filas.append({"Año de admisión": anio,
+                      "Prueba": d.instrumento.iloc[0],
+                      "Inscritos": len(d), "Rindieron": int(p.notna().sum()),
+                      "Cobertura": round(len(p) / len(d), 4),
+                      "Mínimo": round(float(p.min())), "Media": round(float(p.mean())),
+                      "Máximo": round(float(p.max()))})
+    if filas:
+        _save("admision_escala", pd.DataFrame(filas))
+        meta["admision"] = {
+            "anios": [f["Año de admisión"] for f in filas],
+            "instrumentos": sorted({f["Prueba"] for f in filas}),
+            "psu_disponible": False,
+        }
+
+
 def stats_cohortes(meta: dict) -> None:
     """Titulación por cohorte de ingreso (seguimiento longitudinal por MRUN)."""
     detalle = RESULTS / "cohort_tracking.parquet"
@@ -270,6 +308,7 @@ def main() -> int:
     stats_mineduc(meta)
     stats_paes(meta)
     stats_resultados(meta)
+    stats_admision(meta)
     stats_cohortes(meta)
 
     OUT.mkdir(parents=True, exist_ok=True)

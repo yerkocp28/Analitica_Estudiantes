@@ -13,10 +13,17 @@ estudiantes ni reemplaza los modelos de riesgo académico del cockpit.
 
 ## Fuentes y universo
 
-- Matrículas públicas Mineduc/SIES 2023, 2024 y 2025 ya descargadas en
-  `data/external/mineduc/matricula_<año>`.
-- Cohortes de ingreso 2023 y 2024: `nivel_global = Pregrado`,
+- Matrículas públicas Mineduc/SIES **2007–2026**, descargadas en
+  `data/external/mineduc/matricula_<año>` y compactadas a una capa slim en
+  parquet (`data/interim/matricula/`) que es la que consumen los análisis
+  longitudinales.
+- Cohortes de ingreso **2007–2025**: `nivel_global = Pregrado`,
   `tipo_inst_1 = Universidades`, `anio_ing_carr_ori = año de cohorte`.
+- Puntajes de admisión **2021–2026** (PDT 2021–2022, PAES desde 2023). La PSU
+  no está publicada como microdato abierto, así que las cohortes anteriores a
+  2021 no tienen selectividad.
+- Titulados **2007–2025**, para la titulación transversal y la longitudinal.
+- CNED INDICES institucional 2005–2025.
 - El grano es la inscripción de ingreso a carrera: una persona puede contribuir
   más de una inscripción. No equivale necesariamente a primer ingreso al sistema.
 - Se eliminan duplicados según las mismas columnas canónicas utilizadas por
@@ -30,15 +37,41 @@ estudiantes ni reemplaza los modelos de riesgo académico del cockpit.
 
 | Bloque | Variables | Peso predeterminado |
 |---|---|---:|
-| Escala | log(1 + inscripciones de ingreso), log(1 + sedes distintas por código) | 25% |
-| Áreas | Proporción de inscripciones por área de conocimiento | 25% |
-| Regiones | Proporción de inscripciones por región de sede | 25% |
-| Docencia | Proporciones por jornada y por modalidad | 25% |
+| Escala | log(1 + inscripciones de ingreso), log(1 + sedes distintas por código) | 20% |
+| Áreas | Proporción de inscripciones por área de conocimiento | 20% |
+| Regiones | Proporción de inscripciones por región de sede | 20% |
+| Docencia | Proporciones por jornada y por modalidad | 20% |
+| Selectividad | Puntaje de admisión promedio y su rango intercuartil | 20% |
 
-No se incorporan resultados de continuidad, notas finales ni características
-posteriores al seguimiento. Tampoco se incorporan selectividad PAES, acreditación,
-recursos económicos, investigación o perfil socioeconómico: los pares son
-similares en las dimensiones disponibles, no necesariamente en todas las relevantes.
+Con el bloque de selectividad activo, «comparable» deja de significar solo
+*ofrece carreras parecidas* y pasa a significar también *recibe estudiantes
+parecidos*. Eso excluye del grupo a instituciones de oferta similar pero
+admisión mucho más o menos selectiva.
+
+**Un bloque cuyas columnas existen pero vienen enteramente vacías para esa
+cohorte se omite y su peso se reparte** entre los demás. Es el caso de las trece
+cohortes anteriores a 2021, que no tienen puntajes de admisión: imputarlas con
+la mediana las dejaría constantes —aportando cero a la distancia— pero
+consumiendo igual su 20%, y la aplicación afirmaría que la selectividad
+participa cuando no lo hace.
+
+No se incorporan resultados de continuidad ni características posteriores al
+seguimiento. Los recursos institucionales, el cuerpo docente, la acreditación y
+la titulación se incorporaron como **descriptivos**: aparecen en los ejes del
+mapa pero no participan en la distancia. Sigue sin incorporarse actividad de
+investigación ni perfil socioeconómico: los pares son similares en las
+dimensiones disponibles, no necesariamente en todas las relevantes.
+
+### El corte de escala de los puntajes de admisión
+
+La PDT (2021–2022) se medía entre 150 y 850 con media 500; la PAES (desde 2023)
+va de 100 a 1000 con media cercana a 610. **El puntaje crudo no es comparable
+entre cohortes de distinto lado del corte.** Para las series se expone
+`paes_percentil_promedio`, el percentil nacional dentro de cada cohorte, que sí
+lo es.
+
+Para el agrupamiento el corte es inocuo: cada cohorte se agrupa por separado y
+`profile_matrix` estandariza dentro de ella, así que la escala se cancela.
 
 Para los bloques de proporciones se aplica raíz cuadrada. Cada bloque se centra
 y divide por la raíz de su varianza total entre universidades; las variables de
@@ -87,9 +120,14 @@ recalcula la selección de pares. Cambiar la cohorte sí modifica los perfiles,
 las escalas, la partición y los vecinos.
 
 La estabilidad se informa mediante coincidencia de los vecinos más cercanos
-entre las dos cohortes y el índice Rand ajustado de las particiones sobre
+entre cohortes consecutivas y el índice Rand ajustado de las particiones sobre
 universidades comunes. No se presupone igualdad de etiquetas de cluster entre
 años. La PCA tampoco se usa para establecer correspondencias temporales.
+
+Una advertencia al comparar cohortes lejanas: los bloques activos **no son los
+mismos en todos los años**. Desde 2021 la selectividad participa en la
+distancia y antes no, así que una caída de estabilidad entre 2020 y 2021 puede
+deberse al cambio de bloques y no a un cambio real en el sistema.
 
 ## Resultados comparados y referencias
 

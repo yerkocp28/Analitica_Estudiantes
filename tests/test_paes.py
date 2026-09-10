@@ -110,6 +110,51 @@ def test_attach_no_pierde_universidades():
     assert "personas_cohorte" not in unido.columns
 
 
+def test_la_pdt_se_reconstruye_con_la_definicion_de_la_paes(tmp_path):
+    """2021-2022 no traen PROMEDIO_CM_MAX: hay que calcularlo.
+
+    Se verificó contra la PAES que ese promedio es exactamente la media de
+    lectora y matemática, tomando el mejor puntaje entre el año y el anterior.
+    """
+    csv = tmp_path / "pdt.csv"
+    csv.write_text("MRUN;CLEC_ACTUAL;MATE_ACTUAL;CLEC_ANTERIOR;MATE_ANTERIOR\n"
+                   "1;600;700;0;0\n"          # sin anterior: (600+700)/2
+                   "2;500;500;700;300\n"      # arrastra la lectora mejor
+                   "3;0;0;0;0\n",             # no rindió
+                   encoding="utf-8-sig")
+    d = load_scores(csv).set_index("mrun")
+    assert d.instrumento.iloc[0] == "PDT"
+    assert d.loc[1, "paes"] == pytest.approx(650.0)
+    assert d.loc[2, "paes"] == pytest.approx(600.0)   # max(500,700) y max(500,300)
+    assert np.isnan(d.loc[3, "paes"])
+
+
+def test_el_percentil_cruza_el_cambio_de_escala():
+    """La PDT va de 150 a 850 y la PAES de 100 a 1000.
+
+    El puntaje crudo de una cohorte no se puede comparar con el de la otra,
+    pero el percentil nacional sí: estar sobre el 75% del país significa lo
+    mismo con cualquiera de las dos pruebas.
+    """
+    pdt = pd.DataFrame({"mrun": range(100), "paes": np.linspace(150, 850, 100)})
+    paes = pd.DataFrame({"mrun": range(100), "paes": np.linspace(100, 1000, 100)})
+    pdt["percentil"] = pdt.paes.rank(pct=True)
+    paes["percentil"] = paes.paes.rank(pct=True)
+    cohorte = pd.DataFrame({"mrun": range(75, 100), "cod_inst": ["A"] * 25})
+    a = institutional_selectivity(cohorte, pdt, min_takers=1).iloc[0]
+    b = institutional_selectivity(cohorte, paes, min_takers=1).iloc[0]
+    # Los puntajes crudos difieren mucho; el percentil, casi nada.
+    assert abs(a.paes_promedio - b.paes_promedio) > 100
+    assert a.paes_percentil_promedio == pytest.approx(b.paes_percentil_promedio)
+
+
+def test_una_base_sin_puntajes_reconocibles_falla_fuerte(tmp_path):
+    csv = tmp_path / "raro.csv"
+    csv.write_text("MRUN;PTJE_NEM\n1;650\n", encoding="utf-8-sig")
+    with pytest.raises(ValueError, match="PDT"):
+        load_scores(csv)
+
+
 # ----------------------------------------------------------------------
 # Sobre la base real, si está descargada
 # ----------------------------------------------------------------------
@@ -119,6 +164,19 @@ def test_los_puntajes_reales_estan_en_rango():
     p = d.paes.dropna()
     assert len(p) > 100_000
     assert p.between(100, 1000).all(), "la PAES se mide entre 100 y 1000 puntos"
+
+
+@pytest.mark.skipif(not (ROOT / "data/external/mineduc/paes_2022_puntajes").exists(),
+                    reason="PDT 2022 no descargada")
+def test_la_pdt_real_esta_en_su_propia_escala():
+    pdt = sorted((ROOT / "data/external/mineduc/paes_2022_puntajes").rglob("*.csv"))
+    d = load_scores(pdt[0])
+    p = d.paes.dropna()
+    assert d.instrumento.iloc[0] == "PDT"
+    assert len(p) > 100_000
+    assert p.between(150, 850).all(), "la PDT se mide entre 150 y 850 puntos"
+    # El corte con la PAES es real, no un artefacto del cargador.
+    assert p.mean() < 550
 
 
 @pytest.mark.skipif(not (ROOT / "data/results/benchmark_profiles.parquet").exists(),

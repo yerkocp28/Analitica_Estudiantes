@@ -42,6 +42,21 @@
     "rindio_lectora": 0.8842,
     "rindio_m1": 0.874
   },
+  "admision": {
+    "anios": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "instrumentos": [
+      "PAES",
+      "PDT"
+    ],
+    "psu_disponible": false
+  },
   "cohortes": {
     "cohorte_referencia": 2017,
     "universidades_con_dato": 57,

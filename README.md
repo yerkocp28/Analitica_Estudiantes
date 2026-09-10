@@ -20,6 +20,8 @@ La especificación completa está en
 | **1c** | **Datos abiertos Mineduc/SIES: retención real UA + piso predictivo** | **Completo** |
 | **1d** | **Informe metodológico reproducible (Quarto)** | **Completo** |
 | **1e** | **Trayectoria escolar previa al ingreso + ablación del piso** | **Completo** |
+| **1f** | **Benchmark universitario: CNED, selectividad de admisión, titulación** | **Completo** |
+| **1g** | **Serie longitudinal: matrícula 2007–2026, retención y titulación por cohorte** | **Completo** |
 | 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
@@ -41,7 +43,8 @@ Cuatro fuentes, cuatro problemas distintos:
 |---|---|---|
 | Esquemas públicos de Canvas Data 2 y Banner ODS | Que el pipeline reciba las **columnas reales** | No trae datos |
 | **OULAD** (Open University, 28.785 estudiantes reales) | ¿Funciona la predicción temprana? ¿Cuán temprano? | Sin asistencia, sin escala 1–7, sin sedes |
-| **Mineduc / SIES abiertos** (6 bases, individual vía MRUN) | Retención real de la UA; piso predictivo nacional | No se puede unir al RUT de Banner |
+| **Mineduc / SIES abiertos** (matrícula 2007–2026, titulados 2007–2025, admisión 2021–2026, más escolares) | Retención real de la UA; piso predictivo nacional; benchmark y seguimiento por cohorte | No se puede unir al RUT de Banner |
+| **CNED INDICES** (institucional 2005–2025) | Cuerpo docente, infraestructura, acreditación | Se une por nombre, no por código |
 | **Generador sintético** (este repo) | Forma UA completa: sedes, carreras, asistencia, notas 1.0–7.0 | No valida nada por sí solo |
 
 El objetivo de esta fase no es tener un modelo. Es tener un pipeline cuyo
@@ -103,11 +106,19 @@ clustering**. Se puede comparar con los cinco vecinos más cercanos, con el mism
 cluster o con un conjunto manual; la UA permanece como referencia.
 
 ```bash
-python scripts/build_retention.py   # si faltan los agregados de matrícula
-python scripts/download_cned.py     # recursos institucionales (3,3 MB, opcional)
-python scripts/build_benchmark.py   # perfiles de las cohortes disponibles
+python scripts/download_matricula.py   # matrícula 2007-2026 (18 GB crudo, 367 MB slim)
+python scripts/download_titulados.py $(seq 2007 2025)   # titulados, ~6 MB por año
+python scripts/download_paes.py        # admisión 2021-2026
+python scripts/download_cned.py        # recursos institucionales (3,3 MB, opcional)
+python scripts/build_retention.py      # 19 transiciones de continuidad
+python scripts/build_cohorts.py        # titulación por cohorte de ingreso
+python scripts/build_benchmark.py      # perfiles de las cohortes disponibles
 streamlit run src/student_analytics/ui/app.py
 ```
+
+Nada de esto es obligatorio de una vez: cada script detecta lo que falta y se
+salta lo que no está. Con solo dos años de matrícula el benchmark funciona
+igual, con una transición y sin titulación por cohorte.
 
 ### Recursos institucionales (CNED)
 
@@ -118,7 +129,9 @@ grado (permite calcular JCE y % con doctorado), inmuebles y m² construidos,
 laboratorios y PC para estudiantes, bibliotecas, año de creación, pertenencia al
 CRUCH y años de acreditación.
 
-Con eso el mapa de posicionamiento pasa de 14 a **24 variables** en los ejes.
+Con eso, más la selectividad de admisión y la titulación, el perfil llega a
+**99 variables**, de las cuales **42 son graficables** en el mapa de
+posicionamiento y **39 entran a la distancia**.
 
 Tres cosas que hay que saber de esta fuente:
 
@@ -137,8 +150,36 @@ Tres cosas que hay que saber de esta fuente:
 Los recursos entran como **descriptivos**: aparecen en los ejes del mapa pero no
 participan en la distancia ni en los clusters, así que no cambian los pares.
 
-El agrupamiento usa cuatro bloques con igual peso: tamaño de cohorte/sedes,
-distribución por áreas, distribución regional y jornada/modalidad. Compara
+### Selectividad de admisión (PAES y PDT)
+
+`scripts/download_paes.py` baja los puntajes de admisión y `build_benchmark.py`
+los cruza con la cohorte de ingreso **por MRUN**. A diferencia de los recursos,
+la selectividad **sí participa en la distancia**: con ella activada, «comparable»
+deja de significar solo «ofrece carreras parecidas» y pasa a significar también
+«recibe estudiantes parecidos».
+
+Tres cosas que hay que saber de esta fuente:
+
+1. **Solo existe desde 2021.** La PSU (2004–2020) no está publicada como
+   microdato abierto en ninguna sección del portal del Mineduc; hay que pedirla
+   al DEMRE. Las cohortes anteriores a 2021 se comparan sin selectividad, y el
+   bloque se omite repartiendo su peso entre los demás.
+2. **Hay un corte de escala en 2023.** La Prueba de Transición (2021–2022) iba
+   de 150 a 850 con media 500; la PAES va de 100 a 1000 con media ~610. Los
+   puntajes crudos **no son comparables** entre ambos lados: un promedio
+   institucional salta unos 100 puntos sin que haya cambiado nada real. Por eso
+   se expone `paes_percentil_promedio`, el percentil nacional dentro de cada
+   cohorte, que sí cruza el corte. Ese es el eje correcto para mirar la serie.
+3. **La cobertura es la advertencia.** No todos los ingresantes rinden la prueba
+   —vías especiales, extranjeros, continuidad de estudios—, así que el promedio
+   describe solo a quienes sí. `paes_cobertura` acompaña siempre al indicador.
+
+El clustering estandariza dentro de cada cohorte y las agrupa por separado, así
+que el cambio de escala no contamina la selección de pares.
+
+El agrupamiento usa cinco bloques con igual peso: tamaño de cohorte/sedes,
+distribución por áreas, distribución regional, jornada/modalidad y
+selectividad. Compara
 K-means, mezcla gaussiana diagonal y jerárquico Ward, con 2–6 grupos, tamaño
 mínimo de grupo y un **límite de concentración**: se descartan las particiones
 donde un solo grupo reúne más del 50% de las universidades.
@@ -157,9 +198,10 @@ excluyendo a la UA de ambas referencias. La sección de retención aplica el mis
 criterio: la brecha de cada universidad se calcula contra el sistema sin ella
 misma, para que una institución grande no atenúe su propia referencia. Incluye una referencia estandarizada
 con la mezcla de áreas de la UA y cobertura explícita de áreas comunes. Se pueden
-descargar la tabla CSV y la ficha metodológica JSON. Los perfiles no incluyen
-selectividad, recursos, investigación o acreditación; la similitud es parcial,
-y las brechas son descriptivas, no causales.
+descargar la tabla CSV y la ficha metodológica JSON. Los perfiles ya incluyen
+selectividad (en la distancia) y recursos, cuerpo docente, acreditación y
+titulación (descriptivos); sigue sin incorporarse actividad de investigación.
+La similitud es parcial y las brechas son descriptivas, no causales.
 
 Configuración: `config/benchmark.yml`. Artefactos locales:
 `data/results/benchmark_profiles.parquet` y `benchmark_manifest.json`.
@@ -178,11 +220,19 @@ python scripts/build_retention.py
 streamlit run src/student_analytics/ui/app.py
 ```
 
-Con matrícula 2023, 2024 y 2025 se obtienen las cohortes 2023→2024 y 2024→2025.
-La vista incluye selección de universidades, área de conocimiento, mínimo de
-inscripciones, comparación entre cohortes, detalle por sede y carrera y descarga
-CSV. Distingue continuidad en la misma carrera y universidad, en la misma
-universidad y en cualquier institución (incluidos IP/CFT).
+Con la matrícula histórica completa se obtienen **19 transiciones**, de
+2007→2008 a 2025→2026. La vista incluye selección de universidades, área de
+conocimiento, mínimo de inscripciones, comparación entre cohortes, detalle por
+sede y carrera y descarga CSV. Distingue continuidad en la misma carrera y
+universidad, en la misma universidad y en cualquier institución (incluidos
+IP/CFT).
+
+Al mirar la serie completa hay que tener presente que **la continuidad de
+carrera no es comparable antes de 2009**: falta `cod_carrera` en el 24,5% de la
+matrícula 2007 y el 20,9% de la de 2008, y sin código la fila no puede calzar
+aunque la persona haya seguido en la misma carrera. Los otros dos niveles no
+dependen de ese campo. La app avisa cuando se elige ese indicador en una cohorte
+con cobertura baja.
 
 El denominador son inscripciones de pregrado con ingreso a la carrera en el año
 de cohorte y MRUN disponible; una persona puede contar en más de una carrera.
@@ -320,8 +370,8 @@ señales conductuales toman el relevo cuando ya hay conducta que observar.
 ## Resultados sobre datos abiertos de Mineduc / SIES
 
 ```bash
-python scripts/download_mineduc.py    # ~1,3 GB comprimidos
-python scripts/analyze_mineduc.py
+python scripts/download_mineduc.py    # bases escolares y socioeconómicas
+python scripts/analyze_mineduc.py     # retención UA + piso predictivo
 ```
 
 Estas bases están desagregadas **a nivel individual** y usan **MRUN**, un
@@ -349,6 +399,48 @@ Por sede, dentro del área del piloto:
 
 La brecha de **14 puntos entre Providencia y El Llano** es un hallazgo real, no
 simulado, y sugiere que el modelo debería considerar la sede explícitamente.
+
+### La serie larga: 19 transiciones de continuidad (2007→2008 … 2025→2026)
+
+Con la matrícula histórica completa, la retención deja de ser una foto y pasa a
+ser una serie. Como cada año son ~900 MB de CSV y la máquina de trabajo tiene
+~5 GB de RAM libre, `download_matricula.py` escribe una **capa slim en parquet**
+—367 MB para los 20 años— que es lo que consume todo el análisis longitudinal.
+
+Son dos parquet por año. El segundo, `seguimiento_YYYY`, no está filtrado por
+tipo de institución, y esa decisión no es cosmética: la continuidad «en el
+sistema» significa seguir en educación superior, así que si el año siguiente se
+buscara solo entre universidades, quien se cambia a un CFT o a un IP se contaría
+como deserción.
+
+**Una trampa que había que resolver:** `cod_carrera` falta en el **24,5% de la
+matrícula 2007** y el **20,9% de la de 2008**, y bajo el 2% desde 2009. Sin
+código, la fila no puede calzar a nivel de carrera aunque la persona haya
+seguido en la misma, así que la continuidad *de carrera* aparece en 53,9% en vez
+de ~72% sin que nadie hubiera desertado. Los niveles de universidad (76,5%) y de
+sistema (83,8%) no dependen de ese campo y sí son comparables en esos años. El
+script avisa solo y la app también.
+
+### Titulación por cohorte de ingreso
+
+Cruzando la cohorte de ingreso contra las bases de titulados por MRUN se
+responde lo que los indicadores transversales no pueden: de quienes **entraron**,
+qué proporción llegó a titularse. Se mide en tres niveles anidados —de su
+carrera, en su universidad, en alguna universidad—; la brecha entre el segundo y
+el tercero es traslado, y sin ese nivel todo traslado se contaría como fracaso.
+
+El problema central es la **censura por derecha**, y tiene dos niveles:
+
+1. **Por estudiante.** Cada ingresante entra al denominador solo si su propio
+   horizonte —duración nominal más la holgura— cabe en los datos disponibles.
+2. **Por institución.** Corregir el tiempo no corrige la composición: cuando
+   quedan pocos años de seguimiento caen primero las carreras largas, así que
+   una universidad con mucha ingeniería o medicina queda descrita solo por sus
+   carreras cortas y su tasa sube sin haber titulado mejor.
+
+Ese segundo filtro no es teórico. Sin él la UA aparecía **primera del sistema**
+en la cohorte 2018 con 70,4% y percentil 98; con el piso al 90% de cobertura esa
+cohorte se anula y la última comparable pasa a ser 2017.
 
 ### El piso predictivo de las variables previas al ingreso
 
@@ -433,6 +525,19 @@ TinyTeX ni una distribución LaTeX. Los colores de marca (`#E2211C` del escudo,
 `#3D3935` del texto) se muestrearon del propio logo y se verificó su contraste
 sobre blanco — 4,70:1 y 11,44:1, ambos WCAG AA.
 
+Complementan el informe:
+
+- [`documentacion/benchmark_universitario.md`](documentacion/benchmark_universitario.md)
+  — metodología del benchmark: bloques, distancia, clusters y sus límites.
+- `documentacion/datos/inventario_perfil_benchmark.csv` — **una fila por
+  variable del perfil**, con su origen, si entra al clustering, si es graficable
+  y las advertencias que no se deducen del dato (escalas no comparables,
+  denominadores, centinelas). Lo regenera `scripts/build_inventory.py` y **no se
+  edita a mano**: un inventario desactualizado es peor que no tenerlo, porque se
+  lee como si fuera cierto.
+- `documentacion/datos/inventario_campos_fuentes_benchmark.csv` — cada campo
+  crudo de cada base descargada.
+
 ---
 
 ## Preguntas bloqueantes
@@ -464,7 +569,7 @@ Dirección Jurídica **antes** de que el modelo toque datos reales.
 ## Estructura
 
 ```
-config/          settings.yml, synthetic.yml, data_contracts.yml
+config/          settings.yml, synthetic.yml, benchmark.yml, data_contracts.yml
 src/student_analytics/
     config.py               carga y validacion de YAML
     logging_setup.py
@@ -473,19 +578,33 @@ src/student_analytics/
         generator.py        generador reproducible y auto-calibrado
     ingestion/
         oulad.py            OULAD -> esquema canonico
+        retention.py        continuidad en tres niveles anidados
+        cohortes.py         titulacion por cohorte de ingreso (longitudinal)
+        titulados.py        titulacion de la promocion que egresa (transversal)
+        paes.py             selectividad de admision; PDT y PAES
+        cned.py             recursos institucionales y cuerpo docente
     features/
         builder.py          features por semana, agnostico a la fuente
     modeling/
         lead_time.py        poder predictivo vs anticipacion
+        benchmark.py        bloques, distancia y clusters de pares
     ui/
         app.py              cockpit Streamlit
 scripts/
     generate_synthetic.py
     download_oulad.py
-    download_mineduc.py     bases abiertas Mineduc/SIES
+    download_mineduc.py     bases escolares y socioeconomicas
+    download_matricula.py   matricula 2007-2026 + capa slim en parquet
+    download_titulados.py   titulados 2007-2025
+    download_paes.py        admision 2021-2026 (la PSU no es abierta)
+    download_cned.py        INDICES institucional del CNED
     analyze_mineduc.py      retencion real UA + piso predictivo nacional
+    build_retention.py      19 transiciones de continuidad
+    build_cohorts.py        seguimiento longitudinal por MRUN
+    build_benchmark.py      perfiles universidad-cohorte
+    build_inventory.py      inventario de variables (se regenera, no se edita)
     validate_lead_time.py   --source synthetic | oulad
-tests/           58 tests: generador, leakage, OULAD, UI
+tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)
 documentacion/
     informe_metodologico.qmd   fuentes, descriptivas, metodología, resultados
