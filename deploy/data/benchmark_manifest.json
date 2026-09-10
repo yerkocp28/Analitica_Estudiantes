@@ -1,5 +1,5 @@
 {
-  "generado_utc": "2026-09-10T16:12:30.471677+00:00",
+  "generado_utc": "2026-09-10T18:51:15.477857+00:00",
   "version": 2,
   "recursos_denominador": "MRUN únicos por universidad y año, todos los niveles; excluye MRUN ausente",
   "recursos_temporalidad": "solo año exacto; acreditación CNED conserva fecha del catálogo",
@@ -276,5 +276,5 @@
   ],
   "perfil": "cohorte de ingreso a carrera, pregrado universitario",
   "retencion_sha256": "67d1c08ea1c5f882a7a868c9f44c94792339f453175cc204fcaeba9fbc7edfbb",
-  "perfiles_sha256": "83e582656cb6b2ffeb774c5b45830f3b7a39ac67af2733166f40ca1e8fae6d96"
+  "perfiles_sha256": "e63ee4c9d538bac3c8d28f6c0a5f1bb32b61565ef7d9fe919c1f5cde5ee5fe25"
 }

@@ -117,8 +117,16 @@ def institutional_completion(graduates: pd.DataFrame, min_entry_year: int = 1980
     return resultado.reset_index()
 
 
-def attach_completion(profiles: pd.DataFrame, completion: pd.DataFrame) -> pd.DataFrame:
-    """Une los indicadores al perfil por código de institución del SIES."""
+def attach_completion(profiles: pd.DataFrame, completion: pd.DataFrame,
+                      min_estudiantes: int = 100) -> pd.DataFrame:
+    """Une los indicadores al perfil por código de institución del SIES.
+
+    `min_estudiantes` es el denominador mínimo para publicar el flujo de
+    salida. Con matrículas diminutas la razón deja de ser informativa y pasa
+    a ser ruido con apariencia de hallazgo: una universidad con 17 estudiantes
+    y 18 titulados marca 105,9 titulados por cada 100, que como punto en un
+    gráfico se lee como un caso extremo real y no como lo que es.
+    """
     out = profiles.copy()
     out["cod_inst"] = out.cod_inst.astype(str)
     unido = out.merge(completion, on="cod_inst", how="left")
@@ -126,6 +134,7 @@ def attach_completion(profiles: pd.DataFrame, completion: pd.DataFrame) -> pd.Da
         # Razon cruda entre la promocion que egresa y la matricula del mismo
         # anio. NO es una tasa de titulacion: numerador y denominador son
         # cohortes distintas. Sirve para dimensionar el flujo de salida.
-        unido["titulados_por_100_estudiantes"] = 100 * unido.titulados_total.div(
-            unido.estudiantes_total.where(unido.estudiantes_total.gt(0)))
+        denominador = unido.estudiantes_total.where(
+            unido.estudiantes_total.ge(min_estudiantes))
+        unido["titulados_por_100_estudiantes"] = 100 * unido.titulados_total.div(denominador)
     return unido

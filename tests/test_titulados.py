@@ -96,6 +96,21 @@ def test_el_flujo_de_salida_usa_la_matricula_total():
     assert unido.titulados_por_100_estudiantes.iloc[0] == pytest.approx(10.0)
 
 
+def test_con_matricula_diminuta_no_se_publica_el_flujo():
+    """Una universidad con 17 estudiantes y 18 titulados marca 105,9 por 100.
+
+    Como punto en un gráfico se lee como un caso extremo real, no como el
+    ruido que es. Se anula la razón y se conservan los conteos.
+    """
+    perfil = pd.DataFrame({"cod_inst": ["A", "B"], "nomb_inst": ["U. A", "U. B"],
+                           "cohorte_total": [10, 500], "estudiantes_total": [17, 4000]})
+    comp = pd.DataFrame({"cod_inst": ["A", "B"], "titulados_total": [18, 400]})
+    unido = attach_completion(perfil, comp).set_index("cod_inst")
+    assert np.isnan(unido.loc["A", "titulados_por_100_estudiantes"])
+    assert unido.loc["B", "titulados_por_100_estudiantes"] == pytest.approx(10.0)
+    assert unido.loc["A", "titulados_total"] == 18       # el conteo se conserva
+
+
 def test_sin_matricula_total_no_se_inventa_el_flujo():
     perfil = pd.DataFrame({"cod_inst": ["A"], "nomb_inst": ["U. A"], "cohorte_total": [500]})
     comp = pd.DataFrame({"cod_inst": ["A"], "titulados_total": [400]})

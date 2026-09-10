@@ -50,8 +50,13 @@ INK_MUTED = "#8a8880"
 CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
                "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 
-st.set_page_config(page_title="Student Analytics · Benchmark UA", layout="wide",
-                   page_icon="\U0001f393")
+# El icono de la pestania es el escudo de la Universidad Autonoma, recortado del
+# logo institucional: el logo completo lleva el nombre en dos lineas y a 16 px
+# el texto es ilegible. Si el archivo no esta —una copia parcial del repo, por
+# ejemplo— se cae al emoji en vez de romper el arranque.
+FAVICON = REPO_ROOT / "documentacion" / "assets" / "favicon-ua.png"
+st.set_page_config(page_title="Student Analytics UA", layout="wide",
+                   page_icon=str(FAVICON) if FAVICON.is_file() else "\U0001f393")
 
 
 # ----------------------------------------------------------------------
