@@ -65,6 +65,13 @@ paes_cobertura,Cohorte con puntaje PAES · cobertura,PAES × matrícula (MRUN),F
 nem_promedio,Puntaje NEM promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
 ranking_promedio,Puntaje ranking promedio,PAES × matrícula (MRUN),False,True,,51,52,50,51
 paes_rango_intercuartil,Dispersión PAES de la cohorte (p75 − p25),PAES × matrícula (MRUN),True,True,,51,52,50,51
+titulacion_duracion_mediana,Años hasta titularse · promoción que egresa,Matrícula SIES / derivada,False,True,,51,52,51,51
+titulacion_sobreduracion,Sobreduración mediana · promoción que egresa,Matrícula SIES / derivada,False,True,,51,52,51,51
+titulacion_oportuna,Se tituló dentro de la duración nominal,Matrícula SIES / derivada,False,True,,51,52,51,51
+titulacion_oportuna_holgada,Se tituló dentro de la nominal más un año,Matrícula SIES / derivada,False,True,,51,52,51,51
+titulacion_cobertura,Titulados con duración calculable · cobertura,Matrícula SIES / derivada,False,True,,52,52,51,51
+titulados_total,Titulados de pregrado en el año,Matrícula SIES / derivada,False,True,,52,52,51,51
+titulados_por_100_estudiantes,Titulados por 100 estudiantes · flujo de salida,Matrícula SIES / derivada,False,True,,52,52,51,51
 anio_creacion,Año de creación,CNED institucional,False,True,,52,52,51,51
 cruch,Pertenece al CRUCH,CNED institucional,False,False,El CRUCH admite privadas desde la Ley 21.091; pertenecer a él ya no equivale a ser 'tradicional'.,52,52,51,51
 acreditacion_cned,Acreditación CNED · foto del catálogo 2025,Matrícula SIES / derivada,False,True,"Foto del catálogo CNED, no una serie histórica por cohorte.",50,52,50,51

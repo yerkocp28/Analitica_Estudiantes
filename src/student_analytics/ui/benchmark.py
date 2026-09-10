@@ -62,6 +62,16 @@ AXES = {
     "nem_promedio": ("Puntaje NEM promedio", ".0f"),
     "ranking_promedio": ("Puntaje ranking promedio", ".0f"),
     "paes_cobertura": ("Cohorte con puntaje PAES · cobertura", "%"),
+    # Titulacion de la PROMOCION QUE EGRESA, no de la cohorte de ingreso. Las
+    # etiquetas lo dicen para que nadie las lea como tasa de titulacion de
+    # quienes entraron ese anio: de esos todavia no se titula nadie.
+    "titulados_total": ("Titulados de pregrado en el año", ","),
+    "titulados_por_100_estudiantes": ("Titulados por 100 estudiantes · flujo de salida", ".1f"),
+    "titulacion_duracion_mediana": ("Años hasta titularse · promoción que egresa", ".1f"),
+    "titulacion_sobreduracion": ("Sobreduración mediana · promoción que egresa", ".1f"),
+    "titulacion_oportuna": ("Se tituló dentro de la duración nominal", "%"),
+    "titulacion_oportuna_holgada": ("Se tituló dentro de la nominal más un año", "%"),
+    "titulacion_cobertura": ("Titulados con duración calculable · cobertura", "%"),
 }
 
 
@@ -584,6 +594,17 @@ def render_benchmark(results_dir: Path) -> None:
                     f"más del {config['maximum_group_share']:.0%} de las universidades. Solo entre las soluciones "
                     "que cumplen ambas condiciones se compara la silueta. Los vecinos más cercanos por perfil no "
                     "dependen de esta elección: se calculan sobre la distancia, no sobre los clusters.")
+        st.markdown("**Titulación.** Describe a la promoción que EGRESA ese año, no a la cohorte que "
+                    "ingresa: quien se titula en 2024 entró alrededor de 2017-2019, y de la cohorte 2024 "
+                    "todavía no se ha titulado nadie. Por eso no es una tasa de titulación —no dice qué "
+                    "proporción de quienes entraron llegará a titularse— sino cuánto se demoraron quienes "
+                    "sí lo hicieron. Se excluyen los planes de continuidad, cuya duración no es comparable "
+                    "porque reconocen estudios previos, y el valor centinela 1900 del año de ingreso, que "
+                    "afecta al 10% de los registros.")
+        st.markdown("**La titulación oportuna no ordena por calidad.** En estos datos correlaciona −0,08 con "
+                    "el puntaje PAES de ingreso y −0,19 con los años de acreditación: depende sobre todo de "
+                    "la mezcla de carreras. Las universidades con fuerte peso de ingeniería aparecen abajo "
+                    "porque esos programas se alargan, no porque enseñen peor.")
         st.markdown("**Denominadores.** Son inscripciones de ingreso a carrera de pregrado universitario, "
                     "no necesariamente personas que ingresan por primera vez a educación superior. Una persona puede "
                     "contar en varias carreras. Se eliminan duplicados de las columnas canónicas. La retención excluye "

@@ -13,6 +13,8 @@ sys.path.insert(0, str(ROOT / "src"))
 from student_analytics.ingestion.cned import attach_resources, load_institutional
 from student_analytics.ingestion.paes import (attach_selectivity, institutional_selectivity,
                                               load_scores)
+from student_analytics.ingestion.titulados import (attach_completion,
+                                                   institutional_completion, load_graduates)
 from student_analytics.modeling.benchmark import build_profiles
 
 
@@ -71,6 +73,23 @@ def main() -> None:
             del scores
         else:
             print(f"  sin PAES {year}; se omite la selectividad", flush=True)
+
+        # Titulacion de la promocion que egresa ese mismo anio. Es una
+        # cohorte DISTINTA de la de ingreso: describe a quienes salen, no a
+        # quienes entran. Descriptiva, nunca parte de la distancia.
+        tit_dir = ROOT / "data/external/titulados" / f"titulados_{year}"
+        tit_files = sorted(tit_dir.rglob("*.csv")) if tit_dir.exists() else []
+        if tit_files:
+            egresan = load_graduates(tit_files[0])
+            p = attach_completion(p, institutional_completion(egresan))
+            print(f"  titulacion: {p.titulacion_oportuna.notna().sum()} universidades "
+                  f"con indicadores utilizables", flush=True)
+            sources.append({"cohorte": int(year), "archivo": tit_files[0].name,
+                            "bytes": tit_files[0].stat().st_size,
+                            "uso": "titulacion de la promocion que egresa"})
+            del egresan
+        else:
+            print(f"  sin titulados {year}; se omite la titulacion", flush=True)
 
         del all_enrollment, enrollment_parts, cohort_parts
         expected = retention.loc[retention.cohorte.eq(year)].groupby("cod_inst")[["n", "sin_mrun"]].sum().sum(axis=1)
