@@ -15,19 +15,51 @@ En https://share.streamlit.io/ selecciona **Create app** y configura:
 | Advanced settings → Python | `3.11` |
 
 Pulsa **Deploy**. La URL final se confirma en Streamlit al crear la aplicación;
-el subdominio opcional depende de disponibilidad. Los siguientes pushes a la rama
-desplegada actualizan la app.
+el subdominio opcional depende de disponibilidad.
+
+**Una vez creada, los pushes a `master` actualizan la app solos.** No hay que
+volver a desplegar: basta con que `deploy/data/` esté regenerado y versionado.
+Si la app estuvo inactiva varios días, Community Cloud la duerme y el primer
+acceso la despierta con un botón; eso no es un fallo de despliegue.
+
+### Antes de desplegar o actualizar
+
+La comprobación que importa no es que la app corra localmente, sino que corra
+con **solo lo versionado** — si un artefacto quedó en `.gitignore`, aquí anda y
+en la nube no:
+
+```bash
+git archive HEAD | tar -x -C /tmp/limpio
+streamlit run /tmp/limpio/streamlit_app.py
+```
+
+### Repositorio privado
+
+El repositorio es privado y `docs/` contiene documentos internos del proyecto.
+Desplegar concede a Streamlit Cloud acceso de lectura al repositorio completo, y
+**las aplicaciones de Community Cloud son públicas por omisión**: cualquiera con
+la URL entra. La aplicación solo sirve los agregados de `deploy/data/` y no
+expone `docs/`, pero si la URL no debe circular hay que restringir espectadores
+en *Settings → Sharing* de la propia aplicación.
 
 ## Datos distribuidos
 
-`deploy/data/` contiene una instantánea explícita de siete archivos:
+`deploy/data/` contiene una instantánea explícita de diez archivos:
 
-- Perfiles universitarios y retención: agregados de matrícula pública Mineduc/SIES
-  y recursos institucionales CNED.
+- Perfiles universitarios y retención: agregados de matrícula pública Mineduc/SIES,
+  selectividad de admisión, titulación y recursos institucionales CNED.
 - Manifiesto con trazabilidad y SHA-256 de los dos agregados.
 - Métricas y predicciones sintéticas para la demostración del cockpit.
 - Métricas y predicciones derivadas de OULAD, con identificadores públicos
   anonimizados de ese dataset; no son estudiantes de la Universidad Autónoma.
+- Piso predictivo y ablación, que son los insumos del argumento central. Van
+  aparte porque la ablación la escribe `analyze_mineduc.py` en
+  `documentacion/datos/` y no en `data/results/`; sin ellos la vista de
+  hallazgos lo dice en vez de inventar la cifra.
+
+La regla `*.csv` del `.gitignore` excluía el CSV de la ablación en silencio, así
+que hay una excepción explícita `!deploy/data/*.csv`. Si se agrega otro artefacto
+que no sea `.parquet`, hay que comprobar que quede versionado.
 
 Fuentes: [Mineduc Datos Abiertos](https://datosabiertos.mineduc.cl/),
 [CNED INDICES](https://cned.cl/institucional/bases-de-datos/),
