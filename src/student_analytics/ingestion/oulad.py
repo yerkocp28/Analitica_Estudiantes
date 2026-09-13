@@ -203,6 +203,14 @@ def load_oulad(path: str | Path) -> dict[str, pd.DataFrame]:
     reg["unreg_week"] = _to_week(reg["date_unregistration"])
     outcomes = outcomes.merge(reg[K + ["unreg_week"]], on=K, how="left")
 
+    # Una persona puede tener VARIAS evaluaciones calificadas en la misma
+    # semana, con pesos distintos. Sin un discriminador el grano declarado no
+    # es unico (22.653 filas duplicadas) y cualquier join aguas abajo se abre
+    # en silencio. El generador sintetico ya numeraba con `assessment_seq`;
+    # aqui faltaba. Lo detecto el validador de contrato.
+    grades = grades.sort_values(K + ["week", "weight"]).copy()
+    grades["assessment_seq"] = grades.groupby(K + ["week"]).cumcount() + 1
+
     tables = {
         "student_master": student_master,
         "course_master": course_master,
@@ -213,6 +221,14 @@ def load_oulad(path: str | Path) -> dict[str, pd.DataFrame]:
         "outcomes": outcomes,
         # attendance_weekly: NO EXISTE en OULAD, deliberadamente ausente.
     }
+    # El contrato declara `student_id` como str y el generador lo entrega asi.
+    # OULAD lo traia como int64 en todas sus tablas: consistente por dentro,
+    # incompatible con el resto. Se normaliza en el unico punto donde se
+    # ensamblan, para que no queden dos convenciones vivas.
+    for df in tables.values():
+        if "student_id" in df.columns:
+            df["student_id"] = df["student_id"].astype(str)
+
     for name, df in tables.items():
         log.info("  %-20s %10s filas", name, f"{len(df):,}")
     return tables

@@ -22,7 +22,7 @@ La especificación completa está en
 | **1e** | **Trayectoria escolar previa al ingreso + ablación del piso** | **Completo** |
 | **1f** | **Benchmark universitario: CNED, selectividad de admisión, titulación** | **Completo** |
 | **1g** | **Serie longitudinal: matrícula 2007–2026, retención y titulación por cohorte** | **Completo** |
-| 2 | Capa analítica: silver, `mart_student_course_week`, `mart_student_week` | Pendiente |
+| **2** | **Capa analítica: contrato verificado, silver materializado, los dos marts** | **Completo** |
 | 3 | Segmentación (≥3 alternativas) | Pendiente |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
 | 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
@@ -92,7 +92,7 @@ python scripts/descriptive_stats.py
 quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
 quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
-pytest -q                                            # 143 tests
+pytest -q                                            # 174 tests
 ```
 
 ---
@@ -606,6 +606,8 @@ src/student_analytics/
         profiles.py         7 perfiles latentes de estudiante
         generator.py        generador reproducible y auto-calibrado
     ingestion/
+        contract.py         valida cualquier adaptador contra el contrato
+        layers.py           bronze / silver / gold
         oulad.py            OULAD -> esquema canonico
         retention.py        continuidad en tres niveles anidados
         cohortes.py         titulacion por cohorte de ingreso (longitudinal)
@@ -614,6 +616,7 @@ src/student_analytics/
         cned.py             recursos institucionales y cuerpo docente
     features/
         builder.py          features por semana, agnostico a la fuente
+        marts.py            los dos marts del documento maestro (21)
     modeling/
         lead_time.py        poder predictivo vs anticipacion
         benchmark.py        bloques, distancia y clusters de pares
@@ -635,6 +638,8 @@ scripts/
     build_benchmark.py      perfiles universidad-cohorte
     build_inventory.py      inventario de variables (se regenera, no se edita)
     build_findings.py       hallazgos a CSV para el informe
+    build_silver.py         valida los adaptadores y materializa silver
+    build_marts.py          mart_student_course_week y mart_student_week
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)

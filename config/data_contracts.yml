@@ -9,6 +9,22 @@
 #   confirmed  - documentado publicamente en el modelo de datos de la fuente
 #   likely     - estandar en instalaciones Banner/Canvas, falta confirmar en UA
 #   verify     - depende de modulos opcionales o practica local. PREGUNTAR.
+#
+# EL GRANO ES NORMATIVO Y SE VERIFICA
+#
+# `ingestion/contract.py` valida cualquier adaptador contra este archivo, y
+# `tests/test_contract.py` lo corre sobre todos los adaptadores existentes. El
+# adaptador de Banner tendra que pasarlo el dia uno.
+#
+# Las tablas semanales llevan `term_id` en el grano a proposito: una persona
+# puede cursar la misma asignatura en dos periodos. Sin ese campo el grano no
+# es unico —en el generador daba 295.884 duplicados— y los joins aguas abajo
+# se abren en silencio.
+#
+# El contrato describe el esquema OBJETIVO, el que entregaran Banner y Canvas.
+# Un adaptador puede entregar un subconjunto: OULAD no tiene asistencia y el
+# generador no simula fechas de inscripcion. Esos huecos se declaran en el
+# test, uno por adaptador, para que no puedan crecer sin que nadie lo note.
 
 datasets:
 
@@ -44,7 +60,7 @@ datasets:
       dropped_at:      {type: date,  source: "SFRSTCR (RSTS de retiro)",           status: confirmed}
 
   attendance_weekly:
-    grain: [student_id, course_id, week]
+    grain: [student_id, course_id, term_id, week]
     source_real: banner
     # RIESGO ALTO. Banner tiene un modulo Attendance Tracking, pero es
     # OPCIONAL. Si la UA no lo licencia/usa, solo existe
@@ -53,10 +69,17 @@ datasets:
     fields:
       sessions_held:     {type: int, source: "Banner Attendance Tracking (SFRAATT)", status: verify}
       sessions_attended: {type: int, source: "Banner Attendance Tracking (SFRAATT)", status: verify}
+      attendance_rate:   {type: float, source: "derivado: asistidas / realizadas",  status: confirmed}
       last_attend_date:  {type: date, source: "SFRSTCR.SFRSTCR_LAST_ATTEND",         status: likely}
+      # BANDERA DE CALIDAD DEL REGISTRO, no del estudiante. Distingue "este
+      # curso no pasa lista" de "asistio cero". `features/builder.py` la exige:
+      # sin ella un curso que no registra parece uno de inasistencia total.
+      attendance_recorded: {type: bool, source: "derivado: el curso registra asistencia", status: confirmed}
 
   grades_weekly:
-    grain: [student_id, course_id, week]
+    # Una persona puede tener varias evaluaciones calificadas la misma semana,
+    # con pesos distintos: el grano es POR EVALUACION, no por semana.
+    grain: [student_id, course_id, term_id, week, assessment_seq]
     source_real: banner
     fields:
       assessment_grade: {type: float, source: "SHRTCKG / SHRTCKN (calificaciones)", status: confirmed}
@@ -65,18 +88,21 @@ datasets:
       # la nota final del periodo.
       graded_at:        {type: date,  source: "SHRTCKG (fecha de carga)",           status: verify}
 
-  canvas_weekly:
-    grain: [student_id, course_id, week]
+  activity_weekly:
+    grain: [student_id, course_id, term_id, week]
     source_real: canvas_data_2
     # Esquema publico: developerdocs.instructure.com/services/dap/dataset
     fields:
       page_views:      {type: int,   source: "canvas_logs.web_logs",               status: confirmed}
       participations:  {type: int,   source: "canvas.asset_user_accesses",         status: likely}
       days_active:     {type: int,   source: "derivado de web_logs",               status: confirmed}
-      canvas_adoption: {type: str,   source: "derivado: intensidad de uso docente", status: confirmed}
+      platform_adoption: {type: str, source: "derivado: intensidad de uso docente",  status: confirmed}
+      # Idem: si el docente casi no usa la plataforma, la inactividad del
+      # estudiante no es senial suya. El builder anula esas metricas.
+      activity_reliable: {type: bool, source: "derivado: platform_adoption != low",  status: confirmed}
 
   assignments_weekly:
-    grain: [student_id, course_id, week]
+    grain: [student_id, course_id, term_id, week]
     source_real: canvas_data_2
     fields:
       assigned:        {type: int,   source: "canvas.assignments (due_at en semana)", status: confirmed}
