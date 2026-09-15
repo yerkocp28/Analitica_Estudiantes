@@ -1,0 +1,48 @@
+# Segmentación de ingresantes de la Universidad Autónoma.
+#
+# El grano es la persona que ingresa, y las variables son SOLO lo que se sabe
+# al matricularse. La continuidad NO entra: si el segmento se definiera con el
+# resultado, describir su retención sería circular y el segmento no serviría
+# para decidir nada el día que llega la cohorte nueva.
+
+target_name: "Universidad Autónoma de Chile"
+
+# Alcance por omisión. 2021 en adelante es el tramo con puntaje de admisión;
+# antes no existe porque la PSU no es dato abierto.
+cohorte_desde: 2021
+cohorte_hasta: 2025
+
+# Bloques de variables, con igual peso. Cada bloque se normaliza por su propia
+# varianza total antes de pesarse, para que uno con muchas categorías no domine
+# por tener más columnas.
+#
+# LA SEDE NO ES INSUMO, ES DESCRIPTOR. Una variable que ya es filtro en todas
+# las vistas del tablero no debe segmentar: garantiza redundancia. Con el
+# bloque `territorio` activo la partición elegida era literalmente las cuatro
+# sedes, y saber en qué sede está un estudiante no le sirve a nadie como
+# hallazgo. La composición por área, además, es casi idéntica entre sedes
+# (Salud 31-36% en todas), así que tampoco había estructura que descubrir ahí.
+#
+# El perfil reporta la sede de cada segmento, y `ua_segmentos_estabilidad.csv`
+# muestra cómo se reparte. Eso sí es accionable: un director ve qué mezcla de
+# perfiles tiene en SU sede.
+block_weights:
+  academico: 0.50      # percentiles de admisión, NEM y ranking (nunca el puntaje crudo)
+  estructura: 0.50     # área, jornada, duración nominal
+
+k_values: [3, 4, 5, 6, 7, 8]
+random_seed: 42
+
+# Un segmento con menos de esto no es accionable: no se puede diseñar una
+# intervención para cuarenta personas repartidas en cuatro sedes.
+minimum_segment: 500
+
+# Techo de concentración. Sin él la silueta elige siempre la partición que
+# aísla un grupo diminuto y atípico y deja a todo el resto junto: limpia de
+# medir, inútil para actuar. Es la misma lección del benchmark institucional.
+maximum_segment_share: 0.60
+
+# Cuántos ingresantes se usan para ajustar. Con 98.812 filas y varios
+# algoritmos, muestrear acelera sin cambiar la estructura; la asignación se
+# hace después sobre todos.
+muestra_ajuste: 20000

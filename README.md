@@ -23,7 +23,7 @@ La especificación completa está en
 | **1f** | **Benchmark universitario: CNED, selectividad de admisión, titulación** | **Completo** |
 | **1g** | **Serie longitudinal: matrícula 2007–2026, retención y titulación por cohorte** | **Completo** |
 | **2** | **Capa analítica: contrato verificado, silver materializado, los dos marts** | **Completo** |
-| 3 | Segmentación (≥3 alternativas) | Pendiente |
+| **3** | **Segmentación de ingresantes UA reales (≥3 alternativas)** | **Completo** |
 | 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
 | 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
 | 6 | Modelo 2 — desenganche académico | Pendiente |
@@ -92,7 +92,7 @@ python scripts/descriptive_stats.py
 quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
 quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
-pytest -q                                            # 174 tests
+pytest -q                                            # 187 tests
 ```
 
 ---
@@ -598,7 +598,8 @@ Dirección Jurídica **antes** de que el modelo toque datos reales.
 ## Estructura
 
 ```
-config/          settings.yml, synthetic.yml, benchmark.yml, data_contracts.yml
+config/          settings.yml, synthetic.yml, benchmark.yml,
+                 segmentation.yml, data_contracts.yml
 src/student_analytics/
     config.py               carga y validacion de YAML
     logging_setup.py
@@ -620,6 +621,7 @@ src/student_analytics/
     modeling/
         lead_time.py        poder predictivo vs anticipacion
         benchmark.py        bloques, distancia y clusters de pares
+        segmentation.py     segmentos de ingresantes, 3 familias comparadas
         findings.py         hallazgos, calculados una sola vez
     ui/
         app.py              cockpit Streamlit
@@ -640,6 +642,8 @@ scripts/
     build_findings.py       hallazgos a CSV para el informe
     build_silver.py         valida los adaptadores y materializa silver
     build_marts.py          mart_student_course_week y mart_student_week
+    build_ua_cohorts.py     98.812 ingresantes UA reales con outcome observado
+    build_segments.py       segmentacion, entregable del mes 3
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)
