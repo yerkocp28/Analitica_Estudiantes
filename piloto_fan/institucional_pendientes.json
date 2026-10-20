@@ -1,0 +1,137 @@
+{
+  "version": "1.1",
+  "fecha": "2026-10-20",
+  "estado": "Análisis descriptivo y modelos retrospectivos experimentales; definiciones institucionales pendientes",
+  "procedencia": "Extracto generado por la universidad, confirmado por el usuario",
+  "alcance": {
+    "aprobado_por_facultad": false,
+    "facultad": "Fac. Administración y Negocios",
+    "carreras_propuestas": ["AUDI", "CPAU", "IADM", "IECG", "IECT", "INCO"],
+    "campus_propuestos": ["PR", "SM", "TA", "TE"],
+    "nivel_propuesto": "PR",
+    "estados": "Todos los estados observados; no equivale a matrícula efectiva",
+    "minimo_personas_mostradas": 10
+  },
+  "aplicacion": [
+    "Nueva línea descriptiva institucional dentro del piloto FAN independiente.",
+    "Matrícula por persona, período y programa; resultados por persona, período y NRC; resumen por persona y período.",
+    "Asignación a carrera/campus solamente cuando existe un único plan institucional en el período.",
+    "Identificadores internos sustituidos por claves HMAC locales; la interfaz solo muestra agregados.",
+    "Filtros propios de alcance, año, régimen, período, campus, carrera, jornada y estado del plan.",
+    "Notas numéricas y códigos separados; indicadores de notas bajo 4 expresamente descriptivos.",
+    "Modelos públicos existentes conservados. Nuevos modelos internos experimentales con objetivos observables y supuesto de disponibilidad al cierre del semestre, pendiente de confirmación.",
+    "Segmentación académica y dos casos predictivos comparan tres algoritmos. No se declaran alertas actuales ni resultados operativos validados."
+  ],
+  "preguntas": [
+    {
+      "id": "P01",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Área emisora / VRA",
+      "pregunta": "¿Cuál es la fecha de corte, qué consulta o filtros se usaron y están incluidos todos los estados y períodos de matrícula e historia?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Analizar presencia observada en el extracto 2024–2025 y mostrar fecha de corte no informada.",
+      "habilita": "Certificar cobertura, actualización y denominadores de matrícula efectiva.",
+      "restriccion_actual": "No presentar ausencia en el archivo como deserción ni los registros como alumnos activos actuales."
+    },
+    {
+      "id": "P02",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico",
+      "pregunta": "¿Qué significan RI, RR, RM, RC, CR, CC, P y REPROB? ¿Cómo se define aprobación/reprobación en cada modo de calificación?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Convertir notas numéricas de 1 a 7; mostrar aparte los códigos y su cobertura.",
+      "habilita": "Etiquetas de aprobación/reprobación completas y comparables.",
+      "restriccion_actual": "El porcentaje de notas numéricas bajo 4 no se etiqueta como tasa oficial de reprobación."
+    },
+    {
+      "id": "P03",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico / gestión curricular",
+      "pregunta": "¿Qué unidad utiliza CREDIT_HOURS y cambia por plan, modalidad o año? ¿Existe una equivalencia con créditos SCT?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar la magnitud original y usar conteos de resultados y promedios simples de notas conocidas.",
+      "habilita": "Carga comparable, créditos aprobados y promedios ponderados.",
+      "restriccion_actual": "No ponderar notas ni interpretar CREDIT_HOURS como SCT."
+    },
+    {
+      "id": "P04",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico",
+      "pregunta": "Cuando un estudiante tiene varios planes en el mismo período, ¿cómo se atribuyen las asignaturas? ¿Qué significan PRIORIDAD y las secuencias?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar todos los planes; separar resultados con atribución ambigua de las comparaciones por carrera.",
+      "habilita": "Incorporar los casos de planes simultáneos a indicadores por programa.",
+      "restriccion_actual": "No seleccionar un plan por primera fila, mínimo o máximo de secuencia."
+    },
+    {
+      "id": "P05",
+      "prioridad": "Alta",
+      "responsable_sugerido": "VRA / registro académico",
+      "pregunta": "¿Cuáles son las fechas de inicio/cierre de cada período y cuándo estuvieron disponibles las notas y los estados? ¿Los estados del extracto son históricos o actuales?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Describir regímenes separados y evaluar retrospectivamente semestres ordinarios bajo el supuesto explícito de disponibilidad al cierre, sin afirmar fechas reales.",
+      "habilita": "Evaluación predictiva temporal sin información futura.",
+      "restriccion_actual": "No reconstruir semanas, usar notas finales del período objetivo como variables ni generar alertas actuales."
+    },
+    {
+      "id": "P06",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Direcciones FAN",
+      "pregunta": "¿Se ratifican las seis denominaciones propuestas en los cuatro campus? ¿Cómo tratar Online, intercambio, carreras históricas y la fila de Arquitectura asociada a FAN?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Ofrecer un alcance propuesto de cuatro campus y una vista alternativa de todo lo etiquetado FAN.",
+      "habilita": "Denominador institucional aprobado y catálogo vigente.",
+      "restriccion_actual": "No declarar aprobado el alcance ni equiparar automáticamente nombres de carreras."
+    },
+    {
+      "id": "P07",
+      "prioridad": "Alta",
+      "responsable_sugerido": "VRA / registro académico",
+      "pregunta": "¿Qué estados definen matrícula efectiva y continuidad? ¿Hay fechas y registros de suspensión, traslado, egreso y titulación que permitan distinguir las salidas?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Permitir filtrar estados del plan y distinguir presencia observada de matrícula efectiva.",
+      "habilita": "Caso de no renovación de matrícula y seguimiento de salidas.",
+      "restriccion_actual": "No llamar deserción a la ausencia ni tratar TIPO_SALIDA como título obtenido."
+    },
+    {
+      "id": "P08",
+      "prioridad": "Media",
+      "responsable_sugerido": "Gestión curricular",
+      "pregunta": "¿Existe un catálogo de asignaturas, secciones y equivalencias que explique los NRC con diferentes códigos/nombres/cargas y los cambios de malla?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar código de materia, número, nombre y sección originales; no fusionar equivalencias supuestas.",
+      "habilita": "Repitencia observada y comparaciones longitudinales por asignatura más precisas.",
+      "restriccion_actual": "REPETIDO vacío se mantiene desconocido; no equivale a cero intentos previos."
+    },
+    {
+      "id": "P09",
+      "prioridad": "Media",
+      "responsable_sugerido": "VRA / área emisora",
+      "pregunta": "¿Podemos disponer de 2022–2023 y de una actualización 2026, y acordar responsable y frecuencia de entrega?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Usar exclusivamente la ventana 2024–2025 disponible.",
+      "habilita": "Más transiciones para validar modelos y un uso actualizado.",
+      "restriccion_actual": "No interpretar cohortes antiguas de admisión como historia de notas anterior a 2024."
+    },
+    {
+      "id": "P10",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Direcciones FAN / responsable del proyecto",
+      "pregunta": "¿Se priorizan resultado académico adverso y no renovación entre períodos? ¿Qué decisión apoyarán, con qué capacidad de revisión, métricas mínimas y usuarios autorizados?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Tablero descriptivo y experimentos con tres algoritmos por caso, frente a reglas y una versión sin variables académicas; los casos siguen pendientes de priorización institucional.",
+      "habilita": "Criterios de aceptación, prueba de usabilidad y posterior operación institucional.",
+      "restriccion_actual": "No afirmar que los casos están priorizados ni que se ha medido impacto de intervenciones."
+    }
+  ]
+}

@@ -28,7 +28,19 @@ La especificación completa está en
 | 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
 | 6 | Modelo 2 — desenganche académico | Pendiente |
 
-**Sin accesos a Banner/Canvas todavía.** El pipeline corre sobre datos
+**Actualización 20-10-2026: extracto institucional recibido.** Se incorporó una
+línea descriptiva por período en el piloto independiente FAN, a partir de
+`Matricula e Historia Académica Pregrado 2024 2025.xlsx`, generado por la
+universidad. Incluye una vista **Datos institucionales FAN**, filtros y
+auditoría de cobertura. Las definiciones pendientes se registran con una
+regla provisional de trabajo: no detienen la exploración descriptiva.
+Consulta [la incorporación y sus límites](piloto_fan/README.md#fuente-institucional-20242025)
+y [las preguntas para la universidad](piloto_fan/institucional_pendientes.json).
+La vista **Modelos institucionales** añade segmentación académica y dos modelos
+retrospectivos experimentales con esta fuente. Sus supuestos temporales están
+explícitos; no alimentan alertas individuales ni el Streamlit público.
+
+**Sin conexión directa a Banner/Canvas todavía.** El pipeline original corre sobre datos
 sintéticos y sobre dos fuentes reales abiertas (OULAD y Mineduc/SIES). La
 calibración del generador está anclada a la retención **medida** de la propia
 UA, calculada desde datos abiertos.

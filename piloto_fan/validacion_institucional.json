@@ -1,0 +1,34 @@
+{
+  "estado": "pendiente de ejecución con contrapartes institucionales",
+  "alcance_aprobado": false,
+  "casos_priorizados_por_direcciones": false,
+  "acceso_vra_obtenido": false,
+  "extracto_institucional": {
+    "recibido": true,
+    "fecha_registro": "2026-10-20",
+    "procedencia": "Generado por la universidad, confirmado por el usuario",
+    "archivo": "Matricula e Historia Académica Pregrado 2024 2025.xlsx",
+    "integracion": "Línea descriptiva y modelos retrospectivos experimentales por período en el piloto FAN",
+    "pendientes": "institucional_pendientes.json",
+    "alcance_del_acceso": "La recepción no acredita permisos formales VRA, conexión automática ni acceso Canvas."
+  },
+  "objetivo": "Evaluar interpretación y utilidad para direcciones; no medir efecto de intervenciones aún inexistentes.",
+  "participacion_propuesta": ["Providencia", "San Miguel", "Talca", "Temuco"],
+  "tareas": [
+    {"id": "T1", "tarea": "Identificar el alcance, la cohorte y la cobertura antes de comparar resultados."},
+    {"id": "T2", "tarea": "Interpretar un segmento sin confundirlo con un nivel de riesgo o una causa."},
+    {"id": "T3", "tarea": "Comparar la captura del modelo y la regla histórica con capacidad de revisión del 20%."},
+    {"id": "T4", "tarea": "Distinguir resultado censurado, no continuidad y no titulación en plazo."},
+    {"id": "T5", "tarea": "Exportar el informe e identificar qué conclusiones permiten y no permiten los datos."}
+  ],
+  "registro_por_tarea": ["sede", "rol del evaluador", "tarea", "resuelta sin ayuda", "tiempo", "error de interpretación", "utilidad percibida", "ajuste solicitado"],
+  "criterios_propuestos_para_acordar": [
+    "Representación de las cuatro sedes y revisión del catálogo de carreras.",
+    "Comprensión correcta del significado y límites de los dos resultados.",
+    "Capacidad de resolver las tareas acordadas con el tablero.",
+    "Decisiones o preguntas institucionales concretas documentadas por las direcciones.",
+    "Responsable y procedimiento de actualización definidos."
+  ],
+  "resultados": [],
+  "acta_aceptacion": null
+}

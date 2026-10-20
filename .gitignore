@@ -18,6 +18,8 @@ data/gold/
 data/synthetic/
 data/external/
 data/results/
+# Extractos institucionales y archivos de trabajo locales.
+data/interim/
 *.parquet
 *.csv
 !docs/**/*.csv
