@@ -359,7 +359,81 @@ El indicador por cohorte —donde la UA marca 61,4% frente a una mediana de
 51,2%— es el que sostiene una afirmación sobre desempeño. Ver @sec-cohortes.
 :::
 
-## 5. Las trampas de datos que cambiaron un resultado
+## 5. Cuatro modelos entrenados, un solo veredicto favorable
+
+Desde octubre de 2026 el proyecto tiene modelos entrenados sobre estudiantes de
+la UA, no sobre datos sintéticos. Dos usan datos abiertos cruzados por MRUN y
+dos usan el **extracto institucional 2024–2025** que entregó la universidad.
+
+```{python}
+#| label: tbl-modelos
+#| tbl-cap: "Modelos del piloto FAN: métricas del test reservado y veredicto"
+d = leer("hallazgo_modelos")
+if d is not None:
+    t = pd.DataFrame({
+        "Caso": d["caso"], "Qué predice": d["objetivo"], "Estado": d["estado"],
+        "Algoritmo": d["algoritmo"],
+        "AUC": d["auc"].map("{:.3f}".format),
+        "Captura 20%": d["capture_20"].map("{:.1%}".format),
+        "Regla histórica": d.get("regla_capture_20",
+                                 pd.Series([float("nan")] * len(d))).map(
+            lambda v: "—" if pd.isna(v) else f"{v:.1%}"),
+        "n test": d["n"].map("{:,.0f}".format),
+        "Eventos": d["events"].map("{:,.0f}".format)})
+    d = t
+d
+```
+
+::: {.callout-important}
+## El veredicto no es la métrica
+
+Un modelo pasa a **señal retrospectiva** solo si supera a la regla histórica por
+carrera, al azar en captura, **y** mejora el Brier frente a una probabilidad
+constante aprendida en entrenamiento. Si falla cualquiera de las tres, queda
+**experimental**.
+
+Ese criterio separa dos casos que la sola lectura del AUC confundiría. El modelo
+de **matrícula institucional** alcanza AUC 0,888 —la segunda cifra más alta del
+proyecto— con **16 eventos positivos** en 2.318 casos, y su Brier skill es
+**negativo**: calibra peor que predecir siempre la misma probabilidad. Queda
+experimental, y debe quedar.
+
+**Ninguno autoriza uso individual.** Son reconstrucciones retrospectivas de
+registros académicos, no un servicio que hubiera existido en esas fechas.
+:::
+
+El único con veredicto favorable es **continuidad**: AUC 0,683 y captura del
+43,6% al revisar el 20%, frente al 22,0% de priorizar por la tasa histórica de
+la carrera. Casi el doble, que es la comparación que importa para una dirección
+que ya podría usar esa heurística sin ningún modelo.
+
+### Lo que el extracto institucional cambió
+
+El modelo **académico** —resultado del semestre siguiente, con notas reales de
+la UA— alcanza **AUC 0,812**, la cifra más alta del proyecto, y mejora el Brier
+en 26%. Queda experimental porque solo hay **tres transiciones y dos años**: no
+alcanza para descartar deriva temporal.
+
+Pero el orden de magnitud confirma la tesis del informe. Con el expediente
+nacional previo al ingreso el techo medido fue 0,636 (@sec-argumento); agregando
+estructura institucional —carrera, sede, jornada— el modelo de continuidad llega
+a 0,683; agregando **notas del semestre**, el académico llega a 0,812.
+
+> El valor no está en lo que se sabe del estudiante al matricularse, sino en lo
+> que ocurre durante el semestre. Eso dejó de ser un argumento prestado de
+> ULagos y pasó a ser una medición sobre estudiantes de la UA.
+
+::: {.callout-warning}
+## Lo que el extracto no acredita
+
+Recibir el archivo no equivale a tener acceso a los sistemas. No hay permisos
+formales de la VRA, no hay Canvas, no hay conexión automática, y la fecha de
+corte del extracto **no fue informada**. Mientras esa pregunta siga abierta, la
+ausencia de una persona en el archivo no se lee como deserción y los registros
+no se presentan como alumnos activos actuales.
+:::
+
+## 6. Las trampas de datos que cambiaron un resultado
 
 Esta es la parte del trabajo que no aparece en ningún gráfico y es la que
 sostiene todo lo demás. Cada fila es un error que los datos inducen con toda
@@ -377,7 +451,7 @@ d
 «Límite permanente» significa que no hay corrección posible con datos abiertos:
 es una restricción de la fuente, no del pipeline.
 
-## 6. Qué aportó cada fuente
+## 7. Qué aportó cada fuente
 
 ```{python}
 #| label: tbl-fuentes-aporte

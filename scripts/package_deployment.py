@@ -19,6 +19,9 @@ OPCIONALES = {
     "piso_preingreso_nacional.parquet": ROOT / "data/results/piso_preingreso_nacional.parquet",
     "piso_preingreso_temporal.parquet": ROOT / "data/results/piso_preingreso_temporal.parquet",
     "ablacion_piso.csv": ROOT / "documentacion/datos/ablacion_piso.csv",
+    # Resumen agregado de los modelos del piloto FAN. Sin el, la pestania
+    # "Modelos" de la app publicada queda vacia aunque exista localmente.
+    "modelos_resumen.json": ROOT / "data/results/modelos_resumen.json",
 }
 
 

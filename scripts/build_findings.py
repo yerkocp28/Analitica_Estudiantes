@@ -40,6 +40,7 @@ def main() -> int:
 
     log.info("Hallazgos")
     _guardar("hallazgo_argumento_central", F.argumento_central(RESULTS))
+    _guardar("hallazgo_modelos", F.resultados_modelos(RESULTS))
     _guardar("hallazgo_serie_retencion", F.serie_retencion(RESULTS))
     _guardar("hallazgo_retencion_sede",
              F.retencion_por_sede(RESULTS, area="Administración y Comercio"))

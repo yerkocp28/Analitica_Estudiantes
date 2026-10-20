@@ -305,6 +305,84 @@ def _titulacion(perfiles: pd.DataFrame) -> None:
 
 
 # ----------------------------------------------------------------------
+ESTADOS = {"señal retrospectiva": ("✓", VERDE), "experimental": ("○", NARANJA)}
+
+
+def _modelos(results: Path) -> None:
+    st.subheader("Modelos entrenados y su veredicto")
+    d = F.resultados_modelos(results)
+    if d is None:
+        st.info("No hay un resumen de modelos exportado. El piloto FAN no actualiza "
+                "esta vista por su cuenta: para traer su última corrida revisada, "
+                "corre `python scripts/export_pilot_summary.py`.")
+        return
+
+    con_senial = d[d.estado.ne("experimental")]
+    a, b, c = st.columns(3)
+    a.metric("Modelos entrenados", f"{len(d)}", "cuatro casos distintos", delta_color="off")
+    b.metric("Con señal retrospectiva", f"{len(con_senial)}",
+             f"{len(d) - len(con_senial)} siguen experimentales", delta_color="off")
+    mejor = d.loc[d.auc.idxmax()] if "auc" in d else None
+    if mejor is not None:
+        c.metric("Mayor AUC en test", f"{mejor.auc:.3f}",
+                 f"{mejor.caso} · {mejor.estado}", delta_color="off")
+
+    st.markdown(
+        "**El veredicto no es la métrica.** Un modelo pasa a *señal retrospectiva* solo "
+        "si supera a la regla histórica por carrera, al azar en captura, y mejora el "
+        "Brier frente a una probabilidad constante. Un AUC alto con pocos eventos no "
+        "alcanza — y aquí hay un caso que lo ilustra.")
+
+    tabla = d.copy()
+    tabla["Estado"] = tabla.estado.map(lambda s: f"{ESTADOS.get(s, ('·', GRIS))[0]}  {s}")
+    cols = {"caso": "Caso", "objetivo": "Qué predice", "fuente": "Datos",
+            "algoritmo": "Algoritmo", "Estado": "Estado", "auc": "AUC",
+            "capture_20": "Captura 20%", "regla_capture_20": "Regla histórica",
+            "brier_skill": "Brier skill", "n": "n test", "events": "Eventos"}
+    vista = tabla[[c for c in cols if c in tabla.columns]].rename(columns=cols)
+    st.dataframe(vista, hide_index=True, width="stretch", column_config={
+        "AUC": st.column_config.NumberColumn("AUC", format="%.3f"),
+        "Captura 20%": st.column_config.NumberColumn("Captura 20%", format="%.1f%%"),
+        "Regla histórica": st.column_config.NumberColumn("Regla histórica", format="%.1f%%"),
+        "Brier skill": st.column_config.NumberColumn("Brier skill", format="%.3f"),
+    })
+
+    if "ganancia_captura_pp" in d.columns and d.ganancia_captura_pp.notna().any():
+        st.markdown("**Cuánto gana cada modelo sobre priorizar por la tasa histórica "
+                    "de la carrera**, que es lo que hoy podría hacerse sin modelo.")
+        g = d.dropna(subset=["ganancia_captura_pp"])
+        largo = g.melt(id_vars="caso", value_vars=["capture_20", "regla_capture_20"],
+                       var_name="serie", value_name="captura")
+        largo["serie"] = largo.serie.map({"capture_20": "Modelo",
+                                          "regla_capture_20": "Regla histórica"})
+        ch = alt.Chart(largo).mark_bar(cornerRadiusEnd=3).encode(
+            y=alt.Y("caso:N", title=None),
+            x=alt.X("captura:Q", title="Reprobaciones o bajas capturadas al revisar 20%",
+                    axis=alt.Axis(format="%", grid=False)),
+            yOffset=alt.YOffset("serie:N"),
+            color=alt.Color("serie:N", title=None, scale=alt.Scale(
+                domain=["Modelo", "Regla histórica"], range=[AZUL, GRIS])),
+            tooltip=["caso", "serie", alt.Tooltip("captura:Q", format=".1%")])
+        st.altair_chart(ch.properties(height=130), width="stretch")
+
+    pocos = d[(d.events < 30) & d.events.notna()] if "events" in d else d.iloc[0:0]
+    if not pocos.empty:
+        casos = ", ".join(pocos.caso)
+        st.warning(
+            f"**{casos}: muy pocos eventos.** Con {int(pocos.events.min())} casos positivos "
+            "en el test, un AUC alto no es evidencia estable y el Brier puede empeorar "
+            "frente a una probabilidad constante. Por eso queda experimental pese a la cifra.")
+
+    st.info("**Ninguno autoriza uso individual.** Son reconstrucciones retrospectivas de "
+            "registros académicos, no un servicio que hubiera existido en esas fechas. "
+            "El piloto no genera scoring de alumnos actuales.")
+
+    corridas = d.attrs.get("corridas", {})
+    if corridas:
+        st.caption("Corridas de origen · " + " · ".join(
+            f"{k}: {v.get('run_id', '—')}" for k, v in corridas.items()))
+
+
 def _trampas(results: Path, perfiles: pd.DataFrame | None) -> None:
     st.subheader("Trampas de datos que cambiaron un resultado")
     st.markdown(
@@ -348,23 +426,25 @@ def render_hallazgos(results_dir: Path) -> None:
     _argumento(results_dir)
     st.divider()
 
-    tabs = st.tabs(["Retención", "Selectividad de admisión", "Titulación",
+    tabs = st.tabs(["Modelos", "Retención", "Selectividad de admisión", "Titulación",
                     "Trampas de datos", "Fuentes"])
     with tabs[0]:
-        _retencion(results_dir)
+        _modelos(results_dir)
     with tabs[1]:
-        if perfiles is None:
-            st.info("Faltan los perfiles del benchmark.")
-        else:
-            _selectividad(perfiles)
+        _retencion(results_dir)
     with tabs[2]:
         if perfiles is None:
             st.info("Faltan los perfiles del benchmark.")
         else:
-            _titulacion(perfiles)
+            _selectividad(perfiles)
     with tabs[3]:
-        _trampas(results_dir, perfiles)
+        if perfiles is None:
+            st.info("Faltan los perfiles del benchmark.")
+        else:
+            _titulacion(perfiles)
     with tabs[4]:
+        _trampas(results_dir, perfiles)
+    with tabs[5]:
         _fuentes(results_dir, perfiles)
 
     st.divider()

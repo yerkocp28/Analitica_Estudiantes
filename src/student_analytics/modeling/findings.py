@@ -17,6 +17,7 @@ proyecto se arma por partes y la vista tiene que funcionar con lo que haya.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -246,6 +247,36 @@ def contraste_titulacion(profiles: pd.DataFrame,
 # ----------------------------------------------------------------------
 # 5. Las trampas de datos que cambiaron un resultado
 # ----------------------------------------------------------------------
+def resultados_modelos(results: Path) -> pd.DataFrame | None:
+    """Modelos entrenados por el piloto FAN, con su veredicto.
+
+    Lee el agregado que escribe `scripts/export_pilot_summary.py`. Ese paso es
+    deliberadamente manual: el piloto no actualiza por su cuenta la aplicación
+    publicada, y esta vista se limita a mostrar lo que alguien decidió exportar
+    desde una corrida ya revisada.
+
+    El veredicto no es una métrica. Un modelo pasa a `señal retrospectiva` solo
+    si supera a la regla histórica por carrera **y** al azar en captura **y**
+    mejora el Brier frente a una probabilidad constante. Si no, queda
+    `experimental` — y eso significa que no autoriza ningún uso individual.
+    """
+    ruta = results / "modelos_resumen.json"
+    if not ruta.exists():
+        return None
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    casos = datos.get("casos") or []
+    if not casos:
+        return None
+    d = pd.DataFrame(casos)
+    d.attrs["corridas"] = datos.get("corridas", {})
+    d.attrs["generado_utc"] = datos.get("generado_utc")
+    # La ganancia sobre la regla historica es lo que decide si el modelo sirve
+    # para priorizar: superar al azar no basta cuando ya existe una heuristica.
+    if {"capture_20", "regla_capture_20"} <= set(d.columns):
+        d["ganancia_captura_pp"] = 100 * (d.capture_20 - d.regla_capture_20)
+    return d
+
+
 def trampas_datos(results: Path, profiles: pd.DataFrame | None) -> pd.DataFrame:
     """Cada trampa encontrada, con el efecto medido de no corregirla.
 

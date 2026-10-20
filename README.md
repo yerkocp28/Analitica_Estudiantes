@@ -24,7 +24,7 @@ La especificación completa está en
 | **1g** | **Serie longitudinal: matrícula 2007–2026, retención y titulación por cohorte** | **Completo** |
 | **2** | **Capa analítica: contrato verificado, silver materializado, los dos marts** | **Completo** |
 | **3** | **Segmentación de ingresantes UA reales (≥3 alternativas)** | **Completo** |
-| 4 | Modelo 1 — riesgo de reprobación (≥3 algoritmos) | Pendiente |
+| **4** | **Modelos con ≥3 algoritmos sobre estudiantes UA reales** | **Parcial** |
 | 5 | Producto completo: Student 360, drivers SHAP | Pendiente |
 | 6 | Modelo 2 — desenganche académico | Pendiente |
 
@@ -57,6 +57,7 @@ Cuatro fuentes, cuatro problemas distintos:
 | **OULAD** (Open University, 28.785 estudiantes reales) | ¿Funciona la predicción temprana? ¿Cuán temprano? | Sin asistencia, sin escala 1–7, sin sedes |
 | **Mineduc / SIES abiertos** (matrícula 2007–2026, titulados 2007–2025, admisión 2021–2026, más escolares) | Retención real de la UA; piso predictivo nacional; benchmark y seguimiento por cohorte | No se puede unir al RUT de Banner |
 | **CNED INDICES** (institucional 2005–2025) | Cuerpo docente, infraestructura, acreditación | Se une por nombre, no por código |
+| **Extracto institucional UA** (2024–2025) | **Notas reales de la UA**: 569.148 registros académicos, 40.590 personas | Un archivo, no una conexión; fecha de corte no informada |
 | **Generador sintético** (este repo) | Forma UA completa: sedes, carreras, asistencia, notas 1.0–7.0 | No valida nada por sí solo |
 
 El objetivo de esta fase no es tener un modelo. Es tener un pipeline cuyo
@@ -91,6 +92,7 @@ python scripts/download_oulad.py
 python scripts/download_mineduc.py     # escolares y socioeconómicas
 python scripts/analyze_mineduc.py      # retención UA + piso + ablación
 python scripts/build_findings.py       # hallazgos a CSV para el informe
+python scripts/export_pilot_summary.py # resumen agregado de los modelos del piloto
 
 # 3. Curva de poder predictivo vs anticipación, sobre cualquier fuente
 python scripts/validate_lead_time.py --source synthetic --out data/results
@@ -105,6 +107,7 @@ quarto render documentacion/informe_metodologico.qmd            # HTML + PDF
 quarto render documentacion/informe_metodologico.qmd --to typst # solo PDF
 
 pytest -q                                            # 187 tests
+pytest piloto_fan/tests -q                           # 39 tests del piloto
 ```
 
 ---
@@ -114,9 +117,16 @@ pytest -q                                            # 187 tests
 ### Hallazgos (vista inicial)
 
 La app abre en **Hallazgos**, que responde en vez de dejar preguntar. Reúne en
-una pantalla lo que el proyecto encontró: el argumento central, la posición real
-de la UA en continuidad y selectividad, el contraste entre los dos indicadores
-de titulación, y las trampas de datos que cambiaron un resultado.
+una pantalla lo que el proyecto encontró: el argumento central, **los cuatro
+modelos entrenados y su veredicto**, la posición real de la UA en continuidad y
+selectividad, el contraste entre los dos indicadores de titulación, y las
+trampas de datos que cambiaron un resultado.
+
+La pestaña **Modelos** aparece solo si existe `data/results/modelos_resumen.json`.
+El piloto FAN **no actualiza esta vista por su cuenta** —es una decisión suya de
+aislamiento, no un olvido—; para traer su última corrida revisada hay que correr
+`python scripts/export_pilot_summary.py`, que exporta únicamente agregados:
+métricas, tamaños y veredicto, nunca predicciones ni personas.
 
 **Ninguna cifra está escrita en la vista.** Todas se calculan en
 [`modeling/findings.py`](src/student_analytics/modeling/findings.py) desde los
@@ -656,6 +666,7 @@ scripts/
     build_marts.py          mart_student_course_week y mart_student_week
     build_ua_cohorts.py     98.812 ingresantes UA reales con outcome observado
     build_segments.py       segmentacion, entregable del mes 3
+    export_pilot_summary.py resumen agregado de los modelos del piloto FAN
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)

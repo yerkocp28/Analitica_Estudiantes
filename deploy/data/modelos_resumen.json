@@ -1,0 +1,81 @@
+{
+  "generado_utc": "2026-10-20T20:04:04.563350+00:00",
+  "corridas": {
+    "publico": {
+      "run_id": "20261008T124100Z-c2a856",
+      "creado_utc": "2026-10-08T12:41:00.873183+00:00"
+    },
+    "institucional": {
+      "run_id": "20261020T145523Z-99cb7b",
+      "creado_utc": "2026-10-20T14:55:23.450108+00:00"
+    }
+  },
+  "casos": [
+    {
+      "caso": "continuidad",
+      "objetivo": "No continuidad al año siguiente",
+      "fuente": "Datos abiertos Mineduc cruzados por MRUN",
+      "estado": "señal retrospectiva",
+      "algoritmo": "Random forest",
+      "n": 714,
+      "events": 94,
+      "prevalence": 0.13165266106442577,
+      "auc": 0.6827985586822237,
+      "average_precision": 0.264791709495329,
+      "brier": 0.1095906511900788,
+      "brier_skill": 0.06803734466447175,
+      "capture_20": 0.43617021276595747,
+      "regla_auc": 0.5345916266300618,
+      "regla_capture_20": 0.22001934235976786,
+      "regla_brier_skill": -0.007431899883541204
+    },
+    {
+      "caso": "titulacion",
+      "objetivo": "No titulación en el horizonte",
+      "fuente": "Datos abiertos Mineduc cruzados por MRUN",
+      "estado": "experimental",
+      "algoritmo": "Gradient boosting",
+      "n": 517,
+      "events": 84,
+      "prevalence": 0.16247582205029013,
+      "auc": 0.5830171560541075,
+      "average_precision": 0.21504984050147702,
+      "brier": 0.15811543094832023,
+      "brier_skill": 0.03147724066721369,
+      "capture_20": 0.2774891774891775,
+      "regla_auc": 0.5281397778510943,
+      "regla_capture_20": 0.21379479626902306,
+      "regla_brier_skill": -0.024014908980608984
+    },
+    {
+      "caso": "academico",
+      "objetivo": "Resultado académico del semestre siguiente",
+      "fuente": "Extracto institucional UA 2024-2025",
+      "estado": "experimental",
+      "algoritmo": "Regresión logística",
+      "n": 1972,
+      "events": 678,
+      "prevalence": 0.3438133874239351,
+      "auc": 0.8124301860641127,
+      "average_precision": 0.6940319684797818,
+      "brier": 0.17120915567167014,
+      "brier_skill": 0.26140933814432643,
+      "capture_20": 0.4306784660766962
+    },
+    {
+      "caso": "matricula",
+      "objetivo": "No presencia en matrícula del semestre siguiente",
+      "fuente": "Extracto institucional UA 2024-2025",
+      "estado": "experimental",
+      "algoritmo": "Random forest",
+      "n": 2318,
+      "events": 16,
+      "prevalence": 0.006902502157031924,
+      "auc": 0.8877877932232842,
+      "average_precision": 0.04691688897250763,
+      "brier": 0.016519831931321446,
+      "brier_skill": -0.24017518829909967,
+      "capture_20": 0.75
+    }
+  ]
+}

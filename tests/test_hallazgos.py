@@ -136,3 +136,57 @@ def test_la_vista_de_hallazgos_renderiza():
     assert len(app.metric) >= 6
     etiquetas = [m.label for m in app.metric]
     assert any("expediente previo" in e for e in etiquetas)
+
+
+# ----------------------------------------------------------------------
+# Resumen de modelos del piloto
+# ----------------------------------------------------------------------
+def _resumen(tmp_path, casos):
+    import json
+    (tmp_path / "modelos_resumen.json").write_text(json.dumps(
+        {"generado_utc": "2026-10-20T00:00:00+00:00",
+         "corridas": {"publico": {"run_id": "x"}}, "casos": casos},
+        ensure_ascii=False), encoding="utf-8")
+    return tmp_path
+
+
+def test_sin_resumen_exportado_no_se_inventan_modelos(tmp_path):
+    """El piloto no actualiza la app por su cuenta: es una decisión suya."""
+    assert F.resultados_modelos(tmp_path) is None
+
+
+def test_el_resumen_calcula_la_ganancia_sobre_la_regla_historica():
+    """Superar al azar no basta cuando ya existe una heurística por carrera."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        ruta = _resumen(Path(tmp), [
+            {"caso": "continuidad", "estado": "señal retrospectiva", "auc": 0.68,
+             "capture_20": 0.436, "regla_capture_20": 0.220, "n": 714, "events": 94},
+            {"caso": "academico", "estado": "experimental", "auc": 0.81,
+             "capture_20": 0.431, "n": 1972, "events": 678}])
+        d = F.resultados_modelos(ruta)
+    assert len(d) == 2
+    fila = d.set_index("caso").loc["continuidad"]
+    assert fila.ganancia_captura_pp == pytest.approx(21.6, abs=0.1)
+    # Sin regla histórica declarada no se inventa una ganancia.
+    assert np.isnan(d.set_index("caso").loc["academico", "ganancia_captura_pp"])
+
+
+def test_un_resumen_vacio_se_trata_como_ausente():
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        assert F.resultados_modelos(_resumen(Path(tmp), [])) is None
+
+
+@pytest.mark.skipif(not (RESULTS / "modelos_resumen.json").exists(),
+                    reason="resumen de modelos no exportado")
+def test_el_resumen_real_es_coherente():
+    d = F.resultados_modelos(RESULTS)
+    assert not d.empty
+    assert d.estado.isin({"señal retrospectiva", "experimental"}).all()
+    for col in ("auc", "capture_20"):
+        assert d[col].dropna().between(0, 1).all()
+    # Un modelo con muy pocos eventos no puede estar declarado como señal.
+    pocos = d[d.events < 30]
+    assert pocos.estado.eq("experimental").all(), \
+        "un caso con <30 eventos quedó marcado como señal retrospectiva"
