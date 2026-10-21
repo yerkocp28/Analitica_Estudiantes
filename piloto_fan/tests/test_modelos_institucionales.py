@@ -118,3 +118,61 @@ def test_new_views_navigate_filter_and_preserve_public_models():
     assert not app.exception
     app.sidebar.radio[0].set_value("Resumen").run()
     assert not app.exception
+
+
+# ----------------------------------------------------------------------
+# Que ninguna foto del presente entre como variable
+# ----------------------------------------------------------------------
+INSTANTANEAS = {"plan_status", "student_status", "admission_type", "workload_raw"}
+
+
+def test_las_columnas_excluidas_no_entran_como_variable():
+    """El registro declara exclusiones; esto verifica que sean ciertas.
+
+    Una declaracion sin verificacion se desincroniza del codigo en cuanto
+    alguien agrega una variable. Es barato comprobarlo.
+    """
+    usadas = set(SPEC["numeric"]) | set(SPEC["categorical"])
+    assert not (INSTANTANEAS & usadas), \
+        f"entraron columnas de estado al modelo: {sorted(INSTANTANEAS & usadas)}"
+
+
+def test_el_registro_declara_las_exclusiones_que_importan():
+    base = HOME / "artifacts/institucional_modelos"
+    puntero = base / "latest.json"
+    if not puntero.exists():
+        pytest.skip("sin corrida de modelos institucionales")
+    run = json.loads(puntero.read_text(encoding="utf-8"))["run_id"]
+    registro = json.loads((base / run / "feature_registry.json").read_text(encoding="utf-8"))
+    excluidas = set(registro.get("excluded", []))
+    assert INSTANTANEAS <= excluidas, \
+        f"el registro dejo de declarar: {sorted(INSTANTANEAS - excluidas)}"
+    declaradas = set(registro["predictive"]["numeric"]) | set(registro["predictive"]["categorical"])
+    assert not (excluidas & declaradas), "una columna esta excluida y usada a la vez"
+
+
+def test_una_columna_constante_entre_periodos_se_detecta_como_instantanea():
+    """`student_status` vale 'Activo' en 133.972 de 133.975 filas del extracto.
+
+    Eso admite dos lecturas: o es una foto del momento de la extraccion
+    —y entonces es informacion posterior al periodo que describe— o el
+    extracto viene filtrado a alumnos activos, y entonces faltan los que se
+    fueron. Las dos son graves y es la pregunta P01 a la universidad.
+
+    Mientras no haya respuesta, la regla operativa es simple: una columna que
+    no varia entre los periodos de una misma persona no puede ser variable
+    predictiva. Esta prueba fija el criterio con el que se detecta.
+    """
+    d = pd.DataFrame({
+        "student_key": ["a", "a", "b", "b"],
+        "term": [202410, 202420, 202410, 202420],
+        "estado_foto": ["Activo", "Activo", "Activo", "Activo"],
+        "estado_real": ["Activo", "Retirado", "Activo", "Activo"],
+    })
+    varia = d.groupby("student_key").nunique()
+    assert varia["estado_foto"].max() == 1, "la foto no deberia variar"
+    assert varia["estado_real"].max() > 1, "el estado real si varia"
+    # El criterio: cero variacion intrapersona entre periodos = sospechosa.
+    sospechosas = [c for c in ("estado_foto", "estado_real")
+                   if varia[c].max() == 1]
+    assert sospechosas == ["estado_foto"]

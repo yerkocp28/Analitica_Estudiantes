@@ -1,13 +1,25 @@
 {
   "version": "1.1",
-  "fecha": "2026-10-20",
+  "fecha": "2026-10-21",
   "estado": "Análisis descriptivo y modelos retrospectivos experimentales; definiciones institucionales pendientes",
   "procedencia": "Extracto generado por la universidad, confirmado por el usuario",
   "alcance": {
     "aprobado_por_facultad": false,
     "facultad": "Fac. Administración y Negocios",
-    "carreras_propuestas": ["AUDI", "CPAU", "IADM", "IECG", "IECT", "INCO"],
-    "campus_propuestos": ["PR", "SM", "TA", "TE"],
+    "carreras_propuestas": [
+      "AUDI",
+      "CPAU",
+      "IADM",
+      "IECG",
+      "IECT",
+      "INCO"
+    ],
+    "campus_propuestos": [
+      "PR",
+      "SM",
+      "TA",
+      "TE"
+    ],
     "nivel_propuesto": "PR",
     "estados": "Todos los estados observados; no equivale a matrícula efectiva",
     "minimo_personas_mostradas": 10
@@ -27,12 +39,21 @@
       "id": "P01",
       "prioridad": "Alta",
       "responsable_sugerido": "Área emisora / VRA",
-      "pregunta": "¿Cuál es la fecha de corte, qué consulta o filtros se usaron y están incluidos todos los estados y períodos de matrícula e historia?",
+      "pregunta": "¿Cuál es la fecha de corte, qué consulta o filtros se usaron, y están incluidos todos los estados y períodos de matrícula e historia?",
       "estado": "Pendiente",
       "respuesta": null,
       "avanzamos_con": "Analizar presencia observada en el extracto 2024–2025 y mostrar fecha de corte no informada.",
-      "habilita": "Certificar cobertura, actualización y denominadores de matrícula efectiva.",
-      "restriccion_actual": "No presentar ausencia en el archivo como deserción ni los registros como alumnos activos actuales."
+      "habilita": "Certificar cobertura, actualización y denominadores de matrícula efectiva; decidir si el estado del alumno puede ser variable.",
+      "restriccion_actual": "No presentar ausencia en el archivo como deserción ni los registros como alumnos activos actuales. El estado del alumno y del plan quedan excluidos de las variables predictivas, verificado por test.",
+      "detalle": [
+        "UNIVERSO. El estado del alumno vale 'Activo' en 133.972 de 133.975 filas (99,998%); solo 3 personas de 40.590 cambian de valor entre períodos, mientras el estado del plan sí varía en 4.343. Caben dos lecturas y son muy distintas: (a) es una foto del momento de la extracción repetida en las filas históricas, y entonces es información posterior al período que describe; o (b) la consulta filtró por alumnos activos, y entonces falta quien se retiró y las tasas quedan sesgadas por construcción. ¿La consulta filtró por estado del alumno? ¿Ese campo refleja el estado en cada período o el vigente a la fecha de extracción?",
+        "RANGO Y CORTE. El archivo cubre 2024 y 2025 completos: el segundo semestre de 2025 tiene 26.564 matrículas, 114.280 registros y 96,8% de notas cargadas, casi idéntico a 2024. No hay señal de truncamiento ni un solo registro de 2026. ¿El rango 2024-2025 fue un filtro deliberado y existe 2026 disponible? ¿Cuál es la fecha exacta de corte y con qué frecuencia puede regenerarse el extracto?",
+        "ESTADOS. Se observan ocho estados de plan: Activo 126.244, Retirado 2.256, Retracto 1.772, Anulación 1.250, Suspensión 1.019, Eliminado 759, Estado Temporal 543 y Abandono 64. ¿Están todos los que existen? ¿Cuáles cuentan como matrícula efectiva? ¿Qué distingue retiro, retracto, anulación, eliminado y abandono?",
+        "PERSONAS SIN ACTIVIDAD. 2.604 personas aparecen en matrícula sin un solo registro de historia. 1.707 están en Retracto, lo que se explica solo, pero 1.041 figuran con plan Activo y cero registros, concentradas en los primeros semestres (1.318 en 202410, 603 en 202510). ¿Son matrículas sin carga inscrita, congelamientos, casos administrativos o desfase entre los dos módulos? En sentido inverso, 36 personas tienen historia sin matrícula.",
+        "PERÍODOS. Hay 18 códigos. Algunos son claros por volumen (10 y 20 semestrales, 31-33 trimestrales, 30 verano) pero otros aparecen casi vacíos: 202451 con 2 matrículas y ningún registro, y lo mismo 202535, 202540 y 202551. ¿Existe un diccionario oficial? ¿Los casi vacíos son períodos reales marginales o artefactos que debemos excluir?",
+        "CAMPUS. 1.048 registros tienen un campus de asignatura distinto del campus del plan. ¿Es movilidad real, asignaturas en línea o compartidas, o una convención del sistema? De esto depende cómo se atribuyen resultados a cada sede."
+      ],
+      "evidencia_observada": "2026-10-20, sobre la corrida institucional del extracto"
     },
     {
       "id": "P02",

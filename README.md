@@ -577,6 +577,10 @@ Complementan el informe:
 
 - [`documentacion/benchmark_universitario.md`](documentacion/benchmark_universitario.md)
   — metodología del benchmark: bloques, distancia, clusters y sus límites.
+- [`documentacion/evaluacion_impacto_ley_21719.md`](documentacion/evaluacion_impacto_ley_21719.md)
+  — borrador técnico para la Dirección Jurídica: qué datos se tratan, con qué
+  salvaguardas verificadas, y los siete puntos que solo esa dirección puede
+  resolver antes del 1 de diciembre de 2026.
 - [`documentacion/plan_sin_datos_internos.md`](documentacion/plan_sin_datos_internos.md)
   — qué se puede cumplir mientras el acceso a Banner/Canvas siga retrasado, y
   cómo dejar el esquema listo para conectarlos sin reescribir nada.
