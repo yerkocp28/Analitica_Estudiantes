@@ -1,0 +1,19 @@
+{
+  "run_id": "20261020T142529Z-14cba1",
+  "created_utc": "2026-10-20T14:25:29.987045+00:00",
+  "source_file": "Matricula e Historia Académica Pregrado 2024 2025.xlsx",
+  "source_sha256": "2b47685834e6fd89cb3f3ab23232392fb5b750cb7d731e68cb19b3866d1eabf7",
+  "extraction_cutoff": null,
+  "source_origin": "Extracto generado por la universidad, confirmado por el usuario",
+  "config_sha256": "437afa2f156a4eddcce85e7dd71c0092a35598d465b6b5c755e9b3f973ed959f",
+  "build_code_sha256": "8303afc8f5e82317bef9a38820e73a58bbb7ff0b27005a6f346b760805991385",
+  "schema_version": "institutional-term-v1",
+  "use": "Descriptivo retrospectivo 2024–2025; sin modelos predictivos internos.",
+  "artifacts_sha256": {
+    "matricula_plan_periodo.parquet": "7b02b2ad028437e94afbee3c2e092924b95c1127720ffaa7301a1bf21fcbaae3",
+    "resultados_asignatura_periodo.parquet": "9718d74faaccd4e4ceff98a08a9b494ad556a2e7da79eee50a2774c138be08f4",
+    "mart_estudiante_periodo.parquet": "924862b46c926d46db1ce69543ce4aa0a5b71565cfe7b72cd74e6e15d05aa688",
+    "quality.json": "16c06dca8d77200483ebdced182357fd0867b51fd8ddd4c5ee4689f3a78ca102",
+    "pendientes.json": "8daba2b397c2dd6d04d7b7667425fbb389ab9f6d51ed46ce77afacad7ff340a0"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "versions": {
+    "python": "3.11.9",
+    "pandas": "3.0.5",
+    "numpy": "2.4.6",
+    "sklearn": "1.9.0",
+    "joblib": "1.6.0"
+  },
+  "source_run_id": "20261020T142529Z-14cba1",
+  "source_manifest_sha256": "5543009cb7a38bb2ae49ebbdd94b1ed537a2edc79e65d453adc4892c790a18c1",
+  "source_artifacts_sha256": {
+    "matricula_plan_periodo.parquet": "7b02b2ad028437e94afbee3c2e092924b95c1127720ffaa7301a1bf21fcbaae3",
+    "resultados_asignatura_periodo.parquet": "9718d74faaccd4e4ceff98a08a9b494ad556a2e7da79eee50a2774c138be08f4",
+    "mart_estudiante_periodo.parquet": "924862b46c926d46db1ce69543ce4aa0a5b71565cfe7b72cd74e6e15d05aa688",
+    "quality.json": "16c06dca8d77200483ebdced182357fd0867b51fd8ddd4c5ee4689f3a78ca102",
+    "pendientes.json": "8daba2b397c2dd6d04d7b7667425fbb389ab9f6d51ed46ce77afacad7ff340a0"
+  },
+  "source_sha256": "2b47685834e6fd89cb3f3ab23232392fb5b750cb7d731e68cb19b3866d1eabf7",
+  "code_sha256": {
+    "modelos_institucionales.py": "18581005edf80d02890bebb94dedcfaaf30476491973291d587dd1cc9707260c",
+    "models.py": "3d5cdef526cc010ee2bf243fcc05fdb98f7fefd142187b88c4b9964ba95030a5"
+  },
+  "artifacts_sha256": {
+    "academico_dataset.parquet": "91692a5a4b050c07fb35951b5c009f06f7d3c24726aefd7469492dcb7ff7eb9b",
+    "academico_model.joblib": "b72bff6144c960443539b29c5ef992b0d03afe74580132457d2d131de4cabb9d",
+    "academico_model_card.json": "b0a6111e19646f10226c1ea9cf449ae423019cf1a8324a63a10f70f97a21ffc3",
+    "academico_predictions.parquet": "4c772fe3064ee45cf13fcec3ae728daaefc79187bb26c7d7fa8d193b746b72af",
+    "feature_registry.json": "9f174b4d998a2200b36546f488d92d406814e4090b1b6c1c79c82a495408aca9",
+    "matricula_dataset.parquet": "15881f6f7751ca25a0b04998cebea7c2c51972660b9fb8759821b15d067e6ae6",
+    "matricula_model.joblib": "3c649c69b33d36764e5f06bc07b10fc8ad46bf26b625f95e944f8e194347bfc7",
+    "matricula_model_card.json": "bd308e704ec76f9d4fd3611d29dc0641f4ae77ada851f60c82829aa85a4b548c",
+    "matricula_predictions.parquet": "294226d13e66a2fcdef00f86f85f199a5a34a6b9634b2d8ed4d89b298cdc7284",
+    "report.json": "3bb546b6dc8b3c981e86b026925ea0d600320a131d804f530f72aea26ef6e4f6",
+    "segmentacion_assignments.parquet": "dfc91faf434e4e72f50232913397611cfbca0059541240054fa0748a87c896a8",
+    "segmentacion_model.joblib": "e5c8d05505856871e5262275b2b7e61d862baebc13f7294a5c496492f303893c"
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "case": "continuidad",
+  "features": {
+    "numeric": [
+      "percentil_admision",
+      "percentil_nem",
+      "percentil_ranking",
+      "duracion_nominal_anios"
+    ],
+    "categorical": [
+      "nomb_carrera",
+      "nomb_sede",
+      "jornada"
+    ],
+    "target": "No observar matrícula en la UA al año siguiente",
+    "timing": "Características registradas en la cohorte de ingreso; sin conducta universitaria semanal."
+  },
+  "eligible": 3423,
+  "censored": 0,
+  "intended_use": "Evaluación retrospectiva y discusión con direcciones de carrera.",
+  "prohibited_use": "Contactar o sancionar estudiantes, diagnosticar causas o afirmar impacto de intervenciones.",
+  "limitations": [
+    "Población del área y plan definidos, pendiente de validar pertenencia a la facultad.",
+    "Una cohorte final de test no demuestra estabilidad en cohortes futuras.",
+    "Las probabilidades requieren revisar calibración y deriva antes de uso institucional.",
+    "Disponibilidad temporal reconstruida con demora anual asumida; no son fechas de publicación verificadas."
+  ],
+  "status": "señal retrospectiva",
+  "winner": "Random forest",
+  "selection": "Mayor captura al 20% en validación; desempate por Brier y AUC.",
+  "validation_year": 2023,
+  "test_year": 2025,
+  "selection_train_n": 646,
+  "final_train_n": 2044,
+  "reference_prevalence": 0.1888454011741683,
+  "selection_train_cohorts": [
+    2021
+  ],
+  "maximum_selection_training_label_ready_year": 2023,
+  "maximum_validation_label_ready_year": 2025,
+  "final_train_cohorts": [
+    2021,
+    2022,
+    2023
+  ],
+  "maximum_training_label_ready_year": 2025,
+  "validation_candidates": [
+    {
+      "algorithm": "Regresión logística",
+      "n": 687,
+      "events": 136,
+      "prevalence": 0.19796215429403202,
+      "auc": 0.6414940749439522,
+      "average_precision": 0.29085492998054424,
+      "brier": 0.15341752591114377,
+      "brier_skill": 0.043403636740539375,
+      "capture_20": 0.332657200811359,
+      "mean_prediction": 0.16550674430509066
+    },
+    {
+      "algorithm": "Random forest",
+      "n": 687,
+      "events": 136,
+      "prevalence": 0.19796215429403202,
+      "auc": 0.6198756272018788,
+      "average_precision": 0.30004278408642615,
+      "brier": 0.15466984990819269,
+      "brier_skill": 0.03559508570254799,
+      "capture_20": 0.3409090909090909,
+      "mean_prediction": 0.1637775711435528
+    },
+    {
+      "algorithm": "Gradient boosting",
+      "n": 687,
+      "events": 136,
+      "prevalence": 0.19796215429403202,
+      "auc": 0.6312586740685384,
+      "average_precision": 0.2795705246357055,
+      "brier": 0.15948851135632708,
+      "brier_skill": 0.005549535236992531,
+      "capture_20": 0.3297289504036909,
+      "mean_prediction": 0.15131422896824576
+    }
+  ],
+  "test": {
+    "n": 714,
+    "events": 94,
+    "prevalence": 0.13165266106442577,
+    "auc": 0.6827985586822237,
+    "average_precision": 0.264791709495329,
+    "brier": 0.1095906511900788,
+    "brier_skill": 0.06803734466447175,
+    "capture_20": 0.43617021276595747,
+    "mean_prediction": 0.17517670746995118
+  },
+  "historical_rule": {
+    "n": 714,
+    "events": 94,
+    "prevalence": 0.13165266106442577,
+    "auc": 0.5345916266300618,
+    "average_precision": 0.14144880377161323,
+    "brier": 0.11846517379835046,
+    "brier_skill": -0.007431899883541204,
+    "capture_20": 0.22001934235976786,
+    "mean_prediction": 0.19721440965653478
+  },
+  "uncertainty": {
+    "capture_20_ci": [
+      0.3439401622718053,
+      0.535136480787254
+    ],
+    "capture_difference_vs_rule_ci": [
+      0.11924367858283522,
+      0.32132394617521187
+    ],
+    "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+  },
+  "calibration_bias": 0.0435240464055254,
+  "calibration": [
+    {
+      "mean_prediction": 0.07836263518909677,
+      "observed_fraction": 0.04895104895104895
+    },
+    {
+      "mean_prediction": 0.11801161180896631,
+      "observed_fraction": 0.11188811188811189
+    },
+    {
+      "mean_prediction": 0.14970606131398542,
+      "observed_fraction": 0.07042253521126761
+    },
+    {
+      "mean_prediction": 0.1939947348011483,
+      "observed_fraction": 0.13986013986013987
+    },
+    {
+      "mean_prediction": 0.3356303778298739,
+      "observed_fraction": 0.2867132867132867
+    }
+  ],
+  "importance_validation": [
+    {
+      "variable": "percentil_admision",
+      "auc_loss": 0.010625066723604082,
+      "std": 0.0052741311503338596
+    },
+    {
+      "variable": "percentil_nem",
+      "auc_loss": -0.016140439841998578,
+      "std": 0.005398466575127051
+    },
+    {
+      "variable": "percentil_ranking",
+      "auc_loss": 0.0013798441336606126,
+      "std": 0.005898115104146846
+    },
+    {
+      "variable": "duracion_nominal_anios",
+      "auc_loss": -0.0015333084231878846,
+      "std": 0.000913352313434977
+    },
+    {
+      "variable": "nomb_carrera",
+      "auc_loss": -0.003547026796199515,
+      "std": 0.0018940037737592249
+    },
+    {
+      "variable": "nomb_sede",
+      "auc_loss": -0.0013531546920039438,
+      "std": 0.007982276586599535
+    },
+    {
+      "variable": "jornada",
+      "auc_loss": 0.09206923241165785,
+      "std": 0.02895785989239006
+    }
+  ],
+  "capacity": [
+    {
+      "capacity": 0.05,
+      "review_slots": 36,
+      "capture": 0.12310030395136778,
+      "precision": 0.3214285714285714,
+      "rule_capture": 0.055389484789871636,
+      "random_capture": 0.05042016806722689
+    },
+    {
+      "capacity": 0.1,
+      "review_slots": 72,
+      "capture": 0.24959083469721766,
+      "precision": 0.3258547008547008,
+      "rule_capture": 0.11077896957974327,
+      "random_capture": 0.10084033613445378
+    },
+    {
+      "capacity": 0.2,
+      "review_slots": 143,
+      "capture": 0.43617021276595747,
+      "precision": 0.2867132867132867,
+      "rule_capture": 0.22001934235976786,
+      "random_capture": 0.20028011204481794
+    },
+    {
+      "capacity": 0.3,
+      "review_slots": 215,
+      "capture": 0.5319148936170213,
+      "precision": 0.23255813953488372,
+      "rule_capture": 0.33079831193951115,
+      "random_capture": 0.3011204481792717
+    },
+    {
+      "capacity": 0.5,
+      "review_slots": 357,
+      "capture": 0.7021276595744681,
+      "precision": 0.18487394957983194,
+      "rule_capture": 0.5492790574995604,
+      "random_capture": 0.5
+    }
+  ],
+  "subgroups": [
+    {
+      "dimension": "nomb_sede",
+      "group": "CAMPUS EL LLANO",
+      "n": 97,
+      "events": 18,
+      "prevalence": 0.18556701030927836,
+      "auc": 0.5618846694796062,
+      "average_precision": 0.2130255701466577,
+      "brier": 0.16183970397508923,
+      "brier_skill": -0.07077460690916837,
+      "capture_20": 0.23809523809523808,
+      "mean_prediction": 0.21851040520938017
+    },
+    {
+      "dimension": "nomb_sede",
+      "group": "CAMPUS PROVIDENCIA",
+      "n": 270,
+      "events": 35,
+      "prevalence": 0.12962962962962962,
+      "auc": 0.7367173252279635,
+      "average_precision": 0.2881859240558233,
+      "brier": 0.10228534149709033,
+      "brier_skill": 0.12074853926906759,
+      "capture_20": 0.5142857142857142,
+      "mean_prediction": 0.1505181601245016
+    },
+    {
+      "dimension": "nomb_sede",
+      "group": "CASA CENTRAL (TEMUCO)",
+      "n": 199,
+      "events": 20,
+      "prevalence": 0.10050251256281408,
+      "auc": 0.7410614525139665,
+      "average_precision": 0.33978296863413526,
+      "brier": 0.08553315563592129,
+      "brier_skill": 0.1290454658783139,
+      "capture_20": 0.6,
+      "mean_prediction": 0.16831156568022898
+    },
+    {
+      "dimension": "nomb_sede",
+      "group": "SEDE TALCA",
+      "n": 148,
+      "events": 21,
+      "prevalence": 0.14189189189189189,
+      "auc": 0.6284214473190851,
+      "average_precision": 0.23154500583483806,
+      "brier": 0.12102117221871529,
+      "brier_skill": 0.023733191526483788,
+      "capture_20": 0.42857142857142855,
+      "mean_prediction": 0.2009915880017181
+    },
+    {
+      "dimension": "nomb_carrera",
+      "group": "INGENIERIA COMERCIAL",
+      "n": 484,
+      "events": 70,
+      "prevalence": 0.1446280991735537,
+      "auc": 0.670496894409938,
+      "average_precision": 0.27557284439176855,
+      "brier": 0.11930518717731996,
+      "brier_skill": 0.050616679436711776,
+      "capture_20": 0.38571428571428573,
+      "mean_prediction": 0.1829862193489245
+    },
+    {
+      "dimension": "nomb_carrera",
+      "group": "INGENIERIA EN ADMINISTRACION",
+      "n": 38,
+      "events": 2,
+      "prevalence": 0.05263157894736842,
+      "auc": 0.6388888888888888,
+      "average_precision": 0.20512820512820512,
+      "brier": 0.0612519737761169,
+      "brier_skill": 0.10470882133255466,
+      "capture_20": 0.5,
+      "mean_prediction": 0.16279811547918438
+    },
+    {
+      "dimension": "nomb_carrera",
+      "group": "INGENIERIA EN CONTROL DE GESTION",
+      "n": 192,
+      "events": 22,
+      "prevalence": 0.11458333333333333,
+      "auc": 0.7330213903743316,
+      "average_precision": 0.2853995074314362,
+      "brier": 0.09466895496042159,
+      "brier_skill": 0.1149857465132188,
+      "capture_20": 0.5303030303030303,
+      "mean_prediction": 0.1579401592732119
+    }
+  ]
+}

@@ -577,6 +577,12 @@ Complementan el informe:
 
 - [`documentacion/benchmark_universitario.md`](documentacion/benchmark_universitario.md)
   — metodología del benchmark: bloques, distancia, clusters y sus límites.
+- `documentacion/corridas/` — trazabilidad versionada de cada corrida del
+  piloto: reportes, model cards, registros de variables y manifiestos con las
+  huellas de las fuentes. **Sin predicciones ni personas**, y con el mismo piso
+  de 10 personas por celda que aplica la interfaz. Son ~124 KB frente a los
+  ~950 MB de las corridas completas, que no se versionan con razón: los modelos
+  se pueden reentrenar, saber qué se decidió y con qué evidencia no.
 - [`documentacion/evaluacion_impacto_ley_21719.md`](documentacion/evaluacion_impacto_ley_21719.md)
   — borrador técnico para la Dirección Jurídica: qué datos se tratan, con qué
   salvaguardas verificadas, y los siete puntos que solo esa dirección puede
@@ -671,6 +677,7 @@ scripts/
     build_ua_cohorts.py     98.812 ingresantes UA reales con outcome observado
     build_segments.py       segmentacion, entregable del mes 3
     export_pilot_summary.py resumen agregado de los modelos del piloto FAN
+    archive_pilot_runs.py   trazabilidad de cada corrida, sin personas
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)

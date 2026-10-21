@@ -1,0 +1,64 @@
+{
+  "history_rows": 569148,
+  "enrollment_rows": 133975,
+  "history_people": 38022,
+  "enrollment_people": 40590,
+  "multiple_plan_person_periods": 170,
+  "history_attribution": {
+    "Única": 567870,
+    "Sin matrícula coincidente": 686,
+    "Varios planes": 592
+  },
+  "enrollment_person_periods_without_history": 11777,
+  "grade_kinds": {
+    "Numérica 1–7": 550860,
+    "Código institucional": 18288
+  },
+  "coded_results": {
+    "RI": 15458,
+    "RR": 1706,
+    "RM": 654,
+    "RC": 378,
+    "P": 63,
+    "CR": 24,
+    "REPROB": 3,
+    "CC": 2
+  },
+  "campus_mismatch_rows": 1048,
+  "periods": [
+    202410,
+    202420,
+    202430,
+    202431,
+    202432,
+    202433,
+    202434,
+    202451,
+    202510,
+    202520,
+    202530,
+    202531,
+    202532,
+    202533,
+    202534,
+    202535,
+    202540,
+    202551
+  ],
+  "fan": {
+    "fan_label": {
+      "people": 4710,
+      "enrollment_rows": 15671,
+      "person_periods": 15655,
+      "observed_history_rows": 66846,
+      "unambiguous_history_rows": 66669
+    },
+    "fan_proposed": {
+      "people": 4308,
+      "enrollment_rows": 14699,
+      "person_periods": 14684,
+      "observed_history_rows": 63382,
+      "unambiguous_history_rows": 63264
+    }
+  }
+}

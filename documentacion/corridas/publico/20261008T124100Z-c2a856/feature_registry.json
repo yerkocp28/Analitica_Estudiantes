@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "cases": {
+    "continuidad": {
+      "numeric": [
+        "percentil_admision",
+        "percentil_nem",
+        "percentil_ranking",
+        "duracion_nominal_anios"
+      ],
+      "categorical": [
+        "nomb_carrera",
+        "nomb_sede",
+        "jornada"
+      ],
+      "target": "No observar matrícula en la UA al año siguiente",
+      "timing": "Características registradas en la cohorte de ingreso; sin conducta universitaria semanal."
+    },
+    "titulacion": {
+      "numeric": [
+        "duracion_nominal_anios",
+        "years_enrolled",
+        "years_without_ua",
+        "career_codes_observed",
+        "sites_observed",
+        "schedules_observed"
+      ],
+      "categorical": [
+        "nomb_carrera",
+        "nomb_sede",
+        "jornada"
+      ],
+      "target": "No observar un título de pregrado UA hasta duración nominal más holgura",
+      "timing": "Historia UA entre el ingreso y el año de ingreso + 3, inclusive; perfil de carrera/sede al ingreso."
+    }
+  },
+  "excluded": [
+    "MRUN",
+    "resultados posteriores",
+    "notas/asistencia universitarias inexistentes",
+    "socioeconomía sin cobertura temporal consistente"
+  ],
+  "fit_preprocessing": "Imputadores y codificadores ajustados solo sobre entrenamiento."
+}

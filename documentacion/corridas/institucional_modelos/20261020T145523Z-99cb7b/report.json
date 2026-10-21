@@ -1,0 +1,792 @@
+{
+  "run_id": "20261020T145523Z-99cb7b",
+  "created_utc": "2026-10-20T14:55:23.450108+00:00",
+  "source_run_id": "20261020T142529Z-14cba1",
+  "source_sha256": "2b47685834e6fd89cb3f3ab23232392fb5b750cb7d731e68cb19b3866d1eabf7",
+  "config": {
+    "seed": 42,
+    "bootstrap_repetitions": 300,
+    "minimum_class": 10,
+    "minimum_fit": 150,
+    "minimum_evaluation": 100
+  },
+  "limitations": [
+    "Experimento retrospectivo, no alerta individual ni resultado validado para uso operativo.",
+    "Se supone que resultados de cada semestre estaban disponibles a su cierre, antes del siguiente. No se conocen fechas reales de publicación; este supuesto necesita confirmación institucional.",
+    "Solo hay tres transiciones y dos años. Los intervalos no cubren deriva temporal ni errores de extracción.",
+    "La población tiene historia numérica previa, un único plan y alcance FAN provisional. No representa nuevos estudiantes sin historia ni modalidades trimestrales/online.",
+    "Las mismas personas pueden aparecer en semestres sucesivos: evaluación longitudinal, no independencia entre personas de entrenamiento y prueba. Los identificadores nunca son predictores.",
+    "Estados del plan/alumno, secuencias, CREDIT_HOURS, códigos administrativos, PIDM/MRUN y notas futuras se excluyen de las variables. Los atributos del plan se toman del período de origen del extracto.",
+    "Ausencia de matrícula en el semestre ordinario no equivale a deserción: incluye posibles egresos, cambios de régimen y otras salidas; se consideran todos los estados de matrícula del extracto.",
+    "Una nota numérica bajo 4 no equivale a toda la reprobación institucional. Los códigos no se interpretan como aprobado/reprobado. Resultados negativos solo con historia observada completamente numérica.",
+    "No se entrenan sobre datos sintéticos, no se vincula PIDM con MRUN y no se generan prioridades para 2026."
+  ],
+  "coverage": [
+    {
+      "source_term": 202410,
+      "outcome_term": 202420,
+      "base_people": 2362,
+      "academic_known": 2046,
+      "academic_unknown": 316,
+      "enrollment_known": 2362
+    },
+    {
+      "source_term": 202420,
+      "outcome_term": 202510,
+      "base_people": 2162,
+      "academic_known": 1602,
+      "academic_unknown": 560,
+      "enrollment_known": 2162
+    },
+    {
+      "source_term": 202510,
+      "outcome_term": 202520,
+      "base_people": 2318,
+      "academic_known": 1972,
+      "academic_unknown": 346,
+      "enrollment_known": 2318
+    }
+  ],
+  "cases": {
+    "academico": {
+      "title": "Al menos una nota numérica bajo 4 en el siguiente semestre",
+      "status": "experimental",
+      "features": {
+        "numeric": [
+          "observed_results",
+          "numeric_mean",
+          "numeric_sd",
+          "numeric_coverage",
+          "below4_fraction"
+        ],
+        "categorical": [
+          "career_code",
+          "campus_code",
+          "schedule"
+        ]
+      },
+      "unknown_labels": 1222,
+      "rule": "Fracción previa de notas numéricas bajo 4",
+      "split": {
+        "train": [
+          202410,
+          202420
+        ],
+        "validation": [
+          202420,
+          202510
+        ],
+        "test": [
+          202510,
+          202520
+        ],
+        "train_n": 2046,
+        "validation_n": 1602,
+        "test_n": 1972,
+        "test_people_seen_earlier": 1406
+      },
+      "winner": "Regresión logística",
+      "validation_candidates": [
+        {
+          "algorithm": "Regresión logística",
+          "n": 1602,
+          "events": 415,
+          "prevalence": 0.2590511860174782,
+          "auc": 0.8115934673825885,
+          "average_precision": 0.613473956766687,
+          "brier": 0.15094099183013127,
+          "brier_skill": 0.2140908832162337,
+          "capture_20": 0.4843373493975904,
+          "mean_prediction": 0.32919892638949777
+        },
+        {
+          "algorithm": "Random forest",
+          "n": 1602,
+          "events": 415,
+          "prevalence": 0.2590511860174782,
+          "auc": 0.8109235594441795,
+          "average_precision": 0.5736740881401533,
+          "brier": 0.15147642652968116,
+          "brier_skill": 0.21130301885469427,
+          "capture_20": 0.472289156626506,
+          "mean_prediction": 0.32357230949244803
+        },
+        {
+          "algorithm": "Gradient boosting",
+          "n": 1602,
+          "events": 415,
+          "prevalence": 0.2590511860174782,
+          "auc": 0.806573217892632,
+          "average_precision": 0.5886086791820527,
+          "brier": 0.15687552103543234,
+          "brier_skill": 0.18319138699777437,
+          "capture_20": 0.4746987951807229,
+          "mean_prediction": 0.3322582342157426
+        }
+      ],
+      "selection": "Captura al 20% en validación; desempate Brier y AUC",
+      "final_train_n": 3648,
+      "reference_prevalence": 0.2650767543859649,
+      "test": {
+        "n": 1972,
+        "events": 678,
+        "prevalence": 0.3438133874239351,
+        "auc": 0.8124301860641127,
+        "average_precision": 0.6940319684797818,
+        "brier": 0.17120915567167014,
+        "brier_skill": 0.26140933814432643,
+        "capture_20": 0.4306784660766962,
+        "mean_prediction": 0.27031997352888937
+      },
+      "baseline": {
+        "n": 1972,
+        "events": 678,
+        "prevalence": 0.3438133874239351,
+        "auc": 0.7016118185589949,
+        "average_precision": 0.5428029821312264,
+        "brier": 0.2668135600344863,
+        "brier_skill": -0.15102491525544104,
+        "capture_20": 0.39545454545454545,
+        "mean_prediction": 0.07453073183296306
+      },
+      "historical_career": {
+        "n": 1972,
+        "events": 678,
+        "prevalence": 0.3438133874239351,
+        "auc": 0.5895014658076987,
+        "average_precision": 0.39930115263754506,
+        "brier": 0.22327948760890473,
+        "brier_skill": 0.03677964017233615,
+        "capture_20": 0.2659350460124528,
+        "mean_prediction": 0.28136478464148407
+      },
+      "contextual_only": {
+        "n": 1972,
+        "events": 678,
+        "prevalence": 0.3438133874239351,
+        "auc": 0.6425554978047079,
+        "average_precision": 0.4639348041747564,
+        "brier": 0.2163361171239498,
+        "brier_skill": 0.06673311188868902,
+        "capture_20": 0.2978429203539823,
+        "mean_prediction": 0.28680508915625147
+      },
+      "uncertainty": {
+        "capture_20_ci": [
+          0.40272077922077926,
+          0.45717221186418416
+        ],
+        "capture_difference_vs_rule_ci": [
+          0.011239976581244702,
+          0.05748824992593145
+        ],
+        "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+      },
+      "incremental_uncertainty": {
+        "capture_20_ci": [
+          0.40272077922077926,
+          0.45717221186418416
+        ],
+        "capture_difference_vs_rule_ci": [
+          0.10341229838978247,
+          0.16375631553260414
+        ],
+        "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+      },
+      "evidence_vs_rule": "Mejora de captura en esta prueba",
+      "validation_prevalence": 0.2590511860174782,
+      "selection_training_prevalence": 0.2697947214076246,
+      "diagnostics": [
+        "Descalibración: diferencia de al menos 5 puntos entre predicción media y frecuencia observada.",
+        "La frecuencia del resultado cambia al menos 5 puntos entre validación y prueba."
+      ],
+      "calibration": [
+        {
+          "predicted": 0.03682775854004612,
+          "observed": 0.053164556962025315
+        },
+        {
+          "predicted": 0.10702248448279388,
+          "observed": 0.1548223350253807
+        },
+        {
+          "predicted": 0.20523524856233444,
+          "observed": 0.2918781725888325
+        },
+        {
+          "predicted": 0.353100526127209,
+          "observed": 0.4796954314720812
+        },
+        {
+          "predicted": 0.6490452381310134,
+          "observed": 0.739240506329114
+        }
+      ]
+    },
+    "matricula": {
+      "title": "No observar registro de matrícula UA en el siguiente semestre ordinario",
+      "status": "experimental",
+      "features": {
+        "numeric": [
+          "observed_results",
+          "numeric_mean",
+          "numeric_sd",
+          "numeric_coverage",
+          "below4_fraction"
+        ],
+        "categorical": [
+          "career_code",
+          "campus_code",
+          "schedule"
+        ]
+      },
+      "unknown_labels": 0,
+      "rule": "Tasa histórica por carrera, suavizada con 30 casos",
+      "split": {
+        "train": [
+          202410,
+          202420
+        ],
+        "validation": [
+          202420,
+          202510
+        ],
+        "test": [
+          202510,
+          202520
+        ],
+        "train_n": 2362,
+        "validation_n": 2162,
+        "test_n": 2318,
+        "test_people_seen_earlier": 1677
+      },
+      "winner": "Random forest",
+      "validation_candidates": [
+        {
+          "algorithm": "Regresión logística",
+          "n": 2162,
+          "events": 361,
+          "prevalence": 0.1669750231267345,
+          "auc": 0.6291503181519654,
+          "average_precision": 0.2710774346742162,
+          "brier": 0.16009864727423273,
+          "brier_skill": 0.014020056513816881,
+          "capture_20": 0.3185595567867036,
+          "mean_prediction": 0.01258791185216282
+        },
+        {
+          "algorithm": "Random forest",
+          "n": 2162,
+          "events": 361,
+          "prevalence": 0.1669750231267345,
+          "auc": 0.7112407542131872,
+          "average_precision": 0.3441212959729084,
+          "brier": 0.15810439887051395,
+          "brier_skill": 0.02630179006917921,
+          "capture_20": 0.4099722991689751,
+          "mean_prediction": 0.01255035959459813
+        },
+        {
+          "algorithm": "Gradient boosting",
+          "n": 2162,
+          "events": 361,
+          "prevalence": 0.1669750231267345,
+          "auc": 0.5821742614521634,
+          "average_precision": 0.22730743758194635,
+          "brier": 0.16175103339043229,
+          "brier_skill": 0.003843708385921074,
+          "capture_20": 0.2188365650969529,
+          "mean_prediction": 0.010039491748481002
+        }
+      ],
+      "selection": "Captura al 20% en validación; desempate Brier y AUC",
+      "final_train_n": 4524,
+      "reference_prevalence": 0.08731211317418214,
+      "test": {
+        "n": 2318,
+        "events": 16,
+        "prevalence": 0.006902502157031924,
+        "auc": 0.8877877932232842,
+        "average_precision": 0.04691688897250763,
+        "brier": 0.016519831931321446,
+        "brier_skill": -0.24017518829909967,
+        "capture_20": 0.75,
+        "mean_prediction": 0.06133665806749158
+      },
+      "baseline": {
+        "n": 2318,
+        "events": 16,
+        "prevalence": 0.006902502157031924,
+        "auc": 0.555834600347524,
+        "average_precision": 0.009356820570101364,
+        "brier": 0.013125084228485363,
+        "brier_skill": 0.014674975376621435,
+        "capture_20": 0.2959070796460177,
+        "mean_prediction": 0.08067727925031275
+      },
+      "historical_career": {
+        "n": 2318,
+        "events": 16,
+        "prevalence": 0.006902502157031924,
+        "auc": 0.555834600347524,
+        "average_precision": 0.009356820570101364,
+        "brier": 0.013125084228485363,
+        "brier_skill": 0.014674975376621435,
+        "capture_20": 0.2959070796460177,
+        "mean_prediction": 0.08067727925031275
+      },
+      "contextual_only": {
+        "n": 2318,
+        "events": 16,
+        "prevalence": 0.006902502157031924,
+        "auc": 0.6210767810599479,
+        "average_precision": 0.010968750703902595,
+        "brier": 0.01221307821837765,
+        "brier_skill": 0.08314100033482874,
+        "capture_20": 0.27472527472527475,
+        "mean_prediction": 0.07002420891284081
+      },
+      "uncertainty": {
+        "capture_20_ci": [
+          0.533710407239819,
+          0.9511363636363634
+        ],
+        "capture_difference_vs_rule_ci": [
+          0.22372544416643705,
+          0.7456776651467123
+        ],
+        "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+      },
+      "incremental_uncertainty": {
+        "capture_20_ci": [
+          0.533710407239819,
+          0.9511363636363634
+        ],
+        "capture_difference_vs_rule_ci": [
+          0.23628193701723113,
+          0.7316015625
+        ],
+        "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+      },
+      "evidence_vs_rule": "Mejora de captura en esta prueba",
+      "validation_prevalence": 0.1669750231267345,
+      "selection_training_prevalence": 0.014394580863674851,
+      "diagnostics": [
+        "Menos de 30 eventos de una clase en la prueba: incertidumbre elevada.",
+        "El error de probabilidad no mejora la constante de entrenamiento.",
+        "Descalibración: diferencia de al menos 5 puntos entre predicción media y frecuencia observada.",
+        "La frecuencia del resultado cambia al menos 5 puntos entre validación y prueba."
+      ],
+      "calibration": [
+        {
+          "predicted": 0.010654281702561453,
+          "observed": 0.0
+        },
+        {
+          "predicted": 0.013551212364466237,
+          "observed": 0.0
+        },
+        {
+          "predicted": 0.018630731912976276,
+          "observed": 0.0
+        },
+        {
+          "predicted": 0.04055469259235752,
+          "observed": 0.008620689655172414
+        },
+        {
+          "predicted": 0.22353895981692024,
+          "observed": 0.02591792656587473
+        }
+      ]
+    }
+  },
+  "pending": [
+    {
+      "id": "P01",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Área emisora / VRA",
+      "pregunta": "¿Cuál es la fecha de corte, qué consulta o filtros se usaron y están incluidos todos los estados y períodos de matrícula e historia?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Analizar presencia observada en el extracto 2024–2025 y mostrar fecha de corte no informada.",
+      "habilita": "Certificar cobertura, actualización y denominadores de matrícula efectiva.",
+      "restriccion_actual": "No presentar ausencia en el archivo como deserción ni los registros como alumnos activos actuales."
+    },
+    {
+      "id": "P02",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico",
+      "pregunta": "¿Qué significan RI, RR, RM, RC, CR, CC, P y REPROB? ¿Cómo se define aprobación/reprobación en cada modo de calificación?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Convertir notas numéricas de 1 a 7; mostrar aparte los códigos y su cobertura.",
+      "habilita": "Etiquetas de aprobación/reprobación completas y comparables.",
+      "restriccion_actual": "El porcentaje de notas numéricas bajo 4 no se etiqueta como tasa oficial de reprobación."
+    },
+    {
+      "id": "P03",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico / gestión curricular",
+      "pregunta": "¿Qué unidad utiliza CREDIT_HOURS y cambia por plan, modalidad o año? ¿Existe una equivalencia con créditos SCT?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar la magnitud original y usar conteos de resultados y promedios simples de notas conocidas.",
+      "habilita": "Carga comparable, créditos aprobados y promedios ponderados.",
+      "restriccion_actual": "No ponderar notas ni interpretar CREDIT_HOURS como SCT."
+    },
+    {
+      "id": "P04",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Registro académico",
+      "pregunta": "Cuando un estudiante tiene varios planes en el mismo período, ¿cómo se atribuyen las asignaturas? ¿Qué significan PRIORIDAD y las secuencias?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar todos los planes; separar resultados con atribución ambigua de las comparaciones por carrera.",
+      "habilita": "Incorporar los casos de planes simultáneos a indicadores por programa.",
+      "restriccion_actual": "No seleccionar un plan por primera fila, mínimo o máximo de secuencia."
+    },
+    {
+      "id": "P05",
+      "prioridad": "Alta",
+      "responsable_sugerido": "VRA / registro académico",
+      "pregunta": "¿Cuáles son las fechas de inicio/cierre de cada período y cuándo estuvieron disponibles las notas y los estados? ¿Los estados del extracto son históricos o actuales?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Describir regímenes separados y evaluar retrospectivamente semestres ordinarios bajo el supuesto explícito de disponibilidad al cierre, sin afirmar fechas reales.",
+      "habilita": "Evaluación predictiva temporal sin información futura.",
+      "restriccion_actual": "No reconstruir semanas, usar notas finales del período objetivo como variables ni generar alertas actuales."
+    },
+    {
+      "id": "P06",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Direcciones FAN",
+      "pregunta": "¿Se ratifican las seis denominaciones propuestas en los cuatro campus? ¿Cómo tratar Online, intercambio, carreras históricas y la fila de Arquitectura asociada a FAN?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Ofrecer un alcance propuesto de cuatro campus y una vista alternativa de todo lo etiquetado FAN.",
+      "habilita": "Denominador institucional aprobado y catálogo vigente.",
+      "restriccion_actual": "No declarar aprobado el alcance ni equiparar automáticamente nombres de carreras."
+    },
+    {
+      "id": "P07",
+      "prioridad": "Alta",
+      "responsable_sugerido": "VRA / registro académico",
+      "pregunta": "¿Qué estados definen matrícula efectiva y continuidad? ¿Hay fechas y registros de suspensión, traslado, egreso y titulación que permitan distinguir las salidas?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Permitir filtrar estados del plan y distinguir presencia observada de matrícula efectiva.",
+      "habilita": "Caso de no renovación de matrícula y seguimiento de salidas.",
+      "restriccion_actual": "No llamar deserción a la ausencia ni tratar TIPO_SALIDA como título obtenido."
+    },
+    {
+      "id": "P08",
+      "prioridad": "Media",
+      "responsable_sugerido": "Gestión curricular",
+      "pregunta": "¿Existe un catálogo de asignaturas, secciones y equivalencias que explique los NRC con diferentes códigos/nombres/cargas y los cambios de malla?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Conservar código de materia, número, nombre y sección originales; no fusionar equivalencias supuestas.",
+      "habilita": "Repitencia observada y comparaciones longitudinales por asignatura más precisas.",
+      "restriccion_actual": "REPETIDO vacío se mantiene desconocido; no equivale a cero intentos previos."
+    },
+    {
+      "id": "P09",
+      "prioridad": "Media",
+      "responsable_sugerido": "VRA / área emisora",
+      "pregunta": "¿Podemos disponer de 2022–2023 y de una actualización 2026, y acordar responsable y frecuencia de entrega?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Usar exclusivamente la ventana 2024–2025 disponible.",
+      "habilita": "Más transiciones para validar modelos y un uso actualizado.",
+      "restriccion_actual": "No interpretar cohortes antiguas de admisión como historia de notas anterior a 2024."
+    },
+    {
+      "id": "P10",
+      "prioridad": "Alta",
+      "responsable_sugerido": "Direcciones FAN / responsable del proyecto",
+      "pregunta": "¿Se priorizan resultado académico adverso y no renovación entre períodos? ¿Qué decisión apoyarán, con qué capacidad de revisión, métricas mínimas y usuarios autorizados?",
+      "estado": "Pendiente",
+      "respuesta": null,
+      "avanzamos_con": "Tablero descriptivo y experimentos con tres algoritmos por caso, frente a reglas y una versión sin variables académicas; los casos siguen pendientes de priorización institucional.",
+      "habilita": "Criterios de aceptación, prueba de usabilidad y posterior operación institucional.",
+      "restriccion_actual": "No afirmar que los casos están priorizados ni que se ha medido impacto de intervenciones."
+    }
+  ],
+  "segments": {
+    "status": "descriptivo",
+    "winner": "K-means",
+    "k": 4,
+    "silhouette": 0.4081828132804011,
+    "fit_term": 202410,
+    "fit_n": 2362,
+    "features": [
+      "observed_results",
+      "numeric_mean",
+      "numeric_sd",
+      "numeric_coverage",
+      "below4_fraction"
+    ],
+    "candidates": [
+      {
+        "algorithm": "K-means",
+        "k": 2,
+        "silhouette": 0.6250461583920878,
+        "smallest": 193,
+        "largest_share": 0.9182895850973751,
+        "admissible": false
+      },
+      {
+        "algorithm": "Mezcla gaussiana",
+        "k": 2,
+        "silhouette": 0.5069503374076262,
+        "smallest": 367,
+        "largest_share": 0.844623200677392,
+        "admissible": false
+      },
+      {
+        "algorithm": "K-means bisectriz",
+        "k": 2,
+        "silhouette": 0.6134317069211237,
+        "smallest": 204,
+        "largest_share": 0.9136325148179509,
+        "admissible": false
+      },
+      {
+        "algorithm": "K-means",
+        "k": 3,
+        "silhouette": 0.4073856217330159,
+        "smallest": 174,
+        "largest_share": 0.7650296359017782,
+        "admissible": true
+      },
+      {
+        "algorithm": "Mezcla gaussiana",
+        "k": 3,
+        "silhouette": 0.30416912191289824,
+        "smallest": 249,
+        "largest_share": 0.7163420829805249,
+        "admissible": true
+      },
+      {
+        "algorithm": "K-means bisectriz",
+        "k": 3,
+        "silhouette": 0.40220388665708895,
+        "smallest": 204,
+        "largest_share": 0.7565622353937341,
+        "admissible": true
+      },
+      {
+        "algorithm": "K-means",
+        "k": 4,
+        "silhouette": 0.4081828132804011,
+        "smallest": 103,
+        "largest_share": 0.632514817950889,
+        "admissible": true
+      },
+      {
+        "algorithm": "Mezcla gaussiana",
+        "k": 4,
+        "silhouette": 0.3185812541730889,
+        "smallest": 75,
+        "largest_share": 0.7163420829805249,
+        "admissible": false
+      },
+      {
+        "algorithm": "K-means bisectriz",
+        "k": 4,
+        "silhouette": 0.32416329711272035,
+        "smallest": 204,
+        "largest_share": 0.5774767146486028,
+        "admissible": true
+      },
+      {
+        "algorithm": "K-means",
+        "k": 5,
+        "silhouette": 0.23919869919960488,
+        "smallest": 102,
+        "largest_share": 0.3903471634208298,
+        "admissible": true
+      },
+      {
+        "algorithm": "Mezcla gaussiana",
+        "k": 5,
+        "silhouette": 0.2707993525272302,
+        "smallest": 111,
+        "largest_share": 0.45596951735817104,
+        "admissible": true
+      },
+      {
+        "algorithm": "K-means bisectriz",
+        "k": 5,
+        "silhouette": 0.33429629087383933,
+        "smallest": 88,
+        "largest_share": 0.5774767146486028,
+        "admissible": true
+      }
+    ],
+    "profiles": [
+      {
+        "term": 202410,
+        "segment": 1,
+        "n": 1494,
+        "observed_results": 5.926372155287818,
+        "numeric_mean": 5.40224182444062,
+        "numeric_sd": 0.6933478377348267,
+        "numeric_coverage": 0.9926898068464332,
+        "below4_fraction": 0.009692739210811499
+      },
+      {
+        "term": 202410,
+        "segment": 2,
+        "n": 405,
+        "observed_results": 5.624691358024691,
+        "numeric_mean": 4.486151675485009,
+        "numeric_sd": 1.2432493846364017,
+        "numeric_coverage": 0.9685537918871253,
+        "below4_fraction": 0.2665549676660788
+      },
+      {
+        "term": 202410,
+        "segment": 3,
+        "n": 360,
+        "observed_results": 3.0027777777777778,
+        "numeric_mean": 5.249212962962963,
+        "numeric_sd": 0.5752947679868164,
+        "numeric_coverage": 0.9754629629629629,
+        "below4_fraction": 0.01435185185185185
+      },
+      {
+        "term": 202410,
+        "segment": 4,
+        "n": 103,
+        "observed_results": 4.805825242718447,
+        "numeric_mean": 2.7225889967637547,
+        "numeric_sd": 1.0479693041192268,
+        "numeric_coverage": 0.5208275543227,
+        "below4_fraction": 0.7823624595469255
+      },
+      {
+        "term": 202420,
+        "segment": 1,
+        "n": 1204,
+        "observed_results": 5.770764119601329,
+        "numeric_mean": 5.330013150609081,
+        "numeric_sd": 0.6915408112071035,
+        "numeric_coverage": 0.9901924141749725,
+        "below4_fraction": 0.011113747824711279
+      },
+      {
+        "term": 202420,
+        "segment": 2,
+        "n": 393,
+        "observed_results": 5.2748091603053435,
+        "numeric_mean": 4.434272385799104,
+        "numeric_sd": 1.1813808440578615,
+        "numeric_coverage": 0.966042651157155,
+        "below4_fraction": 0.28211559432933475
+      },
+      {
+        "term": 202420,
+        "segment": 3,
+        "n": 493,
+        "observed_results": 3.5496957403651117,
+        "numeric_mean": 5.398918187964842,
+        "numeric_sd": 0.6099123449511322,
+        "numeric_coverage": 0.9832995267072346,
+        "below4_fraction": 0.015720081135902637
+      },
+      {
+        "term": 202420,
+        "segment": 4,
+        "n": 72,
+        "observed_results": 4.486111111111111,
+        "numeric_mean": 2.690277777777778,
+        "numeric_sd": 0.9785318707757966,
+        "numeric_coverage": 0.4712301587301588,
+        "below4_fraction": 0.8009259259259259
+      },
+      {
+        "term": 202510,
+        "segment": 1,
+        "n": 1394,
+        "observed_results": 6.065279770444763,
+        "numeric_mean": 5.432556221675663,
+        "numeric_sd": 0.7015286461611167,
+        "numeric_coverage": 0.9920800027328005,
+        "below4_fraction": 0.010889071075584705
+      },
+      {
+        "term": 202510,
+        "segment": 2,
+        "n": 547,
+        "observed_results": 5.844606946983546,
+        "numeric_mean": 4.491893952584081,
+        "numeric_sd": 1.263750232195544,
+        "numeric_coverage": 0.9616842227445518,
+        "below4_fraction": 0.2775485331244015
+      },
+      {
+        "term": 202510,
+        "segment": 3,
+        "n": 286,
+        "observed_results": 2.8636363636363638,
+        "numeric_mean": 5.3277972027972025,
+        "numeric_sd": 0.6037602799127426,
+        "numeric_coverage": 0.9776223776223777,
+        "below4_fraction": 0.018648018648018648
+      },
+      {
+        "term": 202510,
+        "segment": 4,
+        "n": 91,
+        "observed_results": 5.318681318681318,
+        "numeric_mean": 2.833168498168498,
+        "numeric_sd": 1.1265298256739134,
+        "numeric_coverage": 0.48235375735375735,
+        "below4_fraction": 0.732051282051282
+      },
+      {
+        "term": 202520,
+        "segment": 1,
+        "n": 1101,
+        "observed_results": 5.895549500454132,
+        "numeric_mean": 5.340563881320011,
+        "numeric_sd": 0.6991141494328886,
+        "numeric_coverage": 0.9852619552210834,
+        "below4_fraction": 0.01231492294162594
+      },
+      {
+        "term": 202520,
+        "segment": 2,
+        "n": 505,
+        "observed_results": 5.3841584158415845,
+        "numeric_mean": 4.417987977369166,
+        "numeric_sd": 1.226023606009371,
+        "numeric_coverage": 0.9548805594845199,
+        "below4_fraction": 0.298953323903819
+      },
+      {
+        "term": 202520,
+        "segment": 3,
+        "n": 405,
+        "observed_results": 3.4617283950617286,
+        "numeric_mean": 5.305555555555555,
+        "numeric_sd": 0.6069160599110802,
+        "numeric_coverage": 0.9738683127572015,
+        "below4_fraction": 0.014814814814814815
+      },
+      {
+        "term": 202520,
+        "segment": 4,
+        "n": 99,
+        "observed_results": 4.505050505050505,
+        "numeric_mean": 2.772087542087542,
+        "numeric_sd": 1.0846383291078592,
+        "numeric_coverage": 0.5294853294853294,
+        "below4_fraction": 0.7604377104377105
+      }
+    ],
+    "interpretation": "Perfiles de resultados observados; no niveles de riesgo ni necesidades diagnosticadas. Cobertura e imputación pueden influir. Carrera, campus y resultados futuros no definen los grupos."
+  }
+}

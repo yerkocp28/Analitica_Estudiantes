@@ -1,0 +1,33 @@
+{
+  "predictive": {
+    "numeric": [
+      "observed_results",
+      "numeric_mean",
+      "numeric_sd",
+      "numeric_coverage",
+      "below4_fraction"
+    ],
+    "categorical": [
+      "career_code",
+      "campus_code",
+      "schedule"
+    ]
+  },
+  "segmentation": [
+    "observed_results",
+    "numeric_mean",
+    "numeric_sd",
+    "numeric_coverage",
+    "below4_fraction"
+  ],
+  "timing": "Resultados del semestre de origen, supuesto cerrado; nunca del objetivo.",
+  "excluded": [
+    "student_key",
+    "target",
+    "outcome_term",
+    "plan_status",
+    "student_status",
+    "workload_raw",
+    "admission_type"
+  ]
+}

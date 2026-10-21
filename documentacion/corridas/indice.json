@@ -1,0 +1,25 @@
+{
+  "generado_utc": "2026-10-21T11:15:54.909640+00:00",
+  "minimo_personas_subgrupo": 10,
+  "contenido": "Solo metadatos: reportes, model cards, registros de variables y manifiestos. Sin predicciones ni personas.",
+  "corridas": [
+    {
+      "familia": "publico",
+      "run_id": "20261008T124100Z-c2a856",
+      "archivos": 6,
+      "subgrupos_suprimidos": 0
+    },
+    {
+      "familia": "institucional",
+      "run_id": "20261020T142529Z-14cba1",
+      "archivos": 3,
+      "subgrupos_suprimidos": 0
+    },
+    {
+      "familia": "institucional_modelos",
+      "run_id": "20261020T145523Z-99cb7b",
+      "archivos": 5,
+      "subgrupos_suprimidos": 0
+    }
+  ]
+}

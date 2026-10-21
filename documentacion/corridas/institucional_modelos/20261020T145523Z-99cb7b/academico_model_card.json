@@ -1,0 +1,188 @@
+{
+  "title": "Al menos una nota numérica bajo 4 en el siguiente semestre",
+  "status": "experimental",
+  "features": {
+    "numeric": [
+      "observed_results",
+      "numeric_mean",
+      "numeric_sd",
+      "numeric_coverage",
+      "below4_fraction"
+    ],
+    "categorical": [
+      "career_code",
+      "campus_code",
+      "schedule"
+    ]
+  },
+  "unknown_labels": 1222,
+  "rule": "Fracción previa de notas numéricas bajo 4",
+  "split": {
+    "train": [
+      202410,
+      202420
+    ],
+    "validation": [
+      202420,
+      202510
+    ],
+    "test": [
+      202510,
+      202520
+    ],
+    "train_n": 2046,
+    "validation_n": 1602,
+    "test_n": 1972,
+    "test_people_seen_earlier": 1406
+  },
+  "winner": "Regresión logística",
+  "validation_candidates": [
+    {
+      "algorithm": "Regresión logística",
+      "n": 1602,
+      "events": 415,
+      "prevalence": 0.2590511860174782,
+      "auc": 0.8115934673825885,
+      "average_precision": 0.613473956766687,
+      "brier": 0.15094099183013127,
+      "brier_skill": 0.2140908832162337,
+      "capture_20": 0.4843373493975904,
+      "mean_prediction": 0.32919892638949777
+    },
+    {
+      "algorithm": "Random forest",
+      "n": 1602,
+      "events": 415,
+      "prevalence": 0.2590511860174782,
+      "auc": 0.8109235594441795,
+      "average_precision": 0.5736740881401533,
+      "brier": 0.15147642652968116,
+      "brier_skill": 0.21130301885469427,
+      "capture_20": 0.472289156626506,
+      "mean_prediction": 0.32357230949244803
+    },
+    {
+      "algorithm": "Gradient boosting",
+      "n": 1602,
+      "events": 415,
+      "prevalence": 0.2590511860174782,
+      "auc": 0.806573217892632,
+      "average_precision": 0.5886086791820527,
+      "brier": 0.15687552103543234,
+      "brier_skill": 0.18319138699777437,
+      "capture_20": 0.4746987951807229,
+      "mean_prediction": 0.3322582342157426
+    }
+  ],
+  "selection": "Captura al 20% en validación; desempate Brier y AUC",
+  "final_train_n": 3648,
+  "reference_prevalence": 0.2650767543859649,
+  "test": {
+    "n": 1972,
+    "events": 678,
+    "prevalence": 0.3438133874239351,
+    "auc": 0.8124301860641127,
+    "average_precision": 0.6940319684797818,
+    "brier": 0.17120915567167014,
+    "brier_skill": 0.26140933814432643,
+    "capture_20": 0.4306784660766962,
+    "mean_prediction": 0.27031997352888937
+  },
+  "baseline": {
+    "n": 1972,
+    "events": 678,
+    "prevalence": 0.3438133874239351,
+    "auc": 0.7016118185589949,
+    "average_precision": 0.5428029821312264,
+    "brier": 0.2668135600344863,
+    "brier_skill": -0.15102491525544104,
+    "capture_20": 0.39545454545454545,
+    "mean_prediction": 0.07453073183296306
+  },
+  "historical_career": {
+    "n": 1972,
+    "events": 678,
+    "prevalence": 0.3438133874239351,
+    "auc": 0.5895014658076987,
+    "average_precision": 0.39930115263754506,
+    "brier": 0.22327948760890473,
+    "brier_skill": 0.03677964017233615,
+    "capture_20": 0.2659350460124528,
+    "mean_prediction": 0.28136478464148407
+  },
+  "contextual_only": {
+    "n": 1972,
+    "events": 678,
+    "prevalence": 0.3438133874239351,
+    "auc": 0.6425554978047079,
+    "average_precision": 0.4639348041747564,
+    "brier": 0.2163361171239498,
+    "brier_skill": 0.06673311188868902,
+    "capture_20": 0.2978429203539823,
+    "mean_prediction": 0.28680508915625147
+  },
+  "uncertainty": {
+    "capture_20_ci": [
+      0.40272077922077926,
+      0.45717221186418416
+    ],
+    "capture_difference_vs_rule_ci": [
+      0.011239976581244702,
+      0.05748824992593145
+    ],
+    "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+  },
+  "incremental_uncertainty": {
+    "capture_20_ci": [
+      0.40272077922077926,
+      0.45717221186418416
+    ],
+    "capture_difference_vs_rule_ci": [
+      0.10341229838978247,
+      0.16375631553260414
+    ],
+    "interpretation": "Bootstrap por persona del test; no cubre deriva entre años ni errores de registro."
+  },
+  "evidence_vs_rule": "Mejora de captura en esta prueba",
+  "validation_prevalence": 0.2590511860174782,
+  "selection_training_prevalence": 0.2697947214076246,
+  "diagnostics": [
+    "Descalibración: diferencia de al menos 5 puntos entre predicción media y frecuencia observada.",
+    "La frecuencia del resultado cambia al menos 5 puntos entre validación y prueba."
+  ],
+  "calibration": [
+    {
+      "predicted": 0.03682775854004612,
+      "observed": 0.053164556962025315
+    },
+    {
+      "predicted": 0.10702248448279388,
+      "observed": 0.1548223350253807
+    },
+    {
+      "predicted": 0.20523524856233444,
+      "observed": 0.2918781725888325
+    },
+    {
+      "predicted": 0.353100526127209,
+      "observed": 0.4796954314720812
+    },
+    {
+      "predicted": 0.6490452381310134,
+      "observed": 0.739240506329114
+    }
+  ],
+  "limitations": [
+    "Experimento retrospectivo, no alerta individual ni resultado validado para uso operativo.",
+    "Se supone que resultados de cada semestre estaban disponibles a su cierre, antes del siguiente. No se conocen fechas reales de publicación; este supuesto necesita confirmación institucional.",
+    "Solo hay tres transiciones y dos años. Los intervalos no cubren deriva temporal ni errores de extracción.",
+    "La población tiene historia numérica previa, un único plan y alcance FAN provisional. No representa nuevos estudiantes sin historia ni modalidades trimestrales/online.",
+    "Las mismas personas pueden aparecer en semestres sucesivos: evaluación longitudinal, no independencia entre personas de entrenamiento y prueba. Los identificadores nunca son predictores.",
+    "Estados del plan/alumno, secuencias, CREDIT_HOURS, códigos administrativos, PIDM/MRUN y notas futuras se excluyen de las variables. Los atributos del plan se toman del período de origen del extracto.",
+    "Ausencia de matrícula en el semestre ordinario no equivale a deserción: incluye posibles egresos, cambios de régimen y otras salidas; se consideran todos los estados de matrícula del extracto.",
+    "Una nota numérica bajo 4 no equivale a toda la reprobación institucional. Los códigos no se interpretan como aprobado/reprobado. Resultados negativos solo con historia observada completamente numérica.",
+    "No se entrenan sobre datos sintéticos, no se vincula PIDM con MRUN y no se generan prioridades para 2026."
+  ],
+  "source_run_id": "20261020T142529Z-14cba1",
+  "run_id": "20261020T145523Z-99cb7b"
+}

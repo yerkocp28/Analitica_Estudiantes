@@ -1,0 +1,39 @@
+{
+  "seed": 42,
+  "institution_code": "31",
+  "area_prefix": "Administración",
+  "regular_plan": "Plan Regular",
+  "professional_prefix": "Profesional",
+  "scope_confirmed_by_faculty": false,
+  "faculty_catalog": {
+    "INGENIERIA COMERCIAL": "Oferta actual documentada",
+    "INGENIERIA EN CONTROL DE GESTION": "Oferta actual documentada",
+    "INGENIERIA EN ADMINISTRACION": "Oferta actual documentada",
+    "AUDITORIA E INGENIERIA EN CONTROL DE GESTION": "Oferta histórica documentada; sin equivalencia asumida",
+    "CONTADOR PUBLICO AUDITOR": "Oferta histórica documentada; sin equivalencia asumida",
+    "INGENIERIA DE EJECUCION EN ADMINISTRACION": "Oferta histórica documentada; sin equivalencia asumida"
+  },
+  "faculty_sources": [
+    "https://www.uautonoma.cl/facultades/administracion-y-negocios/",
+    "https://vrac.uautonoma.cl/wp-content/uploads/2019/12/Plan-de-Desarrollo-Facultad-Administracion-y-Negocios.pdf"
+  ],
+  "faculty_sources_checked": "2026-10-08",
+  "campus_label_source": "https://www.uautonoma.cl/sedes/el-llano-subercaseaux-santiago/",
+  "admission_from": 2021,
+  "landmark_years": 3,
+  "graduation_grace_years": 2,
+  "label_lag_years": 1,
+  "minimum_fit": 150,
+  "minimum_evaluation": 100,
+  "minimum_class": 10,
+  "segment_minimum": 80,
+  "segment_maximum_share": 0.8,
+  "segment_k": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "bootstrap_repetitions": 300,
+  "minimum_display_cell": 10
+}
