@@ -1,0 +1,56 @@
+{
+  "generado_utc": "2026-10-21T19:09:46.378642+00:00",
+  "corrida_origen": "20261020T142529Z-14cba1",
+  "minimo_personas_celda": 10,
+  "alcance": "todo el extracto",
+  "personas_en_el_extracto": 40590,
+  "registros_academicos": 569148,
+  "periodos": [
+    202410,
+    202420,
+    202430,
+    202431,
+    202432,
+    202433,
+    202434,
+    202451,
+    202510,
+    202520,
+    202530,
+    202531,
+    202532,
+    202533,
+    202534,
+    202535,
+    202540,
+    202551
+  ],
+  "advertencia": "La fracción bajo 4 es descriptiva sobre notas numéricas. NO es la tasa oficial de reprobación: los resultados codificados y la definición institucional de aprobación siguen pendientes (P01, P02).",
+  "cortes": [
+    {
+      "corte": "por_periodo",
+      "filas": 15,
+      "celdas_suprimidas": 0
+    },
+    {
+      "corte": "por_carrera",
+      "filas": 42,
+      "celdas_suprimidas": 4
+    },
+    {
+      "corte": "por_campus",
+      "filas": 6,
+      "celdas_suprimidas": 0
+    },
+    {
+      "corte": "por_carrera_periodo",
+      "filas": 237,
+      "celdas_suprimidas": 17
+    },
+    {
+      "corte": "por_asignatura",
+      "filas": 1922,
+      "celdas_suprimidas": 115
+    }
+  ]
+}

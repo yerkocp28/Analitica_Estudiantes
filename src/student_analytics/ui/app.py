@@ -115,8 +115,14 @@ with st.sidebar.expander("Acerca de esta herramienta"):
              "Sin acceso a Banner/Canvas de la UA. La comparación institucional no predice riesgo individual.")
     st.link_button("Documentación del proyecto", "https://github.com/yerkocp28/Analitica_Estudiantes")
 
-section = st.sidebar.radio("Sección", ["Hallazgos", "Benchmark UA", "Alerta temprana",
+section = st.sidebar.radio("Sección", ["Hallazgos", "Datos institucionales UA",
+                                       "Benchmark UA", "Alerta temprana",
                                        "Retención universitaria"])
+if section == "Datos institucionales UA":
+    from student_analytics.ui.institucional import render_institucional
+
+    render_institucional(RESULTS_DIR)
+    st.stop()
 if section == "Hallazgos":
     from student_analytics.ui.hallazgos import render_hallazgos
 

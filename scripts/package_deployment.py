@@ -23,6 +23,10 @@ OPCIONALES = {
     # "Modelos" de la app publicada queda vacia aunque exista localmente.
     "modelos_resumen.json": ROOT / "data/results/modelos_resumen.json",
 }
+# Carpetas que se copian enteras. Los agregados institucionales son varios
+# archivos y crecen al agregar cortes: enumerarlos uno por uno los habria
+# dejado fuera en silencio, que es el mismo error que ya ocurrio dos veces.
+CARPETAS = {"institucional_agregado": ROOT / "data/results/institucional_agregado"}
 
 
 def main() -> None:
@@ -54,6 +58,18 @@ def main() -> None:
             llevados.append(name)
         else:
             print(f"  sin {name}; la vista de hallazgos lo dirá en vez de inventarlo")
+    for nombre, origen in CARPETAS.items():
+        if not origen.is_dir() or not any(origen.iterdir()):
+            print(f"  sin {nombre}/; la vista institucional lo dira en vez de inventarlo")
+            continue
+        destino_carpeta = destination / nombre
+        if destino_carpeta.exists():
+            shutil.rmtree(destino_carpeta)
+        shutil.copytree(origen, destino_carpeta)
+        peso = sum(f.stat().st_size for f in destino_carpeta.rglob("*") if f.is_file())
+        print(f"  {nombre}/: {len(list(destino_carpeta.glob('*')))} archivos, "
+              f"{peso / 1e6:.2f} MB")
+
     sizes = {name: (destination / name).stat().st_size for name in llevados}
     print(f"Empaquetados {len(llevados)} archivos, {sum(sizes.values()) / 1e6:.2f} MB, en {destination}")
 

@@ -138,6 +138,30 @@ sobre denominadores siguió ahí meses después de que el código cambiara.
 Cada función devuelve `None` cuando falta su insumo en vez de fallar, así que la
 vista funciona con el proyecto armado a medias y dice qué script correr.
 
+### Datos institucionales UA
+
+Vista **publicable** del extracto de matrícula e historia académica que entregó
+la universidad: volumen y resultado observado por período, carrera, campus y
+asignatura.
+
+Son **solo agregados**. El piloto FAN corre en local porque sus artefactos
+tienen resultados por persona de 40.590 estudiantes; esta vista muestra la
+versión que sí puede publicarse: sin identificadores, con un piso de **diez
+personas por celda aplicado al escribir**, no al mostrar. Las celdas bajo ese
+mínimo no existen en el archivo publicado.
+
+```bash
+python -m piloto_fan.institucional                     # deriva desde el Excel
+python scripts/export_institutional_aggregates.py      # agregados publicables
+python scripts/package_deployment.py
+```
+
+**La fracción bajo 4 no es la tasa de reprobación.** Es descriptiva sobre notas
+numéricas: hay 18.288 resultados en código institucional cuyo significado sigue
+pendiente con Registro Académico, y la definición institucional de aprobación
+tampoco está acordada. La vista lo advierte y tiene una pestaña con lo que falta
+definir.
+
 ### Benchmark UA
 
 Desde la barra lateral. Los pares se
@@ -658,6 +682,7 @@ src/student_analytics/
     ui/
         app.py              cockpit Streamlit
         hallazgos.py        vista de hallazgos (la inicial)
+        institucional.py    agregados publicables del extracto UA
 scripts/
     generate_synthetic.py
     download_oulad.py
@@ -678,6 +703,7 @@ scripts/
     build_segments.py       segmentacion, entregable del mes 3
     export_pilot_summary.py resumen agregado de los modelos del piloto FAN
     archive_pilot_runs.py   trazabilidad de cada corrida, sin personas
+    export_institutional_aggregates.py  agregados publicables del extracto
     validate_lead_time.py   --source synthetic | oulad
 tests/           tests: generador, leakage, OULAD, UI, benchmark, cohortes
 docs/            documentos base del proyecto (postulación, ULagos, títulos)

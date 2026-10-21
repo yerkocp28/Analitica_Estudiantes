@@ -31,6 +31,10 @@ data/interim/
 # desplegada no puede mostrar el argumento central del proyecto.
 !deploy/data/*.parquet
 !deploy/data/*.csv
+# Y las subcarpetas: `deploy/data/*.parquet` no alcanza a
+# `deploy/data/institucional_agregado/*.parquet`, y quedaban fuera en silencio.
+!deploy/data/**/*.parquet
+!deploy/data/**/*.json
 .streamlit/secrets.toml
 
 .env

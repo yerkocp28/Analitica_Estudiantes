@@ -34,6 +34,15 @@ def test_app_distribuida_sin_data_local(tmp_path, monkeypatch):
     app.sidebar.radio[0].set_value("Hallazgos").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert app.title[0].value == "Hallazgos"
+    # Los agregados institucionales viven en una SUBCARPETA de deploy/data, y
+    # la excepcion `!deploy/data/*.parquet` no alcanzaba a las subcarpetas: se
+    # quedaban fuera del repositorio en silencio y la vista salia vacia.
+    app.sidebar.radio[0].set_value("Datos institucionales UA").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
+    assert app.title[0].value == "Datos institucionales UA"
+    faltan = [i.value for i in app.info if "export_institutional" in i.value]
+    assert not faltan, "los agregados institucionales no llegaron al paquete"
+
     app.sidebar.radio[0].set_value("Retención universitaria").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert len(app.dataframe) >= 1
