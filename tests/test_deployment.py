@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import json
 import shutil
+import pandas as pd
 
 from streamlit.testing.v1 import AppTest
 
@@ -40,8 +41,18 @@ def test_app_distribuida_sin_data_local(tmp_path, monkeypatch):
     app.sidebar.radio[0].set_value("Datos institucionales UA").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert app.title[0].value == "Datos institucionales UA"
+    assert not app.error, [e.value for e in app.error]
     faltan = [i.value for i in app.info if "export_institutional" in i.value]
     assert not faltan, "los agregados institucionales no llegaron al paquete"
+    periodos = next(d.value for d in app.dataframe if "Año" in d.value.columns)
+    origen = pd.read_parquet(tmp_path / "deploy/data/institucional_agregado/por_periodo.parquet")
+    pd.testing.assert_series_equal(
+        periodos.set_index("Período")["Notas bajo 4 (%)"].sort_index(),
+        (100 * origen.set_index("period").bajo4).sort_index(), check_names=False)
+    app.slider(key="inst_min_personas").set_value(200).run()
+    assert not app.exception and not app.error
+    asignaturas = next(d.value for d in app.dataframe if "Asignatura" in d.value.columns)
+    assert asignaturas.Personas.ge(200).all()
 
     app.sidebar.radio[0].set_value("Retención universitaria").run()
     assert not app.exception, [str(e.value) for e in app.exception]

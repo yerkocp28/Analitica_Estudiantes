@@ -44,7 +44,7 @@ en *Settings → Sharing* de la propia aplicación.
 
 ## Datos distribuidos
 
-`deploy/data/` contiene una instantánea explícita de diez archivos:
+`deploy/data/` contiene una instantánea de resultados seleccionados explícitamente:
 
 - Perfiles universitarios y retención: agregados de matrícula pública Mineduc/SIES,
   selectividad de admisión, titulación y recursos institucionales CNED.
@@ -56,6 +56,29 @@ en *Settings → Sharing* de la propia aplicación.
   aparte porque la ablación la escribe `analyze_mineduc.py` en
   `documentacion/datos/` y no en `data/results/`; sin ellos la vista de
   hallazgos lo dice en vez de inventar la cifra.
+- Resumen agregado de las cuatro evaluaciones del piloto FAN, sin predicciones individuales.
+- `institucional_agregado/`: cinco tablas por período, carrera, campus,
+  carrera/período y asignatura, más sus metadatos y huellas SHA-256.
+
+### Controles de los agregados institucionales
+
+La exportación verifica el manifiesto de la corrida local antes de leer sus
+derivados. Excluye celdas de menos de diez personas y omite cantidad, cobertura,
+promedio y fracción bajo 4 cuando menos de diez personas distintas aportan notas
+numéricas. Los códigos no se cuentan como notas ni como resultados aprobados.
+
+Exportación, empaquetado y lectura web comparten un contrato de columnas,
+conteos, rangos y huellas. El empaquetado valida antes de copiar y rechaza
+archivos adicionales; nunca copia indiscriminadamente la carpeta institucional.
+Las fracciones se almacenan entre 0 y 1 y se presentan como porcentajes: 0,25
+se muestra como 25,0 %. Las estadísticas omitidas aparecen como «—».
+
+Los conteos por corte corresponden a personas con resultados observados y
+pueden superponerse; no deben sumarse para reconstruir la matrícula. La cabecera
+identifica el alcance del paquete. `--solo-fan` genera un paquete restringido al
+alcance propuesto FAN, incluidos sus totales; no constituye un filtro dinámico
+de la publicación general. Esta supresión no demuestra anonimato frente a
+cualquier combinación de fuentes ni reemplaza la validación institucional.
 
 La regla `*.csv` del `.gitignore` excluía el CSV de la ablación en silencio, así
 que hay una excepción explícita `!deploy/data/*.csv`. Si se agrega otro artefacto
@@ -77,8 +100,9 @@ semanales del cockpit están precalculados.
 Tras regenerar localmente los resultados:
 
 ```bash
+python scripts/export_institutional_aggregates.py
 python scripts/package_deployment.py
-python -m pytest tests/test_deployment.py -q
+python -m pytest tests/test_deployment.py tests/test_institutional_publication.py -q
 ```
 
 Revisa y versiona `deploy/data/` completo para mantener el manifiesto y los

@@ -1,5 +1,5 @@
 {
-  "generado_utc": "2026-10-21T19:09:46.378642+00:00",
+  "generado_utc": "2026-10-26T02:01:54.702858+00:00",
   "corrida_origen": "20261020T142529Z-14cba1",
   "minimo_personas_celda": 10,
   "alcance": "todo el extracto",
@@ -25,32 +25,46 @@
     202540,
     202551
   ],
+  "resultados_codificados": 18288,
+  "registros_campus_distinto": 1048,
+  "archivos_sha256": {
+    "por_periodo.parquet": "d963ccc31df0a374f6f96d1c27f609d8bec18285d0f52831ec4e3a5d0974bd68",
+    "por_carrera.parquet": "e3f58ca05589cbf8a779a173ac2d6f8f737ae6909d83bebb6bbf51b7301a8a35",
+    "por_campus.parquet": "ffc3a59d088719136ad956d3953fec5a66025137c9cb92191e424015eebb1592",
+    "por_carrera_periodo.parquet": "bfc5c769bdac18e1b0eb151fe52f05396b0eacc83f7cd9b4cbd5a092331f8a53",
+    "por_asignatura.parquet": "68d011ab3cad16e6bef498c88c48abdebfd4b035b6ce6a1ed152c0803288e312"
+  },
   "advertencia": "La fracción bajo 4 es descriptiva sobre notas numéricas. NO es la tasa oficial de reprobación: los resultados codificados y la definición institucional de aprobación siguen pendientes (P01, P02).",
   "cortes": [
     {
       "corte": "por_periodo",
       "filas": 15,
-      "celdas_suprimidas": 0
+      "celdas_suprimidas": 0,
+      "estadisticas_numericas_suprimidas": 0
     },
     {
       "corte": "por_carrera",
       "filas": 42,
-      "celdas_suprimidas": 4
+      "celdas_suprimidas": 4,
+      "estadisticas_numericas_suprimidas": 0
     },
     {
       "corte": "por_campus",
       "filas": 6,
-      "celdas_suprimidas": 0
+      "celdas_suprimidas": 0,
+      "estadisticas_numericas_suprimidas": 0
     },
     {
       "corte": "por_carrera_periodo",
       "filas": 237,
-      "celdas_suprimidas": 17
+      "celdas_suprimidas": 17,
+      "estadisticas_numericas_suprimidas": 1
     },
     {
       "corte": "por_asignatura",
       "filas": 1922,
-      "celdas_suprimidas": 115
+      "celdas_suprimidas": 115,
+      "estadisticas_numericas_suprimidas": 0
     }
   ]
 }

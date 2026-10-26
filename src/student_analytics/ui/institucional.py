@@ -23,19 +23,20 @@ vista describe lo observado y no lo bautiza como indicador oficial.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import altair as alt
 import pandas as pd
 import streamlit as st
+from student_analytics.institutional_publication import load_publication
 
 AZUL, NARANJA, GRIS = "#2a78d6", "#eb6834", "#8a8880"
 CARPETA = "institucional_agregado"
 
 ETIQUETAS = {
     "personas": "Personas", "registros": "Registros", "con_nota": "Con nota numérica",
-    "nota_media": "Nota media", "bajo4": "Bajo 4", "cobertura_nota": "Cobertura de nota",
+    "nota_media": "Nota media", "bajo4": "Notas bajo 4 (%)", "cobertura_nota": "Cobertura de nota (%)",
+    "personas_con_nota": "Personas con nota numérica",
     "career": "Carrera", "career_code": "Código", "campus": "Campus",
     "campus_code": "Sede", "period": "Período", "year": "Año",
     "course_name": "Asignatura", "course_code": "Código asignatura",
@@ -44,27 +45,30 @@ ETIQUETAS = {
 
 @st.cache_data(show_spinner=False)
 def _cargar(carpeta: str, firma: tuple) -> tuple[dict[str, pd.DataFrame], dict]:
-    base = Path(carpeta)
-    tablas = {p.stem: pd.read_parquet(p) for p in sorted(base.glob("*.parquet"))}
-    meta_path = base / "meta.json"
-    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-    return tablas, meta
+    return load_publication(Path(carpeta))
 
 
 def _firma(base: Path) -> tuple:
     return tuple(sorted((p.name, p.stat().st_mtime_ns) for p in base.glob("*")))
 
 
+def _presentacion(d: pd.DataFrame) -> pd.DataFrame:
+    v = d.copy()
+    for col in ("bajo4", "cobertura_nota"):
+        if col in v:
+            v[col] = 100 * v[col]
+    return v.rename(columns=ETIQUETAS)
+
+
 def _tabla(d: pd.DataFrame, orden: str | None = None) -> None:
-    v = d.rename(columns=ETIQUETAS)
+    v = _presentacion(d)
     if orden and ETIQUETAS.get(orden, orden) in v.columns:
         v = v.sort_values(ETIQUETAS.get(orden, orden), ascending=False)
-    st.dataframe(v, hide_index=True, width="stretch", column_config={
-        "Nota media": st.column_config.NumberColumn("Nota media", format="%.2f"),
-        "Bajo 4": st.column_config.NumberColumn("Bajo 4", format="%.1f%%"),
-        "Cobertura de nota": st.column_config.NumberColumn(
-            "Cobertura de nota", format="%.1f%%"),
-    })
+    formats = {c: "{:,.0f}" for c in v.select_dtypes(include="number")}
+    formats.update({"Nota media": "{:.2f}", "Notas bajo 4 (%)": "{:.1f}%",
+                    "Cobertura de nota (%)": "{:.1f}%", "Año": "{:.0f}"})
+    st.dataframe(v.style.format(formats, na_rep="—", decimal=",", thousands="."),
+                 hide_index=True, width="stretch")
 
 
 def render_institucional(results_dir: Path) -> None:
@@ -80,7 +84,13 @@ def render_institucional(results_dir: Path) -> None:
                 "python scripts/export_institutional_aggregates.py", language="bash")
         return
 
-    tablas, meta = _cargar(str(base), _firma(base))
+    try:
+        tablas, meta = _cargar(str(base), _firma(base))
+    except (OSError, ValueError, KeyError) as exc:
+        st.error(f"No se pudieron verificar los agregados institucionales: {exc}")
+        return
+    st.caption(f"Alcance de esta publicación: {meta.get('alcance', '—')}. "
+               "Personas y registros corresponden a todo ese alcance, sin filtros.")
 
     a, b, c = st.columns(3)
     a.metric("Personas en el extracto",
@@ -95,7 +105,9 @@ def render_institucional(results_dir: Path) -> None:
 
     st.warning(
         "**La fracción bajo 4 no es la tasa de reprobación.** Es descriptiva sobre "
-        "notas numéricas. Hay 18.288 resultados en código institucional cuyo "
+        "notas numéricas. Hay "
+        f"{meta.get('resultados_codificados', 0):,}".replace(",", ".") +
+        " resultados en código institucional cuyo "
         "significado sigue pendiente de confirmación con Registro Académico, y la "
         "definición institucional de aprobación tampoco está acordada.")
 
@@ -151,7 +163,9 @@ def render_institucional(results_dir: Path) -> None:
             st.info("Sin corte por campus.")
         else:
             st.markdown("**Campus.** La atribución a campus usa el plan del "
-                        "estudiante en el período; 1.048 registros tienen un campus "
+                        "estudiante en el período; " +
+                        f"{meta.get('registros_campus_distinto', 0):,}".replace(",", ".") +
+                        " registros tienen un campus "
                         "de asignatura distinto al del plan y su interpretación "
                         "está pendiente.")
             _tabla(d, "personas")
@@ -161,8 +175,8 @@ def render_institucional(results_dir: Path) -> None:
         if d is None or d.empty:
             st.info("Sin corte por asignatura.")
         else:
-            st.markdown(f"**{len(d):,} asignaturas** con al menos diez personas. "
-                        "Las que tienen menos no se publican.".replace(",", "."))
+            st.markdown((f"**{len(d):,} asignaturas** con al menos diez personas. "
+                         "Las que tienen menos no se publican.").replace(",", "."))
             minimo = st.slider("Personas mínimas", 10, 200, 30, step=10,
                                key="inst_min_personas")
             sub = d[d.personas >= minimo]
@@ -207,6 +221,9 @@ def render_institucional(results_dir: Path) -> None:
                        f"{meta.get('minimo_personas_celda', '—')} personas")
 
     st.divider()
+    st.caption("Personas en las tablas cuenta a quienes tienen resultados observados; "
+               "no equivale a matrícula efectiva. Los subtotales pueden compartir personas. "
+               "— indica estadísticas omitidas cuando menos de diez personas aportan notas numéricas.")
     st.caption(
         "Esta vista muestra únicamente agregados. El detalle por persona, los "
         "modelos institucionales y la auditoría completa viven en el piloto FAN, "

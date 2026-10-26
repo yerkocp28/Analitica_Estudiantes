@@ -3,10 +3,13 @@ from pathlib import Path
 import hashlib
 import json
 import shutil
+import sys
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from student_analytics.institutional_publication import FILES as INSTITUTIONAL_FILES, load_publication
 FILES = (
     "benchmark_profiles.parquet", "retention_universities.parquet", "benchmark_manifest.json",
     "metrics_synthetic.parquet", "predictions_synthetic.parquet",
@@ -23,9 +26,7 @@ OPCIONALES = {
     # "Modelos" de la app publicada queda vacia aunque exista localmente.
     "modelos_resumen.json": ROOT / "data/results/modelos_resumen.json",
 }
-# Carpetas que se copian enteras. Los agregados institucionales son varios
-# archivos y crecen al agregar cortes: enumerarlos uno por uno los habria
-# dejado fuera en silencio, que es el mismo error que ya ocurrio dos veces.
+# La lista de cortes y su contrato se comparten con exportación e interfaz.
 CARPETAS = {"institucional_agregado": ROOT / "data/results/institucional_agregado"}
 
 
@@ -48,6 +49,13 @@ def main() -> None:
                 raise SystemExit(f"Identificadores personales no admitidos en {name}")
             if "student_id" in frame and not name.startswith("predictions_"):
                 raise SystemExit(f"Se esperaba un agregado institucional en {name}")
+    # Validar antes de modificar cualquier archivo del despliegue.
+    for nombre, origen in CARPETAS.items():
+        if origen.is_dir() and any(origen.iterdir()):
+            load_publication(origen)
+            target = destination / nombre
+            if target.exists() and {p.name for p in target.iterdir()} - set(INSTITUTIONAL_FILES):
+                raise ValueError(f"Archivos no autorizados en {target}; revisar antes de empaquetar.")
     destination.mkdir(parents=True, exist_ok=True)
     for name in FILES:
         shutil.copyfile(source / name, destination / name)
@@ -63,9 +71,9 @@ def main() -> None:
             print(f"  sin {nombre}/; la vista institucional lo dira en vez de inventarlo")
             continue
         destino_carpeta = destination / nombre
-        if destino_carpeta.exists():
-            shutil.rmtree(destino_carpeta)
-        shutil.copytree(origen, destino_carpeta)
+        destino_carpeta.mkdir(parents=True, exist_ok=True)
+        for filename in INSTITUTIONAL_FILES:
+            shutil.copyfile(origen / filename, destino_carpeta / filename)
         peso = sum(f.stat().st_size for f in destino_carpeta.rglob("*") if f.is_file())
         print(f"  {nombre}/: {len(list(destino_carpeta.glob('*')))} archivos, "
               f"{peso / 1e6:.2f} MB")

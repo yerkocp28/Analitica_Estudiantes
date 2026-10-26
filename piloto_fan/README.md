@@ -31,15 +31,18 @@ No se descargan nuevas fuentes durante la generación.
 - Todo el código nuevo está en `piloto_fan/`.
 - Las fuentes se abren solo para lectura. No se cambian los conjuntos ni las
   etiquetas originales: la depuración y el seguimiento se recalculan aquí.
-- No se alteran `src/`, `scripts/`, `config/`, `documentacion/`, `deploy/`,
-  `streamlit_app.py` ni las dependencias de la solución existente. La incorporación
-  institucional añade documentación al README raíz y excluye `data/interim/`
-  en `.gitignore` para proteger el extracto.
+- El entrenamiento y los derivados individuales permanecen en este piloto.
+  La integración posterior añade exportadores explícitos en `scripts/`,
+  documentación de corridas y vistas de agregados en la aplicación existente.
+  `data/interim/` se excluye en `.gitignore` para proteger el extracto.
 - Cada ejecución crea `piloto_fan/artifacts/<fecha-uuid>/`. No sobrescribe corridas.
 - `artifacts/latest.json` apunta a la última ejecución terminada y verificada.
 - La carpeta de artefactos está ignorada por Git: contiene modelos y datos
   individuales locales. La app sirve resultados agregados, no los parquet de personas.
-- Este piloto no cambia ni actualiza automáticamente el Streamlit publicado.
+- Este piloto no actualiza automáticamente el Streamlit publicado. Los scripts
+  `export_pilot_summary.py`, `export_institutional_aggregates.py` y
+  `package_deployment.py` preparan explícitamente los agregados para esa app;
+  véase [el contrato de publicación](../deploy/README.md#controles-de-los-agregados-institucionales).
 
 ## Fuentes reutilizadas
 
