@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "fecha": "2026-10-21",
+  "fecha": "2026-10-27",
   "estado": "Análisis descriptivo y modelos retrospectivos experimentales; definiciones institucionales pendientes",
   "procedencia": "Extracto generado por la universidad, confirmado por el usuario",
   "alcance": {
@@ -40,8 +40,15 @@
       "prioridad": "Alta",
       "responsable_sugerido": "Área emisora / VRA",
       "pregunta": "¿Cuál es la fecha de corte, qué consulta o filtros se usaron, y están incluidos todos los estados y períodos de matrícula e historia?",
-      "estado": "Pendiente",
-      "respuesta": null,
+      "estado": "Respondida parcialmente",
+      "respuesta": {
+        "fecha": "2026-10-27",
+        "via": "Confirmación del usuario",
+        "universo": "El estado del alumno es una FOTO del momento de la extracción, repetida en las filas históricas. Es información posterior al período que describe y no puede usarse como variable.",
+        "rango": "2024-2025 es toda la data disponible; no existe 2026.",
+        "personas_sin_historia": "Las 2.604 personas con matrícula y sin ningún registro académico se pueden excluir.",
+        "campus": "Plan frente a asignatura: sigue sin aclararse."
+      },
       "avanzamos_con": "Analizar presencia observada en el extracto 2024–2025 y mostrar fecha de corte no informada.",
       "habilita": "Certificar cobertura, actualización y denominadores de matrícula efectiva; decidir si el estado del alumno puede ser variable.",
       "restriccion_actual": "No presentar ausencia en el archivo como deserción ni los registros como alumnos activos actuales. El estado del alumno y del plan quedan excluidos de las variables predictivas, verificado por test.",
@@ -53,7 +60,15 @@
         "PERÍODOS. Hay 18 códigos. Algunos son claros por volumen (10 y 20 semestrales, 31-33 trimestrales, 30 verano) pero otros aparecen casi vacíos: 202451 con 2 matrículas y ningún registro, y lo mismo 202535, 202540 y 202551. ¿Existe un diccionario oficial? ¿Los casi vacíos son períodos reales marginales o artefactos que debemos excluir?",
         "CAMPUS. 1.048 registros tienen un campus de asignatura distinto del campus del plan. ¿Es movilidad real, asignaturas en línea o compartidas, o una convención del sistema? De esto depende cómo se atribuyen resultados a cada sede."
       ],
-      "evidencia_observada": "2026-10-20, sobre la corrida institucional del extracto"
+      "evidencia_observada": "2026-10-20, sobre la corrida institucional del extracto",
+      "verificado_contra_los_datos": "La respuesta (a) resolvía el uso pero no el universo, así que se comprobó: 7.786 personas (24,5% de las de 2024) NO aparecen en 2025, y su foto de estado sigue diciendo 'Activo'. Por lo tanto el extracto NO está filtrado a alumnos vigentes: el universo está completo y la continuidad SÍ es calculable. El corolario es que el estado del alumno no informa sobre nada —dice 'Activo' incluso para quien desapareció— y la señal de salida es la ausencia en el período siguiente, leída junto al estado del PLAN, que sí varía.",
+      "pendiente_aun": [
+        "Fecha exacta de corte de la extracción.",
+        "Frecuencia con que puede regenerarse el extracto.",
+        "Qué estados de plan cuentan como matrícula efectiva (parte del punto 3).",
+        "Diccionario de los 18 códigos de período y qué son los casi vacíos.",
+        "Campus del plan frente al de la asignatura (1.048 registros)."
+      ]
     },
     {
       "id": "P02",

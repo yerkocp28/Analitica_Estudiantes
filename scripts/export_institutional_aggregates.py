@@ -96,6 +96,8 @@ def main() -> int:
                     help="personas mínimas por celda publicada")
     ap.add_argument("--solo-fan", action="store_true",
                     help="restringe al alcance FAN propuesto")
+    ap.add_argument("--incluir-sin-historia", action="store_true",
+                    help="cuenta también a quienes no tienen ningún registro académico")
     args = ap.parse_args()
     if args.minimo < 10:
         ap.error("--minimo no puede ser inferior a 10 personas")
@@ -113,6 +115,18 @@ def main() -> int:
         d = d.loc[d.fan_proposed.fillna(False)]
         enrollment = enrollment.loc[enrollment.fan_proposed.fillna(False)]
         log.info("alcance FAN: %s registros", f"{len(d):,}")
+
+    # EXCLUSION INSTRUIDA POR LA UNIVERSIDAD (respuesta a P01, 2026-10-27).
+    #
+    # 2.604 personas aparecen en matricula sin un solo registro academico y el
+    # area emisora indico que se pueden excluir. No cambian las tablas —se
+    # construyen desde `courses` y esas personas no tienen cursos— pero si el
+    # DENOMINADOR que se informa: sin excluirlas, "personas en el extracto"
+    # cuenta a 2.604 que no aportan ningun resultado.
+    sin_historia = set(enrollment.student_key) - set(d.student_key)
+    if sin_historia and not args.incluir_sin_historia:
+        enrollment = enrollment.loc[~enrollment.student_key.isin(sin_historia)]
+        log.info("excluidas %s personas sin registro académico", f"{len(sin_historia):,}")
 
     tables = {name: _agregar(d, dims, args.minimo) for name, dims in CUTS.items()}
     for name, table in tables.items():
@@ -137,6 +151,14 @@ def main() -> int:
         "minimo_personas_celda": args.minimo,
         "alcance": "FAN propuesto" if args.solo_fan else "todo el extracto",
         "personas_en_el_extracto": int(enrollment.student_key.nunique()),
+        "personas_sin_registro_academico_excluidas": (
+            0 if args.incluir_sin_historia else len(sin_historia)),
+        "universo": ("Completo. Se verificó que 7.786 personas de 2024 (24,5%) no "
+                     "aparecen en 2025, así que el extracto NO está filtrado a "
+                     "alumnos vigentes y la continuidad es calculable. El estado "
+                     "del alumno es una foto del momento de extracción —dice "
+                     "'Activo' incluso para quien desapareció— y no informa sobre "
+                     "salidas: la señal es la ausencia en el período siguiente."),
         "registros_academicos": len(d),
         "periodos": sorted(int(x) for x in enrollment.term.unique()),
         "resultados_codificados": int(d.grade_kind.eq("Código institucional").sum()),
