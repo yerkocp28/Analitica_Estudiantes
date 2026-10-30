@@ -1,0 +1,354 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Modelo de alerta temprana: poder predictivo vs anticipación",
+    "output": ".archify/workflow-alerta-temprana-20261030-092706/alerta-temprana.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "security": {
+          "label": "Control, regla o estado"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        },
+        "external": {
+          "label": "Fuente de datos"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "oul",
+      "label": "Fuente OULAD"
+    },
+    {
+      "id": "sint",
+      "label": "Fuente sintética"
+    },
+    {
+      "id": "eval",
+      "label": "Por cada semana de scoring"
+    },
+    {
+      "id": "out",
+      "label": "Salida"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-fuente",
+      "label": "Datos canónicos",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "ph-semana",
+      "label": "Evaluación temporal",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "perfil",
+    "conducta",
+    "resultado",
+    "features",
+    "split",
+    "fit",
+    "metrics"
+  ],
+  "nodes": [
+    {
+      "id": "perfil",
+      "lane": "sint",
+      "col": 0,
+      "type": "backend",
+      "label": "Perfil latente",
+      "sublabel": "7 perfiles de estudiante",
+      "sources": [
+        {
+          "path": "src/student_analytics/synthetic/profiles.py",
+          "line": 45,
+          "end_line": 120,
+          "label": "PROFILES"
+        }
+      ]
+    },
+    {
+      "id": "conducta",
+      "lane": "sint",
+      "col": 1,
+      "type": "backend",
+      "label": "Conducta semanal",
+      "sublabel": "nivel + deriva + ruido",
+      "sources": [
+        {
+          "path": "src/student_analytics/synthetic/generator.py",
+          "line": 295,
+          "end_line": 300,
+          "label": "_weekly_panel"
+        }
+      ]
+    },
+    {
+      "id": "resultado",
+      "lane": "sint",
+      "col": 2,
+      "type": "backend",
+      "label": "Riesgo → resultado",
+      "sublabel": "intercepto por bisección",
+      "tag": "data/synthetic",
+      "sources": [
+        {
+          "path": "src/student_analytics/synthetic/generator.py",
+          "line": 54,
+          "end_line": 74,
+          "label": "solve_intercept"
+        },
+        {
+          "path": "src/student_analytics/synthetic/generator.py",
+          "line": 459,
+          "end_line": 475,
+          "label": "_outcomes"
+        },
+        {
+          "path": "config/synthetic.yml",
+          "line": 46,
+          "end_line": 51,
+          "label": "anclas"
+        }
+      ]
+    },
+    {
+      "id": "oulad",
+      "lane": "oul",
+      "col": 0,
+      "type": "external",
+      "label": "load_oulad",
+      "sublabel": "mismo esquema, sin asistencia",
+      "sources": [
+        {
+          "path": "src/student_analytics/ingestion/oulad.py",
+          "line": 66,
+          "end_line": 94,
+          "label": "adaptador"
+        }
+      ]
+    },
+    {
+      "id": "elegibles",
+      "lane": "oul",
+      "col": 1,
+      "type": "security",
+      "label": "Cohorte fija",
+      "sublabel": "aún matriculados en la última semana",
+      "sources": [
+        {
+          "path": "src/student_analytics/ingestion/oulad.py",
+          "line": 237,
+          "end_line": 245,
+          "label": "eligible_at_week"
+        },
+        {
+          "path": "src/student_analytics/modeling/lead_time.py",
+          "line": 113,
+          "end_line": 121,
+          "label": "cohorte anclada"
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "lane": "eval",
+      "col": 3,
+      "type": "backend",
+      "label": "Features semana N",
+      "sublabel": "solo lo observable hasta N",
+      "sources": [
+        {
+          "path": "src/student_analytics/features/builder.py",
+          "line": 1,
+          "end_line": 46,
+          "label": "anti-leakage"
+        },
+        {
+          "path": "src/student_analytics/features/builder.py",
+          "line": 140,
+          "end_line": 144,
+          "label": "columnas prohibidas"
+        }
+      ]
+    },
+    {
+      "id": "split",
+      "lane": "eval",
+      "col": 4,
+      "type": "backend",
+      "label": "Split temporal",
+      "sublabel": "períodos antiguos → recientes",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/lead_time.py",
+          "line": 102,
+          "end_line": 139,
+          "label": "train/test por período"
+        }
+      ]
+    },
+    {
+      "id": "fit",
+      "lane": "eval",
+      "col": 5,
+      "type": "backend",
+      "label": "Logística balanceada",
+      "sublabel": "escala + mediana de train",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/lead_time.py",
+          "line": 146,
+          "end_line": 153,
+          "label": "baseline obligatorio"
+        },
+        {
+          "path": "src/student_analytics/features/builder.py",
+          "line": 147,
+          "end_line": 161,
+          "label": "imputación"
+        }
+      ]
+    },
+    {
+      "id": "metrics",
+      "lane": "out",
+      "col": 5,
+      "type": "database",
+      "label": "metrics_ · predictions_",
+      "sublabel": "AUC · Brier · captura 5/10/20%",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/lead_time.py",
+          "line": 155,
+          "end_line": 177,
+          "label": "métricas y detalle"
+        },
+        {
+          "path": "scripts/validate_lead_time.py",
+          "line": 119,
+          "end_line": 124,
+          "label": "escritura --out"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-perfil",
+      "from": "perfil",
+      "to": "conducta",
+      "label": "trayectoria",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-conducta",
+      "from": "conducta",
+      "to": "resultado",
+      "label": "agregados de cierre",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-sint",
+      "from": "resultado",
+      "to": "features",
+      "label": "8 tablas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-oulad-elig",
+      "from": "oulad",
+      "to": "elegibles",
+      "label": "outcomes"
+    },
+    {
+      "id": "e-oulad-feat",
+      "from": "oulad",
+      "to": "features",
+      "label": "tablas canónicas"
+    },
+    {
+      "id": "e-feat-split",
+      "from": "features",
+      "to": "split",
+      "label": "features + target",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-elig-split",
+      "from": "elegibles",
+      "to": "split",
+      "label": "filtra casos",
+      "variant": "security"
+    },
+    {
+      "id": "e-split-fit",
+      "from": "split",
+      "to": "fit",
+      "label": "train",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-fit-out",
+      "from": "fit",
+      "to": "metrics",
+      "label": "score del test",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-loop",
+      "from": "fit",
+      "to": "features",
+      "label": "siguiente semana",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Semanas evaluadas",
+      "items": [
+        "Sintético: semanas 3, 5, 8 y 12 de 18 (config/settings.yml).",
+        "OULAD: semanas 4, 8, 12, 16, 20 y 26 de 39, comparables en proporción del curso.",
+        "Con cohorte fija, n y prevalencia son iguales en todas las semanas: solo cambia la información."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Anti-leakage",
+      "items": [
+        "Solo filas con semana ≤ N; las notas se filtran por available_from_week, nunca por week.",
+        "Si una columna del resultado llega a las features, el builder lanza AssertionError.",
+        "La mediana de imputación sale del train; un promedio ausente no es cero."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Dónde se usa",
+      "items": [
+        "La sección Alerta temprana de la app lee metrics_ y predictions_ de cada fuente.",
+        "El generador no valida nada por sí solo: OULAD es la prueba con datos reales."
+      ]
+    }
+  ]
+}

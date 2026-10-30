@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Piloto FAN: datos por persona en local, solo agregados hacia afuera",
+    "output": ".archify/dataflow-piloto-fan-20261030-092706/piloto-fan.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Datos por persona (solo local)"
+        },
+        "emphasis": {
+          "label": "Solo agregados o metadatos"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Fuentes"
+    },
+    {
+      "label": "Integración"
+    },
+    {
+      "label": "Modelos"
+    },
+    {
+      "label": "Corridas locales"
+    },
+    {
+      "label": "Consumo y publicación"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ing",
+      "type": "database",
+      "label": "Ingresantes UA",
+      "sublabel": "ua_ingresantes.parquet",
+      "stage": 0,
+      "row": 0,
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 64,
+          "end_line": 67,
+          "label": "lectura del perfil"
+        }
+      ]
+    },
+    {
+      "id": "slimm",
+      "type": "database",
+      "label": "Matrícula slim",
+      "sublabel": "historia UA por año",
+      "stage": 0,
+      "row": 1,
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 69,
+          "end_line": 84,
+          "label": "institución 31"
+        }
+      ]
+    },
+    {
+      "id": "tit",
+      "type": "database",
+      "label": "Titulados",
+      "sublabel": "títulos de pregrado UA",
+      "stage": 0,
+      "row": 2,
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 85,
+          "end_line": 104,
+          "label": "todos los años"
+        }
+      ]
+    },
+    {
+      "id": "excel",
+      "type": "security",
+      "label": "Extracto UA",
+      "sublabel": "Excel 2024–2025 · PIDM",
+      "stage": 0,
+      "row": 3,
+      "sources": [
+        {
+          "path": "piloto_fan/institucional.py",
+          "line": 17,
+          "end_line": 25,
+          "label": "fuente y tablas"
+        }
+      ]
+    },
+    {
+      "id": "pop",
+      "type": "backend",
+      "label": "Población FAN",
+      "sublabel": "catálogo · 1er ingreso",
+      "stage": 1,
+      "row": 1,
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 24,
+          "end_line": 63,
+          "label": "prepare_entries"
+        },
+        {
+          "path": "piloto_fan/data.py",
+          "line": 110,
+          "end_line": 166,
+          "label": "etiquetas reconstruidas"
+        },
+        {
+          "path": "piloto_fan/build.py",
+          "line": 62,
+          "end_line": 78,
+          "label": "orquestación"
+        }
+      ]
+    },
+    {
+      "id": "inst",
+      "type": "database",
+      "label": "Integración UA",
+      "sublabel": "HMAC · parquet por período",
+      "stage": 1,
+      "row": 3,
+      "sources": [
+        {
+          "path": "piloto_fan/institucional.py",
+          "line": 56,
+          "end_line": 78,
+          "label": "seudonimización"
+        },
+        {
+          "path": "piloto_fan/institucional.py",
+          "line": 242,
+          "end_line": 287,
+          "label": "build y puntero"
+        }
+      ]
+    },
+    {
+      "id": "cont",
+      "type": "backend",
+      "label": "Casos predictivos",
+      "sublabel": "continuidad · titulación",
+      "stage": 2,
+      "row": 0,
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 17,
+          "end_line": 30,
+          "label": "variables por caso"
+        },
+        {
+          "path": "piloto_fan/models.py",
+          "line": 144,
+          "end_line": 221,
+          "label": "evaluate_case"
+        },
+        {
+          "path": "piloto_fan/build.py",
+          "line": 79,
+          "end_line": 95,
+          "label": "un ciclo por caso"
+        }
+      ],
+      "tag": "LR · RF · GB"
+    },
+    {
+      "id": "segp",
+      "type": "backend",
+      "label": "Perfiles de ingreso",
+      "sublabel": "3 algoritmos · k 2–5",
+      "stage": 2,
+      "row": 1,
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 19,
+          "end_line": 101,
+          "label": "segment"
+        }
+      ]
+    },
+    {
+      "id": "imod",
+      "type": "backend",
+      "label": "Modelos semestre",
+      "sublabel": "académico · matrícula",
+      "stage": 2,
+      "row": 3,
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 87,
+          "end_line": 125,
+          "label": "datasets"
+        },
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 151,
+          "end_line": 210,
+          "label": "fit_case"
+        }
+      ]
+    },
+    {
+      "id": "iseg",
+      "type": "backend",
+      "label": "Perfil académico",
+      "sublabel": "3 algoritmos · k 2–5",
+      "stage": 2,
+      "row": 4,
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 213,
+          "end_line": 256,
+          "label": "segment"
+        }
+      ]
+    },
+    {
+      "id": "runpub",
+      "type": "database",
+      "label": "Corrida pública",
+      "sublabel": "artifacts/<run_id>",
+      "stage": 3,
+      "row": 0,
+      "sources": [
+        {
+          "path": "piloto_fan/build.py",
+          "line": 76,
+          "end_line": 139,
+          "label": "artefactos y puntero"
+        }
+      ]
+    },
+    {
+      "id": "runinst",
+      "type": "database",
+      "label": "Corrida semestral",
+      "sublabel": "institucional_modelos/",
+      "stage": 3,
+      "row": 3,
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 270,
+          "end_line": 326,
+          "label": "build"
+        }
+      ]
+    },
+    {
+      "id": "resumen",
+      "type": "database",
+      "label": "Resumen modelos",
+      "sublabel": "modelos_resumen.json",
+      "stage": 4,
+      "row": 0,
+      "sources": [
+        {
+          "path": "scripts/export_pilot_summary.py",
+          "line": 37,
+          "end_line": 58,
+          "label": "familias y métricas"
+        },
+        {
+          "path": "scripts/export_pilot_summary.py",
+          "line": 90,
+          "end_line": 114,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "corridas",
+      "type": "database",
+      "label": "Trazabilidad",
+      "sublabel": "documentacion/corridas",
+      "stage": 4,
+      "row": 1,
+      "sources": [
+        {
+          "path": "scripts/archive_pilot_runs.py",
+          "line": 1,
+          "end_line": 25,
+          "label": "solo JSON"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "App piloto FAN",
+      "sublabel": "local · puerto 8502",
+      "stage": 4,
+      "row": 2,
+      "sources": [
+        {
+          "path": "piloto_fan/app.py",
+          "line": 30,
+          "end_line": 72,
+          "label": "carga verificada"
+        }
+      ]
+    },
+    {
+      "id": "agreg",
+      "type": "database",
+      "label": "Agregados UA",
+      "sublabel": "mínimo 10 por celda",
+      "stage": 4,
+      "row": 4,
+      "sources": [
+        {
+          "path": "scripts/export_institutional_aggregates.py",
+          "line": 105,
+          "end_line": 160,
+          "label": "export"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "p-ing",
+      "from": "ing",
+      "to": "pop",
+      "label": "perfil al ingreso",
+      "variant": "security",
+      "classification": "MRUN"
+    },
+    {
+      "id": "p-slim",
+      "from": "slimm",
+      "to": "pop",
+      "label": "historia UA",
+      "variant": "security"
+    },
+    {
+      "id": "p-tit",
+      "from": "tit",
+      "to": "pop",
+      "label": "títulos UA",
+      "variant": "security"
+    },
+    {
+      "id": "p-excel",
+      "from": "excel",
+      "to": "inst",
+      "label": "2 hojas STG",
+      "variant": "security",
+      "classification": "PIDM → HMAC"
+    },
+    {
+      "id": "p-cont",
+      "from": "pop",
+      "to": "cont",
+      "label": "2 datasets",
+      "variant": "security"
+    },
+    {
+      "id": "p-segp",
+      "from": "pop",
+      "to": "segp",
+      "label": "percentiles",
+      "variant": "security"
+    },
+    {
+      "id": "p-imod",
+      "from": "inst",
+      "to": "imod",
+      "label": "notas semestre",
+      "variant": "security"
+    },
+    {
+      "id": "p-iseg",
+      "from": "inst",
+      "to": "iseg",
+      "label": "notas 2024-1",
+      "variant": "security"
+    },
+    {
+      "id": "p-run-cont",
+      "from": "cont",
+      "to": "runpub",
+      "label": "predicciones",
+      "variant": "security"
+    },
+    {
+      "id": "p-run-segp",
+      "from": "segp",
+      "to": "runpub",
+      "label": "asignaciones",
+      "variant": "security"
+    },
+    {
+      "id": "p-run-imod",
+      "from": "imod",
+      "to": "runinst",
+      "label": "predicciones",
+      "variant": "security"
+    },
+    {
+      "id": "p-run-iseg",
+      "from": "iseg",
+      "to": "runinst",
+      "label": "asignaciones",
+      "variant": "security"
+    },
+    {
+      "id": "p-res-pub",
+      "from": "runpub",
+      "to": "resumen",
+      "label": "report.json",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-res-inst",
+      "from": "runinst",
+      "to": "resumen",
+      "label": "report.json",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-arc-pub",
+      "from": "runpub",
+      "to": "corridas",
+      "label": "cards y manifiesto",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-arc-inst",
+      "from": "runinst",
+      "to": "corridas",
+      "label": "cards y manifiesto",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-app-pub",
+      "from": "runpub",
+      "to": "app",
+      "label": "hash verificado",
+      "variant": "security"
+    },
+    {
+      "id": "p-app-inst",
+      "from": "runinst",
+      "to": "app",
+      "label": "hash verificado",
+      "variant": "security"
+    },
+    {
+      "id": "p-app-data",
+      "from": "inst",
+      "to": "app",
+      "label": "vista descriptiva",
+      "variant": "security"
+    },
+    {
+      "id": "p-agreg",
+      "from": "inst",
+      "to": "agreg",
+      "label": "sin student_key",
+      "variant": "emphasis",
+      "route": "bottom-channel"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Frontera de publicación",
+      "items": [
+        "Las corridas guardan modelos joblib y predicciones por persona; están ignoradas por Git.",
+        "La app del piloto verifica el SHA-256 de cada artefacto y solo muestra celdas de 10 o más personas.",
+        "package_deployment copia modelos_resumen.json y los agregados UA a deploy/data; nada más del piloto sale."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Dos poblaciones distintas",
+      "items": [
+        "Línea pública: primeros ingresos FAN 2007–2025 desde datos abiertos, identificados por MRUN.",
+        "Línea institucional: extracto UA 2024–2025, con PIDM seudonimizado por HMAC; no se cruza con MRUN."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cada corrida es inmutable",
+      "items": [
+        "Cada ejecución escribe una carpeta nueva con fecha y uuid; latest.json cambia solo si todo terminó y se verificó.",
+        "Si un insumo cambia durante la corrida, el piloto aborta y no mueve el puntero."
+      ]
+    }
+  ]
+}

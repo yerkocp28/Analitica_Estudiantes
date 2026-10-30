@@ -1,0 +1,517 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Las tres segmentaciones: mismo método, distintas poblaciones",
+    "output": ".archify/workflow-segmentaciones-20261030-092706/segmentaciones.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "security": {
+          "label": "Control, regla o estado"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ua",
+      "label": "Ingresantes UA · build_segments.py"
+    },
+    {
+      "id": "fan",
+      "label": "Perfiles de ingreso · piloto FAN"
+    },
+    {
+      "id": "aca",
+      "label": "Perfil académico · extracto UA"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-esp",
+      "label": "Espacio sin resultado",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "ph-sel",
+      "label": "Comparar y elegir",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ph-uso",
+      "label": "Asignar y describir",
+      "fromCol": 5,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "u-pob",
+    "u-var",
+    "u-prep",
+    "u-alg",
+    "u-adm",
+    "u-out"
+  ],
+  "nodes": [
+    {
+      "id": "u-pob",
+      "lane": "ua",
+      "col": 0,
+      "type": "database",
+      "label": "Cohortes 2021–2025",
+      "sublabel": "ua_ingresantes",
+      "sources": [
+        {
+          "path": "scripts/build_segments.py",
+          "line": 42,
+          "end_line": 54,
+          "label": "lectura y filtro"
+        },
+        {
+          "path": "config/segmentation.yml",
+          "line": 12,
+          "end_line": 13,
+          "label": "cohortes"
+        }
+      ]
+    },
+    {
+      "id": "u-var",
+      "lane": "ua",
+      "col": 1,
+      "type": "backend",
+      "label": "2 bloques 50/50",
+      "sublabel": "percentiles · estructura",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 48,
+          "end_line": 66,
+          "label": "bloques y prohibidas"
+        },
+        {
+          "path": "config/segmentation.yml",
+          "line": 29,
+          "end_line": 31,
+          "label": "pesos"
+        }
+      ]
+    },
+    {
+      "id": "u-prep",
+      "lane": "ua",
+      "col": 2,
+      "type": "backend",
+      "label": "Normalización",
+      "sublabel": "muestra de 20.000",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 104,
+          "end_line": 112,
+          "label": "matriz_segmentacion"
+        },
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 164,
+          "end_line": 174,
+          "label": "muestra de ajuste"
+        }
+      ]
+    },
+    {
+      "id": "u-alg",
+      "lane": "ua",
+      "col": 3,
+      "type": "backend",
+      "label": "3 algoritmos · k 3–8",
+      "sublabel": "K-means, GMM, bisectriz",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 146,
+          "end_line": 154,
+          "label": "_candidatos"
+        },
+        {
+          "path": "config/segmentation.yml",
+          "line": 33,
+          "end_line": 34,
+          "label": "k y semilla"
+        }
+      ]
+    },
+    {
+      "id": "u-adm",
+      "lane": "ua",
+      "col": 4,
+      "type": "security",
+      "label": "Admisible",
+      "sublabel": "≥500 · ≤60% · silueta",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 176,
+          "end_line": 212,
+          "label": "filtro y elección"
+        },
+        {
+          "path": "config/segmentation.yml",
+          "line": 38,
+          "end_line": 48,
+          "label": "mínimo y techo"
+        }
+      ]
+    },
+    {
+      "id": "u-out",
+      "lane": "ua",
+      "col": 5,
+      "type": "database",
+      "label": "ua_segmentos*",
+      "sublabel": "perfil y estabilidad",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/segmentation.py",
+          "line": 213,
+          "end_line": 267,
+          "label": "renumera, perfila, estabilidad"
+        },
+        {
+          "path": "scripts/build_segments.py",
+          "line": 56,
+          "end_line": 66,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "f-pob",
+      "lane": "fan",
+      "col": 0,
+      "type": "database",
+      "label": "Primer ingreso FAN",
+      "sublabel": "desde 2021",
+      "sources": [
+        {
+          "path": "piloto_fan/build.py",
+          "line": 96,
+          "end_line": 99,
+          "label": "segment(first)"
+        }
+      ]
+    },
+    {
+      "id": "f-var",
+      "lane": "fan",
+      "col": 1,
+      "type": "backend",
+      "label": "Percentiles + jornada",
+      "sublabel": "sin sede ni carrera",
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 15,
+          "end_line": 31,
+          "label": "variables"
+        }
+      ]
+    },
+    {
+      "id": "f-prep",
+      "lane": "fan",
+      "col": 2,
+      "type": "backend",
+      "label": "Ajuste histórico",
+      "sublabel": "sin las 2 últimas",
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 22,
+          "end_line": 38,
+          "label": "mediana, escala, one-hot"
+        }
+      ]
+    },
+    {
+      "id": "f-alg",
+      "lane": "fan",
+      "col": 3,
+      "type": "backend",
+      "label": "3 algoritmos · k 2–5",
+      "sublabel": "K-means, GMM, bisectriz",
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 40,
+          "end_line": 55,
+          "label": "candidatos"
+        }
+      ]
+    },
+    {
+      "id": "f-adm",
+      "lane": "fan",
+      "col": 4,
+      "type": "security",
+      "label": "Admisible",
+      "sublabel": "≥80 · ≤80% · silueta",
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 56,
+          "end_line": 68,
+          "label": "filtro y elección"
+        },
+        {
+          "path": "piloto_fan/config.json",
+          "line": 29,
+          "end_line": 31,
+          "label": "mínimo y techo"
+        }
+      ]
+    },
+    {
+      "id": "f-out",
+      "lane": "fan",
+      "col": 5,
+      "type": "database",
+      "label": "Perfiles por cohorte",
+      "sublabel": "numeración fija",
+      "sources": [
+        {
+          "path": "piloto_fan/segments.py",
+          "line": 69,
+          "end_line": 101,
+          "label": "asignación y perfiles"
+        }
+      ]
+    },
+    {
+      "id": "a-pob",
+      "lane": "aca",
+      "col": 0,
+      "type": "database",
+      "label": "Semestres 2024–25",
+      "sublabel": "FAN · 1 plan · semestral",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 78,
+          "end_line": 84,
+          "label": "snapshots"
+        }
+      ]
+    },
+    {
+      "id": "a-var",
+      "lane": "aca",
+      "col": 1,
+      "type": "backend",
+      "label": "5 variables de notas",
+      "sublabel": "promedio, dispersión, <4",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 30,
+          "end_line": 32,
+          "label": "NUMERIC"
+        }
+      ]
+    },
+    {
+      "id": "a-prep",
+      "lane": "aca",
+      "col": 2,
+      "type": "backend",
+      "label": "Ajuste en 2024-1",
+      "sublabel": "mediana + escala",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 213,
+          "end_line": 220,
+          "label": "preprocesamiento"
+        }
+      ]
+    },
+    {
+      "id": "a-alg",
+      "lane": "aca",
+      "col": 3,
+      "type": "backend",
+      "label": "3 algoritmos · k 2–5",
+      "sublabel": "K-means, GMM, bisectriz",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 221,
+          "end_line": 232,
+          "label": "candidatos"
+        }
+      ]
+    },
+    {
+      "id": "a-adm",
+      "lane": "aca",
+      "col": 4,
+      "type": "security",
+      "label": "Admisible",
+      "sublabel": "≥80 · ≤80% · silueta",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 233,
+          "end_line": 242,
+          "label": "filtro y elección"
+        }
+      ]
+    },
+    {
+      "id": "a-out",
+      "lane": "aca",
+      "col": 5,
+      "type": "database",
+      "label": "Perfiles semestrales",
+      "sublabel": "celdas ≥10",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 243,
+          "end_line": 256,
+          "label": "asignación y perfiles"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "su1",
+      "from": "u-pob",
+      "to": "u-var",
+      "variant": "emphasis"
+    },
+    {
+      "id": "su2",
+      "from": "u-var",
+      "to": "u-prep",
+      "variant": "emphasis"
+    },
+    {
+      "id": "su3",
+      "from": "u-prep",
+      "to": "u-alg",
+      "variant": "emphasis"
+    },
+    {
+      "id": "su4",
+      "from": "u-alg",
+      "to": "u-adm",
+      "label": "diagnóstico",
+      "variant": "emphasis"
+    },
+    {
+      "id": "su5",
+      "from": "u-adm",
+      "to": "u-out",
+      "label": "todas las filas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sf1",
+      "from": "f-pob",
+      "to": "f-var"
+    },
+    {
+      "id": "sf2",
+      "from": "f-var",
+      "to": "f-prep"
+    },
+    {
+      "id": "sf3",
+      "from": "f-prep",
+      "to": "f-alg"
+    },
+    {
+      "id": "sf4",
+      "from": "f-alg",
+      "to": "f-adm",
+      "label": "diagnóstico"
+    },
+    {
+      "id": "sf5",
+      "from": "f-adm",
+      "to": "f-out",
+      "label": "cohortes nuevas"
+    },
+    {
+      "id": "sa1",
+      "from": "a-pob",
+      "to": "a-var"
+    },
+    {
+      "id": "sa2",
+      "from": "a-var",
+      "to": "a-prep"
+    },
+    {
+      "id": "sa3",
+      "from": "a-prep",
+      "to": "a-alg"
+    },
+    {
+      "id": "sa4",
+      "from": "a-alg",
+      "to": "a-adm",
+      "label": "diagnóstico"
+    },
+    {
+      "id": "sa5",
+      "from": "a-adm",
+      "to": "a-out",
+      "label": "semestres siguientes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Regla común: el resultado no define el segmento",
+      "items": [
+        "Ninguna segmentación usa continuidad, titulación ni notas futuras; esas solo describen los grupos.",
+        "Percentiles dentro de cohorte en vez de puntajes crudos: el corte PDT → PAES de 2023 agruparía por año."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Elección",
+      "items": [
+        "Solo compiten particiones que respetan tamaño mínimo y techo de concentración.",
+        "Entre ellas gana la mayor silueta; ante empate, el k menor.",
+        "Los segmentos se numeran por tamaño, para que el 1 signifique lo mismo entre corridas."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Qué consume cada salida",
+      "items": [
+        "ua_segmentos* queda en data/results y hoy ningún script ni vista lo lee.",
+        "Los perfiles del piloto los muestra su app local, con celdas de 10 o más personas."
+      ]
+    }
+  ]
+}

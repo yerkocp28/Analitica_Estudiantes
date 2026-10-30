@@ -1,0 +1,399 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Benchmark universitario: perfiles de ingreso y pares comparables de la UA",
+    "output": ".archify/workflow-benchmark-pares-20261030-092706/benchmark-pares.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "security": {
+          "label": "Control, regla o estado"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        },
+        "external": {
+          "label": "Fuente de datos"
+        },
+        "frontend": {
+          "label": "Vista en la app"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ins",
+      "label": "Insumos por cohorte"
+    },
+    {
+      "id": "perf",
+      "label": "build_benchmark.py"
+    },
+    {
+      "id": "pares",
+      "label": "App: pares (al abrir)"
+    },
+    {
+      "id": "comp",
+      "label": "App: comparación"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-pre",
+      "label": "Precalculado",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "ph-app",
+      "label": "En la app, con caché",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "matric",
+    "perfil",
+    "universo",
+    "perfiles",
+    "hash",
+    "matriz",
+    "clusters",
+    "brechas"
+  ],
+  "nodes": [
+    {
+      "id": "matric",
+      "lane": "ins",
+      "col": 0,
+      "type": "external",
+      "label": "Matrícula + PAES",
+      "sublabel": "cohorte de ingreso · universidades",
+      "sources": [
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 35,
+          "end_line": 57,
+          "label": "cohorte por año"
+        },
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 61,
+          "end_line": 76,
+          "label": "selectividad PAES"
+        }
+      ]
+    },
+    {
+      "id": "retcoh",
+      "lane": "ins",
+      "col": 1,
+      "type": "database",
+      "label": "Retención y cohortes",
+      "sublabel": "build_retention · build_cohorts",
+      "sources": [
+        {
+          "path": "src/student_analytics/ingestion/retention.py",
+          "line": 11,
+          "end_line": 46,
+          "label": "3 niveles anidados"
+        },
+        {
+          "path": "scripts/build_cohorts.py",
+          "line": 100,
+          "end_line": 134,
+          "label": "censura en 2 niveles"
+        }
+      ]
+    },
+    {
+      "id": "descr",
+      "lane": "ins",
+      "col": 2,
+      "type": "external",
+      "label": "Titulados + CNED",
+      "sublabel": "solo descriptivos",
+      "sources": [
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 78,
+          "end_line": 93,
+          "label": "titulación transversal"
+        },
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 106,
+          "end_line": 124,
+          "label": "recursos CNED por nombre"
+        }
+      ]
+    },
+    {
+      "id": "perfil",
+      "lane": "perf",
+      "col": 1,
+      "type": "backend",
+      "label": "Perfil por universidad",
+      "sublabel": "escala · áreas · regiones · jornada",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/benchmark.py",
+          "line": 55,
+          "end_line": 82,
+          "label": "build_profiles"
+        },
+        {
+          "path": "src/student_analytics/ingestion/paes.py",
+          "line": 137,
+          "end_line": 190,
+          "label": "institutional_selectivity"
+        }
+      ]
+    },
+    {
+      "id": "universo",
+      "lane": "perf",
+      "col": 2,
+      "type": "security",
+      "label": "Universo = retención",
+      "sublabel": "si no calza, falla",
+      "sources": [
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 95,
+          "end_line": 99,
+          "label": "control de denominadores"
+        }
+      ]
+    },
+    {
+      "id": "perfiles",
+      "lane": "perf",
+      "col": 3,
+      "type": "database",
+      "label": "benchmark_profiles",
+      "sublabel": "+ manifiesto SHA-256",
+      "sources": [
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 126,
+          "end_line": 158,
+          "label": "titulación por cohorte y escritura"
+        }
+      ]
+    },
+    {
+      "id": "hash",
+      "lane": "pares",
+      "col": 3,
+      "type": "security",
+      "label": "Verifica huellas",
+      "sublabel": "perfiles y retención",
+      "sources": [
+        {
+          "path": "src/student_analytics/ui/benchmark.py",
+          "line": 92,
+          "end_line": 102,
+          "label": "load_benchmark"
+        }
+      ]
+    },
+    {
+      "id": "matriz",
+      "lane": "pares",
+      "col": 4,
+      "type": "backend",
+      "label": "Matriz de perfil",
+      "sublabel": "5 bloques · peso 0,20 c/u",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/benchmark.py",
+          "line": 131,
+          "end_line": 145,
+          "label": "profile_matrix"
+        },
+        {
+          "path": "config/benchmark.yml",
+          "line": 29,
+          "end_line": 34,
+          "label": "pesos de bloque"
+        }
+      ]
+    },
+    {
+      "id": "clusters",
+      "lane": "pares",
+      "col": 5,
+      "type": "backend",
+      "label": "Partición admisible",
+      "sublabel": "K-means · Ward · GMM · k 2–6",
+      "tag": "grupo ≥3 · ≤50%",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/benchmark.py",
+          "line": 221,
+          "end_line": 275,
+          "label": "fit_peers"
+        },
+        {
+          "path": "config/benchmark.yml",
+          "line": 1,
+          "end_line": 18,
+          "label": "mínimos y techo"
+        }
+      ]
+    },
+    {
+      "id": "vecinos",
+      "lane": "comp",
+      "col": 4,
+      "type": "backend",
+      "label": "Vecinos de la UA",
+      "sublabel": "distancia total y por bloque",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/benchmark.py",
+          "line": 278,
+          "end_line": 292,
+          "label": "neighbors"
+        }
+      ]
+    },
+    {
+      "id": "brechas",
+      "lane": "comp",
+      "col": 5,
+      "type": "frontend",
+      "label": "Brechas de continuidad",
+      "sublabel": "pares y sistema, sin la UA",
+      "sources": [
+        {
+          "path": "src/student_analytics/modeling/benchmark.py",
+          "line": 295,
+          "end_line": 329,
+          "label": "compare_outcomes"
+        },
+        {
+          "path": "src/student_analytics/ui/benchmark.py",
+          "line": 261,
+          "end_line": 270,
+          "label": "UA como referencia"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "b-mat",
+      "from": "matric",
+      "to": "perfil",
+      "label": "inscripciones",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-ret",
+      "from": "retcoh",
+      "to": "universo",
+      "label": "n por universidad",
+      "variant": "security"
+    },
+    {
+      "id": "b-uni",
+      "from": "perfil",
+      "to": "universo",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-desc",
+      "from": "descr",
+      "to": "perfiles",
+      "label": "descriptivos"
+    },
+    {
+      "id": "b-out",
+      "from": "universo",
+      "to": "perfiles",
+      "label": "calza",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-hash",
+      "from": "perfiles",
+      "to": "hash",
+      "label": "parquet + manifiesto",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-hash-mtx",
+      "from": "hash",
+      "to": "matriz",
+      "label": "cohorte elegida",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-fit",
+      "from": "matriz",
+      "to": "clusters",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-nb",
+      "from": "matriz",
+      "to": "vecinos",
+      "label": "distancias"
+    },
+    {
+      "id": "b-grp",
+      "from": "clusters",
+      "to": "brechas",
+      "label": "mismo cluster",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-near",
+      "from": "vecinos",
+      "to": "brechas",
+      "label": "5 más cercanos"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Qué entra a la distancia",
+      "items": [
+        "Escala, áreas, regiones, jornada/modalidad y selectividad, con igual peso; la retención nunca entra.",
+        "Titulación, recursos CNED, aranceles y acreditación son descriptivos: se grafican, no definen pares."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Por qué el techo de concentración",
+      "items": [
+        "Sin él, la silueta elige k=2 y deja casi todas las universidades en un solo grupo.",
+        "Se descartan particiones con un grupo bajo 3 o sobre el 50%; entre las admisibles gana la silueta."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Controles",
+      "items": [
+        "build_benchmark falla si el universo de perfiles no coincide con el de retención.",
+        "La app no compara si las huellas SHA-256 no coinciden con el manifiesto.",
+        "Las brechas usan retention_universities, verificado con el mismo manifiesto.",
+        "Las brechas excluyen a la UA de pares y sistema; son descriptivas, no causales."
+      ]
+    }
+  ]
+}

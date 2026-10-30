@@ -1,0 +1,336 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Modelos institucionales FAN: resultado académico y presencia en matrícula",
+    "output": ".archify/workflow-fan-institucional-20261030-092706/fan-institucional.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "security": {
+          "label": "Control, regla o estado"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "dat",
+      "label": "Datos del extracto"
+    },
+    {
+      "id": "aca",
+      "label": "Caso académico"
+    },
+    {
+      "id": "mat",
+      "label": "Caso matrícula"
+    },
+    {
+      "id": "eval",
+      "label": "fit_case (común a ambos)"
+    },
+    {
+      "id": "comp",
+      "label": "Comparaciones y diagnóstico"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-pob",
+      "label": "Población y etiqueta del semestre siguiente",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "ph-eval",
+      "label": "Partición fija por semestre",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "deriv",
+    "snap",
+    "t-aca",
+    "part",
+    "algs",
+    "test",
+    "out"
+  ],
+  "nodes": [
+    {
+      "id": "deriv",
+      "lane": "dat",
+      "col": 0,
+      "type": "security",
+      "label": "Derivados UA",
+      "sublabel": "latest.json verificado",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 270,
+          "end_line": 284,
+          "label": "carga verificada"
+        }
+      ]
+    },
+    {
+      "id": "snap",
+      "lane": "dat",
+      "col": 1,
+      "type": "backend",
+      "label": "Semestres 2024–25",
+      "sublabel": "FAN · 1 plan · ≥1 nota",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 78,
+          "end_line": 84,
+          "label": "snapshots"
+        },
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 30,
+          "end_line": 33,
+          "label": "variables y transiciones"
+        }
+      ]
+    },
+    {
+      "id": "t-aca",
+      "lane": "aca",
+      "col": 2,
+      "type": "backend",
+      "label": "Alguna nota < 4",
+      "sublabel": "negativo: todo ≥ 4",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 98,
+          "end_line": 108,
+          "label": "academic_target"
+        }
+      ]
+    },
+    {
+      "id": "t-mat",
+      "lane": "mat",
+      "col": 1,
+      "type": "backend",
+      "label": "Sin registro UA",
+      "sublabel": "semestre siguiente",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 109,
+          "end_line": 112,
+          "label": "enrollment_target"
+        }
+      ]
+    },
+    {
+      "id": "part",
+      "lane": "eval",
+      "col": 3,
+      "type": "security",
+      "label": "Partición fija",
+      "sublabel": "1 fila por persona",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 138,
+          "end_line": 148,
+          "label": "partition"
+        },
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 160,
+          "end_line": 164,
+          "label": "split y solapamiento"
+        }
+      ]
+    },
+    {
+      "id": "algs",
+      "lane": "eval",
+      "col": 4,
+      "type": "backend",
+      "label": "Elegir algoritmo",
+      "sublabel": "captura 20% · Brier",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 165,
+          "end_line": 171,
+          "label": "selección en validación"
+        }
+      ]
+    },
+    {
+      "id": "test",
+      "lane": "eval",
+      "col": 5,
+      "type": "backend",
+      "label": "Reajuste + test",
+      "sublabel": "train+val → 2025-2",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 172,
+          "end_line": 177,
+          "label": "final_train y prueba"
+        }
+      ]
+    },
+    {
+      "id": "ctx",
+      "lane": "comp",
+      "col": 4,
+      "type": "backend",
+      "label": "Regla + contexto",
+      "sublabel": "mismo modelo sin notas",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 128,
+          "end_line": 135,
+          "label": "reglas simples"
+        },
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 178,
+          "end_line": 191,
+          "label": "ablación contextual"
+        }
+      ]
+    },
+    {
+      "id": "out",
+      "lane": "comp",
+      "col": 5,
+      "type": "database",
+      "label": "Model card",
+      "sublabel": "experimental · diagnóstico",
+      "sources": [
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 195,
+          "end_line": 210,
+          "label": "diagnósticos"
+        },
+        {
+          "path": "piloto_fan/modelos_institucionales.py",
+          "line": 290,
+          "end_line": 300,
+          "label": "escritura por caso"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "i-snap",
+      "from": "deriv",
+      "to": "snap",
+      "label": "por semestre",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-aca",
+      "from": "snap",
+      "to": "t-aca",
+      "label": "notas siguientes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-mat",
+      "from": "snap",
+      "to": "t-mat",
+      "label": "matrícula siguiente"
+    },
+    {
+      "id": "i-part-a",
+      "from": "t-aca",
+      "to": "part",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-part-m",
+      "from": "t-mat",
+      "to": "part"
+    },
+    {
+      "id": "i-algs",
+      "from": "part",
+      "to": "algs",
+      "label": "train → validación",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-test",
+      "from": "algs",
+      "to": "test",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-ctx",
+      "from": "algs",
+      "to": "ctx",
+      "label": "ganador"
+    },
+    {
+      "id": "i-out",
+      "from": "test",
+      "to": "out",
+      "label": "métricas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i-ctx-out",
+      "from": "ctx",
+      "to": "out",
+      "label": "aporte de las notas"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Partición",
+      "items": [
+        "Train: 2024-1 → 2024-2 · Validación: 2024-2 → 2025-1 · Prueba: 2025-1 → 2025-2.",
+        "Gana la mayor captura al 20% en validación; desempate por Brier y luego AUC. El test no elige.",
+        "Variables del semestre de origen: cantidad de resultados, promedio, dispersión, cobertura numérica, fracción bajo 4, carrera, campus y jornada.",
+        "Una misma persona puede reaparecer en semestres sucesivos; la ficha informa ese solapamiento."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Etiquetas desconocidas",
+      "items": [
+        "Un negativo académico exige que todo lo observado sea numérico y ≥ 4; códigos o ausencia dejan la etiqueta vacía.",
+        "Las etiquetas vacías no entran al entrenamiento ni se imputan como éxito o fracaso."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Siempre experimental",
+      "items": [
+        "fit_case no promueve el estado: la ficha queda experimental y solo agrega diagnósticos.",
+        "Diagnósticos: menos de 30 eventos, Brier sin mejora, descalibración o cambio de prevalencia de 5 puntos o más."
+      ]
+    }
+  ]
+}

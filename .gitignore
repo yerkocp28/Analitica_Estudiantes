@@ -37,5 +37,13 @@ data/interim/
 !deploy/data/**/*.json
 .streamlit/secrets.toml
 
+# Diagramas de archify: se versionan el HTML y su fuente (candidate.json).
+# Las capturas, recibos y carpetas review-*/ son evidencia de cada verificación
+# y se regeneran con `archify finalize`.
+.archify/**
+!.archify/*/
+!.archify/*/candidate.json
+!.archify/*/*.html
+
 .env
 mlruns/

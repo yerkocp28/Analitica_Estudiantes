@@ -1,0 +1,374 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Piloto FAN: modelos de continuidad y titulación",
+    "output": ".archify/workflow-fan-continuidad-titulacion-20261030-092706/fan-continuidad-titulacion.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "security": {
+          "label": "Control, regla o estado"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "cont",
+      "label": "Caso continuidad"
+    },
+    {
+      "id": "tit",
+      "label": "Caso titulación"
+    },
+    {
+      "id": "eval",
+      "label": "evaluate_case (común a ambos)"
+    },
+    {
+      "id": "ref",
+      "label": "Referencias y veredicto"
+    },
+    {
+      "id": "exc",
+      "label": "Sin partición válida",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-etq",
+      "label": "Etiqueta",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "ph-sel",
+      "label": "Selección con validación",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ph-test",
+      "label": "Test reservado, una vez",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "d-cont",
+    "split",
+    "algs",
+    "winner",
+    "refit",
+    "verdict"
+  ],
+  "nodes": [
+    {
+      "id": "d-cont",
+      "lane": "cont",
+      "col": 0,
+      "type": "database",
+      "label": "Continuidad",
+      "sublabel": "sin matrícula UA al año siguiente",
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 110,
+          "end_line": 120,
+          "label": "continuity"
+        },
+        {
+          "path": "piloto_fan/models.py",
+          "line": 17,
+          "end_line": 23,
+          "label": "variables"
+        }
+      ]
+    },
+    {
+      "id": "d-tit",
+      "lane": "tit",
+      "col": 0,
+      "type": "database",
+      "label": "Titulación",
+      "sublabel": "corte ingreso+3 · sin título UA",
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 123,
+          "end_line": 166,
+          "label": "graduation"
+        },
+        {
+          "path": "piloto_fan/models.py",
+          "line": 24,
+          "end_line": 30,
+          "label": "variables"
+        }
+      ]
+    },
+    {
+      "id": "split",
+      "lane": "eval",
+      "col": 1,
+      "type": "security",
+      "label": "Partición temporal",
+      "sublabel": "solo etiquetas maduras",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 100,
+          "end_line": 126,
+          "label": "temporal_split"
+        }
+      ]
+    },
+    {
+      "id": "algs",
+      "lane": "eval",
+      "col": 2,
+      "type": "backend",
+      "label": "3 algoritmos",
+      "sublabel": "LR · random forest · boosting",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 45,
+          "end_line": 61,
+          "label": "estimator"
+        },
+        {
+          "path": "piloto_fan/models.py",
+          "line": 160,
+          "end_line": 167,
+          "label": "ajuste en train"
+        }
+      ]
+    },
+    {
+      "id": "winner",
+      "lane": "eval",
+      "col": 3,
+      "type": "backend",
+      "label": "Ganador",
+      "sublabel": "captura 20% → Brier → AUC",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 168,
+          "end_line": 171,
+          "label": "solo validación"
+        }
+      ]
+    },
+    {
+      "id": "refit",
+      "lane": "eval",
+      "col": 4,
+      "type": "backend",
+      "label": "Reajuste + test",
+      "sublabel": "train maduro · año reservado",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 172,
+          "end_line": 177,
+          "label": "final_train y test"
+        }
+      ]
+    },
+    {
+      "id": "rule",
+      "lane": "ref",
+      "col": 4,
+      "type": "backend",
+      "label": "Regla histórica",
+      "sublabel": "tasa por carrera · 30 casos",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 87,
+          "end_line": 91,
+          "label": "historical_rule"
+        }
+      ]
+    },
+    {
+      "id": "verdict",
+      "lane": "ref",
+      "col": 5,
+      "type": "security",
+      "label": "Veredicto",
+      "sublabel": "señal retrospectiva o experimental",
+      "tag": "bootstrap 300",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 129,
+          "end_line": 141,
+          "label": "bootstrap por persona"
+        },
+        {
+          "path": "piloto_fan/models.py",
+          "line": 178,
+          "end_line": 183,
+          "label": "criterio del estado"
+        }
+      ]
+    },
+    {
+      "id": "card",
+      "lane": "eval",
+      "col": 5,
+      "type": "database",
+      "label": "Model card",
+      "sublabel": "+ joblib y predicciones locales",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 183,
+          "end_line": 221,
+          "label": "resultado y predicciones"
+        },
+        {
+          "path": "piloto_fan/build.py",
+          "line": 81,
+          "end_line": 95,
+          "label": "escritura por caso"
+        }
+      ]
+    },
+    {
+      "id": "insuf",
+      "lane": "exc",
+      "col": 2,
+      "type": "security",
+      "label": "Insuficiente",
+      "sublabel": "sin entrenar ni predecir",
+      "sources": [
+        {
+          "path": "piloto_fan/models.py",
+          "line": 154,
+          "end_line": 159,
+          "label": "estado insuficiente"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "c-cont",
+      "from": "d-cont",
+      "to": "split",
+      "label": "cohortes ≥2021",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "c-tit",
+      "from": "d-tit",
+      "to": "split",
+      "label": "año de corte",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "c-algs",
+      "from": "split",
+      "to": "algs",
+      "label": "train",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-win",
+      "from": "algs",
+      "to": "winner",
+      "label": "validación",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-refit",
+      "from": "winner",
+      "to": "refit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-rule",
+      "from": "refit",
+      "to": "rule",
+      "label": "mismo test"
+    },
+    {
+      "id": "c-ver",
+      "from": "refit",
+      "to": "verdict",
+      "label": "métricas test",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-rule-ver",
+      "from": "rule",
+      "to": "verdict",
+      "label": "captura vs regla"
+    },
+    {
+      "id": "c-card",
+      "from": "verdict",
+      "to": "card",
+      "label": "estado"
+    },
+    {
+      "id": "c-insuf",
+      "from": "split",
+      "to": "insuf",
+      "label": "sin etiquetas maduras",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Partición temporal",
+      "items": [
+        "Test: el año de evaluación más reciente con resultado completo.",
+        "Validación: un año anterior cuyas etiquetas ya se conocían en el año de test.",
+        "Train: años previos con etiqueta disponible (resultado + 1 año) y sin personas de validación ni test."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Señal retrospectiva solo si",
+      "items": [
+        "El IC 95% de la captura al 20% está sobre el azar (20%).",
+        "El IC de la diferencia contra la regla histórica es positivo.",
+        "Brier mejora frente a la prevalencia constante del train. Si no, queda experimental."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Variables por caso",
+      "items": [
+        "Continuidad: percentiles de admisión, NEM y ranking, duración nominal, carrera, sede y jornada.",
+        "Titulación: duración nominal, años matriculado y sin matrícula UA, códigos de carrera, sedes y jornadas hasta el corte, más carrera, sede y jornada."
+      ]
+    }
+  ]
+}

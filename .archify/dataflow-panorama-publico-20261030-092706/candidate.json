@@ -1,0 +1,746 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Analítica pública y sintética: de las fuentes a la app y el informe",
+    "output": ".archify/dataflow-panorama-publico-20261030-092706/panorama-publico.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Datos por persona (MRUN)"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Fuentes"
+    },
+    {
+      "label": "Capas locales"
+    },
+    {
+      "label": "Modelos y agregados"
+    },
+    {
+      "label": "Artefactos"
+    },
+    {
+      "label": "Consumo"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "synth",
+      "type": "backend",
+      "label": "Generador sintético",
+      "sublabel": "calibrado por anclas",
+      "stage": 0,
+      "row": 0,
+      "sources": [
+        {
+          "path": "src/student_analytics/synthetic/generator.py",
+          "line": 1,
+          "end_line": 18,
+          "label": "orden causal"
+        },
+        {
+          "path": "config/synthetic.yml",
+          "line": 46,
+          "end_line": 51,
+          "label": "anclas de calibración"
+        }
+      ]
+    },
+    {
+      "id": "oulad",
+      "type": "external",
+      "label": "OULAD",
+      "sublabel": "Open University · UCI",
+      "stage": 0,
+      "row": 1,
+      "sources": [
+        {
+          "path": "scripts/download_oulad.py",
+          "line": 20,
+          "end_line": 28,
+          "label": "descarga"
+        }
+      ]
+    },
+    {
+      "id": "mineduc",
+      "type": "external",
+      "label": "Mineduc / SIES",
+      "sublabel": "matrícula · PAES · titulados",
+      "stage": 0,
+      "row": 2,
+      "sources": [
+        {
+          "path": "scripts/download_matricula.py",
+          "line": 1,
+          "end_line": 28,
+          "label": "matrícula 2007–2026"
+        },
+        {
+          "path": "scripts/download_paes.py",
+          "line": 1,
+          "end_line": 30,
+          "label": "admisión desde 2021"
+        },
+        {
+          "path": "scripts/download_titulados.py",
+          "line": 1,
+          "end_line": 17,
+          "label": "titulados 2007–2025"
+        }
+      ]
+    },
+    {
+      "id": "escolar",
+      "type": "external",
+      "label": "Mineduc escolar",
+      "sublabel": "asistencia · SEP · becas",
+      "stage": 0,
+      "row": 3,
+      "sources": [
+        {
+          "path": "scripts/download_mineduc.py",
+          "line": 38,
+          "end_line": 73,
+          "label": "catálogo de bases"
+        }
+      ]
+    },
+    {
+      "id": "cned",
+      "type": "external",
+      "label": "CNED INDICES",
+      "sublabel": "recursos institucionales",
+      "stage": 0,
+      "row": 4,
+      "sources": [
+        {
+          "path": "scripts/download_cned.py",
+          "line": 20,
+          "end_line": 31,
+          "label": "descarga"
+        }
+      ]
+    },
+    {
+      "id": "synthdir",
+      "type": "database",
+      "label": "data/synthetic",
+      "sublabel": "8 tablas parquet",
+      "stage": 1,
+      "row": 0,
+      "sources": [
+        {
+          "path": "scripts/generate_synthetic.py",
+          "line": 24,
+          "end_line": 48,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "ouladdir",
+      "type": "database",
+      "label": "data/external/oulad",
+      "sublabel": "6 CSV",
+      "stage": 1,
+      "row": 1,
+      "sources": [
+        {
+          "path": "scripts/download_oulad.py",
+          "line": 23,
+          "end_line": 28,
+          "label": "destino"
+        }
+      ]
+    },
+    {
+      "id": "crudos",
+      "type": "database",
+      "label": "data/external",
+      "sublabel": "CSV y xlsx crudos",
+      "stage": 1,
+      "row": 3,
+      "sources": [
+        {
+          "path": "scripts/download_mineduc.py",
+          "line": 32,
+          "end_line": 35,
+          "label": "mineduc/"
+        },
+        {
+          "path": "scripts/download_titulados.py",
+          "line": 27,
+          "end_line": 29,
+          "label": "titulados/"
+        },
+        {
+          "path": "scripts/download_cned.py",
+          "line": 20,
+          "end_line": 21,
+          "label": "cned/"
+        }
+      ]
+    },
+    {
+      "id": "slim",
+      "type": "database",
+      "label": "Matrícula slim",
+      "sublabel": "data/interim · seguimiento",
+      "stage": 1,
+      "row": 2,
+      "sources": [
+        {
+          "path": "scripts/download_matricula.py",
+          "line": 105,
+          "end_line": 158,
+          "label": "compactar"
+        }
+      ]
+    },
+    {
+      "id": "leadtime",
+      "type": "backend",
+      "label": "Alerta temprana",
+      "sublabel": "logística por semana",
+      "stage": 2,
+      "row": 0,
+      "sources": [
+        {
+          "path": "scripts/validate_lead_time.py",
+          "line": 37,
+          "end_line": 67,
+          "label": "fuente y evaluación"
+        },
+        {
+          "path": "src/student_analytics/modeling/lead_time.py",
+          "line": 65,
+          "end_line": 186,
+          "label": "evaluate_lead_time"
+        }
+      ]
+    },
+    {
+      "id": "marts",
+      "type": "backend",
+      "label": "Silver y marts",
+      "sublabel": "contrato de datos",
+      "stage": 2,
+      "row": 1,
+      "sources": [
+        {
+          "path": "scripts/build_silver.py",
+          "line": 30,
+          "end_line": 47,
+          "label": "adaptadores"
+        },
+        {
+          "path": "scripts/build_marts.py",
+          "line": 51,
+          "end_line": 58,
+          "label": "marts"
+        }
+      ]
+    },
+    {
+      "id": "piso",
+      "type": "backend",
+      "label": "Piso pre-ingreso",
+      "sublabel": "logística + ablación",
+      "stage": 2,
+      "row": 2,
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 223,
+          "end_line": 328,
+          "label": "piso aleatorio"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 526,
+          "end_line": 650,
+          "label": "piso temporal + ablación"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 676,
+          "end_line": 684,
+          "label": "main"
+        }
+      ]
+    },
+    {
+      "id": "bench",
+      "type": "backend",
+      "label": "Benchmark universitario",
+      "sublabel": "retención · cohortes · perfiles",
+      "stage": 2,
+      "row": 3,
+      "sources": [
+        {
+          "path": "scripts/build_retention.py",
+          "line": 72,
+          "end_line": 110,
+          "label": "retención"
+        },
+        {
+          "path": "scripts/build_cohorts.py",
+          "line": 100,
+          "end_line": 134,
+          "label": "titulación por cohorte"
+        },
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 22,
+          "end_line": 158,
+          "label": "perfiles"
+        }
+      ]
+    },
+    {
+      "id": "uaseg",
+      "type": "backend",
+      "label": "Ingresantes UA",
+      "sublabel": "+ segmentación",
+      "stage": 2,
+      "row": 4,
+      "sources": [
+        {
+          "path": "scripts/build_ua_cohorts.py",
+          "line": 135,
+          "end_line": 174,
+          "label": "ingresantes"
+        },
+        {
+          "path": "scripts/build_segments.py",
+          "line": 36,
+          "end_line": 66,
+          "label": "segmentos"
+        }
+      ]
+    },
+    {
+      "id": "leadout",
+      "type": "database",
+      "label": "Métricas y scores",
+      "sublabel": "metrics_* · predictions_*",
+      "stage": 3,
+      "row": 0,
+      "sources": [
+        {
+          "path": "scripts/validate_lead_time.py",
+          "line": 119,
+          "end_line": 124,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "martsout",
+      "type": "database",
+      "label": "data/results/marts",
+      "sublabel": "sin consumidor aún",
+      "stage": 3,
+      "row": 1,
+      "sources": [
+        {
+          "path": "scripts/build_marts.py",
+          "line": 51,
+          "end_line": 58,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "pisoout",
+      "type": "database",
+      "label": "piso_preingreso_*",
+      "sublabel": "+ ablacion_piso.csv",
+      "stage": 3,
+      "row": 2,
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 324,
+          "end_line": 328,
+          "label": "piso nacional"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 642,
+          "end_line": 650,
+          "label": "temporal + ablación"
+        }
+      ]
+    },
+    {
+      "id": "benchout",
+      "type": "database",
+      "label": "Benchmark",
+      "sublabel": "retención · cohortes · perfiles",
+      "stage": 3,
+      "row": 3,
+      "sources": [
+        {
+          "path": "scripts/build_retention.py",
+          "line": 108,
+          "end_line": 110,
+          "label": "retention_universities"
+        },
+        {
+          "path": "scripts/build_cohorts.py",
+          "line": 132,
+          "end_line": 134,
+          "label": "cohort_completion"
+        },
+        {
+          "path": "scripts/build_benchmark.py",
+          "line": 149,
+          "end_line": 158,
+          "label": "benchmark_profiles"
+        }
+      ]
+    },
+    {
+      "id": "segout",
+      "type": "database",
+      "label": "Ingresantes UA",
+      "sublabel": "ua_ingresantes · ua_segmentos",
+      "stage": 3,
+      "row": 4,
+      "sources": [
+        {
+          "path": "scripts/build_ua_cohorts.py",
+          "line": 173,
+          "end_line": 174,
+          "label": "ua_ingresantes"
+        },
+        {
+          "path": "scripts/build_segments.py",
+          "line": 60,
+          "end_line": 66,
+          "label": "ua_segmentos*"
+        }
+      ]
+    },
+    {
+      "id": "informe",
+      "type": "frontend",
+      "label": "Informe",
+      "sublabel": "metodológico · Quarto",
+      "stage": 4,
+      "row": 0,
+      "sources": [
+        {
+          "path": "documentacion/informe_metodologico.qmd",
+          "line": 57,
+          "end_line": 64,
+          "label": "lee documentacion/datos"
+        },
+        {
+          "path": "scripts/descriptive_stats.py",
+          "line": 202,
+          "end_line": 213,
+          "label": "descriptivas"
+        },
+        {
+          "path": "scripts/build_findings.py",
+          "line": 22,
+          "end_line": 48,
+          "label": "hallazgos"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Streamlit público",
+      "sublabel": "5 secciones",
+      "stage": 4,
+      "row": 1,
+      "sources": [
+        {
+          "path": "streamlit_app.py",
+          "line": 1,
+          "end_line": 8,
+          "label": "entrada de despliegue"
+        },
+        {
+          "path": "src/student_analytics/ui/app.py",
+          "line": 118,
+          "end_line": 154,
+          "label": "secciones"
+        },
+        {
+          "path": "src/student_analytics/ui/benchmark.py",
+          "line": 240,
+          "end_line": 266,
+          "label": "ajusta pares al abrir"
+        }
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "database",
+      "label": "deploy/data",
+      "sublabel": "lista explícita · sin MRUN",
+      "stage": 4,
+      "row": 2,
+      "sources": [
+        {
+          "path": "scripts/package_deployment.py",
+          "line": 13,
+          "end_line": 82,
+          "label": "package_deployment"
+        }
+      ]
+    },
+    {
+      "id": "piloto",
+      "type": "backend",
+      "label": "Piloto FAN",
+      "sublabel": "local · ver su diagrama",
+      "stage": 4,
+      "row": 3,
+      "sources": [
+        {
+          "path": "piloto_fan/data.py",
+          "line": 64,
+          "end_line": 107,
+          "label": "read_sources"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-synth",
+      "from": "synth",
+      "to": "synthdir",
+      "label": "8 tablas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-oulad",
+      "from": "oulad",
+      "to": "ouladdir",
+      "label": "zip → CSV"
+    },
+    {
+      "id": "f-mineduc-raw",
+      "from": "mineduc",
+      "to": "crudos",
+      "label": "CSV por año"
+    },
+    {
+      "id": "f-mineduc-slim",
+      "from": "mineduc",
+      "to": "slim",
+      "label": "parquet slim"
+    },
+    {
+      "id": "f-escolar",
+      "from": "escolar",
+      "to": "crudos",
+      "label": "rar → CSV"
+    },
+    {
+      "id": "f-cned",
+      "from": "cned",
+      "to": "crudos",
+      "label": "xlsx"
+    },
+    {
+      "id": "f-lead-synth",
+      "from": "synthdir",
+      "to": "leadtime",
+      "label": "tablas canónicas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-lead-oulad",
+      "from": "ouladdir",
+      "to": "leadtime",
+      "label": "sin asistencia",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-marts-synth",
+      "from": "synthdir",
+      "to": "marts",
+      "label": "adaptador"
+    },
+    {
+      "id": "f-marts-oulad",
+      "from": "ouladdir",
+      "to": "marts",
+      "label": "adaptador"
+    },
+    {
+      "id": "f-piso-in",
+      "from": "crudos",
+      "to": "piso",
+      "label": "cruce por MRUN",
+      "classification": "matrícula, PAES, escolar"
+    },
+    {
+      "id": "f-bench-raw",
+      "from": "crudos",
+      "to": "bench",
+      "label": "PAES · CNED",
+      "classification": "y titulados"
+    },
+    {
+      "id": "f-bench-slim",
+      "from": "slim",
+      "to": "bench",
+      "label": "seguimiento"
+    },
+    {
+      "id": "f-ua-slim",
+      "from": "slim",
+      "to": "uaseg",
+      "label": "cohortes UA"
+    },
+    {
+      "id": "f-ua-raw",
+      "from": "crudos",
+      "to": "uaseg",
+      "label": "PAES · becas · SEP"
+    },
+    {
+      "id": "f-lead-out",
+      "from": "leadtime",
+      "to": "leadout",
+      "label": "AUC · scores",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-marts-out",
+      "from": "marts",
+      "to": "martsout",
+      "label": "2 marts"
+    },
+    {
+      "id": "f-piso-out",
+      "from": "piso",
+      "to": "pisoout",
+      "label": "AUC por bloque",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-bench-out",
+      "from": "bench",
+      "to": "benchout",
+      "label": "agregados",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-ua-out",
+      "from": "uaseg",
+      "to": "segout",
+      "label": "MRUN + segmento",
+      "variant": "security",
+      "classification": "nivel persona"
+    },
+    {
+      "id": "f-doc-lead",
+      "from": "leadout",
+      "to": "informe",
+      "label": "métricas"
+    },
+    {
+      "id": "f-doc-piso",
+      "from": "pisoout",
+      "to": "informe",
+      "label": "piso"
+    },
+    {
+      "id": "f-doc-bench",
+      "from": "benchout",
+      "to": "informe",
+      "label": "hallazgos"
+    },
+    {
+      "id": "f-dep-lead",
+      "from": "leadout",
+      "to": "deploy",
+      "label": "copia"
+    },
+    {
+      "id": "f-dep-piso",
+      "from": "pisoout",
+      "to": "deploy",
+      "label": "opcional"
+    },
+    {
+      "id": "f-dep-bench",
+      "from": "benchout",
+      "to": "deploy",
+      "label": "hash verificado"
+    },
+    {
+      "id": "f-app",
+      "from": "deploy",
+      "to": "app",
+      "label": "agregados",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-piloto-in",
+      "from": "segout",
+      "to": "piloto",
+      "label": "ua_ingresantes",
+      "variant": "security",
+      "classification": "nivel persona"
+    },
+    {
+      "id": "f-piloto-out",
+      "from": "piloto",
+      "to": "deploy",
+      "label": "solo agregados",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Cómo leerlo",
+      "items": [
+        "Cada flecha es una lectura o escritura que hace el código; cada nodo cita el script responsable.",
+        "La app abre en Hallazgos y lee deploy/data publicada; en local lee data/results.",
+        "El benchmark de pares no se precalcula: la app ajusta los clusters al abrir la sección."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Lo que no se publica",
+      "items": [
+        "ua_ingresantes y ua_segmentos tienen una fila por persona (MRUN) y package_deployment no los copia.",
+        "package_deployment rechaza columnas mrun, rut, email o fecha_nacimiento antes de copiar.",
+        "El piloto FAN entra a deploy/data solo con modelos_resumen.json e institucional_agregado."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Salidas sin consumidor todavía",
+      "items": [
+        "data/results/marts y ua_segmentos se escriben, pero ningún script ni vista los lee.",
+        "El piloto también lee la capa slim y los titulados; su diagrama muestra esas entradas."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,398 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Piso predictivo previo al ingreso: ¿cuánto se sabe antes de matricularse?",
+    "output": ".archify/workflow-piso-preingreso-20261030-092706/piso-preingreso.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yerkocp28/Analitica_Estudiantes.git",
+      "revision": "f5b4e528859ef1e728ad608eda0135452ea88aba"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Paso de cálculo"
+        },
+        "database": {
+          "label": "Datos o artefacto"
+        },
+        "external": {
+          "label": "Fuente de datos"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "src",
+      "label": "Bases abiertas Mineduc (MRUN)"
+    },
+    {
+      "id": "coh",
+      "label": "Cohorte y etiqueta"
+    },
+    {
+      "id": "mod",
+      "label": "Regresión logística balanceada"
+    },
+    {
+      "id": "out",
+      "label": "Salidas"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph-datos",
+      "label": "Construcción",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "ph-modelos",
+      "label": "Tres evaluaciones",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "mat",
+    "ingreso",
+    "etiqueta",
+    "enriquecer",
+    "temporal",
+    "ablacion",
+    "o-abl"
+  ],
+  "nodes": [
+    {
+      "id": "mat",
+      "lane": "src",
+      "col": 0,
+      "type": "external",
+      "label": "Matrícula 2023–2025",
+      "sublabel": "solo columnas usadas",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 77,
+          "end_line": 99,
+          "label": "load_matricula"
+        }
+      ]
+    },
+    {
+      "id": "paes",
+      "lane": "src",
+      "col": 1,
+      "type": "external",
+      "label": "PAES 2023 y 2024",
+      "sublabel": "0 = no rindió → vacío",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 56,
+          "end_line": 63,
+          "label": "columnas y ceros"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 338,
+          "end_line": 345,
+          "label": "load_paes"
+        }
+      ]
+    },
+    {
+      "id": "escolar",
+      "lane": "src",
+      "col": 3,
+      "type": "external",
+      "label": "Trayectoria escolar",
+      "sublabel": "año previo al ingreso",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 405,
+          "end_line": 410,
+          "label": "asistencia mensual"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 454,
+          "end_line": 460,
+          "label": "SEP y becas"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 396,
+          "end_line": 402,
+          "label": "bloques de variables"
+        }
+      ]
+    },
+    {
+      "id": "ingreso",
+      "lane": "coh",
+      "col": 1,
+      "type": "backend",
+      "label": "Ingresantes del año",
+      "sublabel": "pregrado · cruce MRUN con PAES",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 368,
+          "end_line": 374,
+          "label": "_construir_cohorte"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 239,
+          "end_line": 247,
+          "label": "cohorte 2024 (aleatorio)"
+        }
+      ]
+    },
+    {
+      "id": "etiqueta",
+      "lane": "coh",
+      "col": 2,
+      "type": "backend",
+      "label": "Etiqueta desertor",
+      "sublabel": "no sigue en misma institución y carrera",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 375,
+          "end_line": 390,
+          "label": "etiqueta y variables base"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 252,
+          "end_line": 270,
+          "label": "etiqueta (aleatorio)"
+        }
+      ]
+    },
+    {
+      "id": "enriquecer",
+      "lane": "coh",
+      "col": 3,
+      "type": "backend",
+      "label": "Enriquecer",
+      "sublabel": "vacío donde no hay calce",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 503,
+          "end_line": 506,
+          "label": "_enriquecer"
+        }
+      ]
+    },
+    {
+      "id": "aleatorio",
+      "lane": "mod",
+      "col": 3,
+      "type": "backend",
+      "label": "Piso aleatorio",
+      "sublabel": "cohorte 2024 · 70/30",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 272,
+          "end_line": 299,
+          "label": "_ajustar"
+        }
+      ]
+    },
+    {
+      "id": "temporal",
+      "lane": "mod",
+      "col": 4,
+      "type": "backend",
+      "label": "Piso temporal",
+      "sublabel": "2023 entrena → 2024 testea",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 526,
+          "end_line": 559,
+          "label": "cohortes"
+        },
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 575,
+          "end_line": 613,
+          "label": "_evaluar"
+        }
+      ]
+    },
+    {
+      "id": "ablacion",
+      "lane": "mod",
+      "col": 5,
+      "type": "backend",
+      "label": "Ablación A–E",
+      "sublabel": "solo universidades",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 615,
+          "end_line": 640,
+          "label": "bloques A–E"
+        }
+      ]
+    },
+    {
+      "id": "o-nac",
+      "lane": "out",
+      "col": 3,
+      "type": "database",
+      "label": "piso_preingreso_nacional",
+      "sublabel": "AUC sistema y universidades",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 324,
+          "end_line": 328,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "o-temp",
+      "lane": "out",
+      "col": 4,
+      "type": "database",
+      "label": "piso_preingreso_temporal",
+      "sublabel": "AUC validación temporal",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 642,
+          "end_line": 646,
+          "label": "escritura"
+        }
+      ]
+    },
+    {
+      "id": "o-abl",
+      "lane": "out",
+      "col": 5,
+      "type": "database",
+      "label": "ablacion_piso.csv",
+      "sublabel": "+ descriptivas escolares",
+      "sources": [
+        {
+          "path": "scripts/analyze_mineduc.py",
+          "line": 648,
+          "end_line": 667,
+          "label": "documentacion/datos"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "g-mat",
+      "from": "mat",
+      "to": "ingreso",
+      "label": "año de ingreso",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g-paes",
+      "from": "paes",
+      "to": "ingreso",
+      "label": "cruce interno"
+    },
+    {
+      "id": "g-etq",
+      "from": "ingreso",
+      "to": "etiqueta",
+      "label": "año siguiente",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g-enr",
+      "from": "etiqueta",
+      "to": "enriquecer",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g-esc",
+      "from": "escolar",
+      "to": "enriquecer",
+      "label": "por MRUN"
+    },
+    {
+      "id": "g-rnd",
+      "from": "etiqueta",
+      "to": "aleatorio",
+      "label": "ficha base",
+      "role": "branch"
+    },
+    {
+      "id": "g-tmp",
+      "from": "enriquecer",
+      "to": "temporal",
+      "label": "2 cohortes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g-abl",
+      "from": "temporal",
+      "to": "ablacion",
+      "label": "mismo split",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g-o1",
+      "from": "aleatorio",
+      "to": "o-nac"
+    },
+    {
+      "id": "g-o2",
+      "from": "temporal",
+      "to": "o-temp"
+    },
+    {
+      "id": "g-o3",
+      "from": "ablacion",
+      "to": "o-abl",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Variables",
+      "items": [
+        "Ficha base: notas de enseñanza media, NEM, ranking, cinco pruebas PAES, sexo, dependencia agrupada y años desde el egreso.",
+        "Asistencia de enseñanza media: nivel anual, pendiente marzo–diciembre, mínimo y último trimestre.",
+        "Socioeconómico: quintil, decil DFE, gratuidad, FSCU, beca de arancel, prioritario y preferente."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ablación (validación temporal)",
+      "items": [
+        "A: ficha base · B: + asistencia · C: + socioeconómico · D: + ambos · E: solo asistencia.",
+        "El delta de cada bloque se mide contra A, con el mismo train 2023 y test 2024."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Reglas",
+      "items": [
+        "La mediana de imputación sale del train; usar la del conjunto completo filtraría el test.",
+        "Ninguna persona ni año aparece en train y test a la vez en el piso temporal.",
+        "El mismo script calcula la retención real UA 2024→2025 por sede y carrera, sin modelo."
+      ]
+    }
+  ]
+}
