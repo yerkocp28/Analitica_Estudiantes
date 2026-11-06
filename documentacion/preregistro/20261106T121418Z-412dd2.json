@@ -1,0 +1,135 @@
+{
+  "tipo": "preregistro",
+  "run_id": "20261106T121418Z-412dd2",
+  "creado_utc": "2026-11-06T12:14:18.916624+00:00",
+  "revision_git_al_sellar": "ee31c6ee88726f247d26f76be677d47cc3aa202a",
+  "transicion": {
+    "origen": 202520,
+    "objetivo": 202610
+  },
+  "fuentes": {
+    "integracion": {
+      "run_id": "20261020T142529Z-14cba1",
+      "manifest_sha256": "5543009cb7a38bb2ae49ebbdd94b1ed537a2edc79e65d453adc4892c790a18c1",
+      "excel_sha256": "2b47685834e6fd89cb3f3ab23232392fb5b750cb7d731e68cb19b3866d1eabf7"
+    },
+    "modelos": {
+      "run_id": "20261020T145523Z-99cb7b",
+      "manifest_sha256": "524c7efed6c90cb687c52c82f66654ac2f3105a060ba875339bb1d4885a55c21",
+      "modelos_sha256": {
+        "academico": "b72bff6144c960443539b29c5ef992b0d03afe74580132457d2d131de4cabb9d",
+        "matricula": "3c649c69b33d36764e5f06bc07b10fc8ad46bf26b625f95e944f8e194347bfc7"
+      }
+    }
+  },
+  "codigo_sha256": {
+    "preregistro.py": "52768f50c038ad9a4e12f98fb6b3baa57e2360e19eada6dd822c5755daba8faf",
+    "modelos_institucionales.py": "4d7008c799f339664ebc205fc9421b0706e8538a132d233a70c5e0c713bb1530",
+    "models.py": "3d5cdef526cc010ee2bf243fcc05fdb98f7fefd142187b88c4b9964ba95030a5"
+  },
+  "predicciones": {
+    "archivo": "piloto_fan/artifacts/preregistro/20261106T121418Z-412dd2/predicciones.parquet",
+    "versionado": false,
+    "filas": 4220,
+    "sha256_archivo": "605286e5b2a734a26750c174d3c6294c52a0ee1e6f48269e3896b2b10f72fbf1",
+    "sha256_contenido": "2d0abf04ceccdaa163029a9f15917107f06e2d5bc3c2f3ab531393805dd56716"
+  },
+  "casos": {
+    "academico": {
+      "prevalencia_transicion_comparable": 0.2590511860174782,
+      "algoritmo": "Regresión logística",
+      "n": 2110,
+      "riesgo_medio_a": 0.3466630658572348,
+      "riesgo_medio_b": 0.3686520448978886,
+      "prevalencia_entrenamiento_a": 0.2650767543859649,
+      "prevalencia_entrenamiento_b": 0.29270462633451955,
+      "entrenamiento_a_n": 3648,
+      "entrenamiento_b_n": 5620,
+      "prevalencia_por_transicion": [
+        {
+          "origen": 202410,
+          "objetivo": 202420,
+          "n": 2046,
+          "prevalencia": 0.2697947214076246
+        },
+        {
+          "origen": 202420,
+          "objetivo": 202510,
+          "n": 1602,
+          "prevalencia": 0.2590511860174782
+        },
+        {
+          "origen": 202510,
+          "objetivo": 202520,
+          "n": 1972,
+          "prevalencia": 0.3438133874239351
+        }
+      ]
+    },
+    "matricula": {
+      "prevalencia_transicion_comparable": 0.1669750231267345,
+      "algoritmo": "Random forest",
+      "n": 2110,
+      "riesgo_medio_a": 0.0867096882980714,
+      "riesgo_medio_b": 0.06550267402825755,
+      "prevalencia_entrenamiento_a": 0.08731211317418214,
+      "prevalencia_entrenamiento_b": 0.06007015492546039,
+      "entrenamiento_a_n": 4524,
+      "entrenamiento_b_n": 6842,
+      "prevalencia_por_transicion": [
+        {
+          "origen": 202410,
+          "objetivo": 202420,
+          "n": 2362,
+          "prevalencia": 0.014394580863674851
+        },
+        {
+          "origen": 202420,
+          "objetivo": 202510,
+          "n": 2162,
+          "prevalencia": 0.1669750231267345
+        },
+        {
+          "origen": 202510,
+          "objetivo": 202520,
+          "n": 2318,
+          "prevalencia": 0.006902502157031924
+        }
+      ]
+    }
+  },
+  "advertencias_previas": [
+    "academico: el riesgo medio sellado (A) es 34,7%, pero la transición que también cruza de año tuvo 25,9%. Se espera descalibración; el criterio principal es la captura al 20%, que depende del orden de los estudiantes y no del nivel del riesgo.",
+    "matricula: el riesgo medio sellado (A) es 8,7%, pero la transición que también cruza de año tuvo 16,7%. Se espera descalibración; el criterio principal es la captura al 20%, que depende del orden de los estudiantes y no del nivel del riesgo."
+  ],
+  "protocolo": {
+    "pregunta": "¿Conserva el modelo del informe su capacidad en un semestre que no existía al sellar?",
+    "variantes": {
+      "A": "Modelo del informe sin cambios, entrenado con 2024-1→2024-2 y 2024-2→2025-1. Decide el resultado.",
+      "B": "Mismo algoritmo e hiperparámetros reentrenado con las tres transiciones. Informa si reentrenar ayuda."
+    },
+    "etiquetas": {
+      "academico": "Al menos una nota numérica bajo 4 en 2026-1. Negativo solo si todo lo observado es numérico y ≥ 4; códigos o ausencia de historia dejan la etiqueta desconocida y fuera de la evaluación.",
+      "matricula": "Ningún registro UA en 2026-1, considerando todos los estados y carreras del extracto."
+    },
+    "definicion_etiquetas": "piloto_fan.modelos_institucionales.label, la misma del entrenamiento.",
+    "reglas_de_comparacion": {
+      "academico": "Fracción de notas numéricas bajo 4 en 2025-2.",
+      "matricula": "Tasa histórica por carrera, contraída con 30 casos hacia el promedio."
+    },
+    "metricas": [
+      "Captura al 20% con desempate fraccional.",
+      "AUC y precisión promedio.",
+      "Brier y Brier skill frente a la prevalencia del entrenamiento de cada variante.",
+      "IC 95% bootstrap por persona: 300 repeticiones, semilla 42."
+    ],
+    "criterio": "Señal prospectiva si, en la variante A, el límite inferior del IC de la captura al 20% supera 0,20 (azar), el límite inferior del IC de la diferencia contra la regla supera 0 y el Brier skill es positivo. Si no se cumple, se informa igual y el modelo no se promueve.",
+    "invalidacion": [
+      "La huella del archivo o del contenido no coincide con este sello.",
+      "Cambió la clave de seudonimización (artifacts/institucional/.identity_key): los student_key no se unirían.",
+      "El extracto 2026 redefine variables o estados del semestre de origen.",
+      "Este protocolo se edita después del commit que lo sella."
+    ],
+    "uso": "Las predicciones no se muestran ni se entregan y no generan alertas: 2026-1 ya ocurrió. Existen solo para ser evaluadas."
+  }
+}

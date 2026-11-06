@@ -413,3 +413,33 @@ duplicadas en la documentación. La primera evaluación muestra señal útil en
 resultado académico y un caso de matrícula con muy pocos eventos y problemas
 de calibración. Ambos permanecen **experimentales**. Los pendientes institucionales
 siguen abiertos y no se genera scoring de alumnos actuales.
+
+## Preregistro 2025-2 → 2026-1
+
+Con tres transiciones, la prueba de los modelos institucionales es una
+reconstrucción: el resultado ya estaba en el archivo cuando se eligió el
+modelo. La única evaluación que no puede contaminarse es una cuyas
+predicciones existían, con fecha y huella, antes de que el resultado llegara.
+
+```powershell
+.venv\Scripts\python.exe -m piloto_fan.preregistro            # sella 2025-2 → 2026-1
+.venv\Scripts\python.exe -m piloto_fan.preregistro --evaluar  # cuando exista 2026-1
+```
+
+El sello calcula dos variantes por caso. **A** es el modelo del informe sin
+cambios, y decide si el informe generaliza. **B** es el mismo algoritmo
+reentrenado con las tres transiciones, e informa si conviene reentrenar.
+
+- Las predicciones, una fila por persona, quedan en
+  `artifacts/preregistro/<run_id>/` y no se versionan.
+- `documentacion/preregistro/<run_id>.json` sí se versiona: huellas del archivo
+  y del contenido, fuentes, resumen agregado, advertencias escritas antes de
+  ver el resultado y el protocolo completo. El commit que lo agrega es el
+  sello de tiempo.
+- La evaluación usa `label`, la misma definición de resultado del
+  entrenamiento, y se niega a correr si la huella no coincide.
+- Unir el resultado exige la misma `.identity_key`: si se pierde, el
+  preregistro queda inutilizable.
+
+No genera alertas ni se muestra en la app. 2026-1 ya ocurrió; estas
+predicciones existen solo para ser evaluadas.

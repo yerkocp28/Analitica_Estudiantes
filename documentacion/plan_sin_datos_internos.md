@@ -1,9 +1,32 @@
 # Plan de avance con datos públicos
 
-Supuesto de trabajo: **los accesos a Banner y Canvas se retrasan y no hay fecha
-comprometida.** Este documento define qué se puede cumplir igual, qué no, y cómo
-dejar todo listo para que la llegada de los datos internos sea una conexión y no
-una reescritura.
+> **Actualización 2026-11-06: el acceso no llegó y el plan ya no lo espera.**
+>
+> El supuesto de abajo era un retraso. Pasa a ser permanente: no habrá conexión
+> a Banner ni a Canvas dentro del proyecto. Tres consecuencias:
+>
+> 1. **La postulación no exigía esa conexión.** Comprometió acceso a los datos
+>    consolidados por la VRA, una segmentación y dos modelos elegidos *con las
+>    direcciones de carrera*, publicados «en algún mecanismo por definir». La
+>    alerta semanal con conducta de Canvas era ambición del documento maestro.
+> 2. **La Fase B cambia de forma.** No es «conectar adaptadores el día del
+>    acceso», sino recibir cada semestre el mismo extracto de Banner que
+>    Registro Académico ya entregó una vez (`STG UWVHIAC` y `STG UWVMAHI`). La
+>    gestión prioritaria es P09: responsable, consulta fija y cadencia.
+> 3. **El argumento central se actualiza.** Con solo notas semestrales del
+>    extracto, el modelo de resultado académico llega a AUC 0,812 en su prueba
+>    retrospectiva, contra 0,636 de todo lo previo al ingreso. Para validarlo
+>    sin contaminación se sellaron las predicciones 2025-2 → 2026-1 antes de
+>    conocer el resultado: ver `documentacion/preregistro/` y
+>    [el preregistro del piloto](../piloto_fan/README.md#preregistro-2025-2--2026-1).
+>
+> Lo que sigue se conserva como registro de cómo se razonó con el supuesto
+> anterior. La Fase B (sección 5) queda sustituida por el punto 2.
+
+Supuesto de trabajo original: **los accesos a Banner y Canvas se retrasan y no
+hay fecha comprometida.** Este documento define qué se puede cumplir igual, qué
+no, y cómo dejar todo listo para que la llegada de los datos internos sea una
+conexión y no una reescritura.
 
 ---
 

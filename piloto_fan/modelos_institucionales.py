@@ -84,30 +84,38 @@ def snapshots(frames):
     return d[["student_key", "term", "career", "campus"] + NUMERIC + CATEGORICAL]
 
 
-def datasets(frames):
-    """No requiere matrícula ni resultado futuro para entrar a la población base."""
-    base = snapshots(frames)
+def label(d, frames, target):
+    """Etiquetas del semestre `target` para las filas de `d` (una por student_key).
+
+    Es la única definición de los dos resultados: la usan el entrenamiento y la
+    evaluación del preregistro, para que ambos midan exactamente lo mismo.
+    """
     courses = frames["courses"]
-    future = courses.groupby(["student_key", "term"]).agg(
+    future = courses.loc[courses.term.eq(target)].groupby("student_key").agg(
         observed=("nrc", "size"), numeric=("grade_numeric", "count"),
         minimum=("grade_numeric", "min")).reset_index()
     presence = set(map(tuple, frames["enrollment"][["student_key", "term"]].drop_duplicates().to_numpy()))
     observed_terms = set(frames["enrollment"].term)
-    academic_terms = set(courses.term)
+    d = d.merge(future, on="student_key", how="left", validate="one_to_one")
+    d["academic_target"] = np.nan
+    positive = d.minimum.lt(4)
+    negative = d.observed.gt(0) & d.observed.eq(d.numeric) & d.minimum.ge(4)
+    if target in set(courses.term):
+        d.loc[positive, "academic_target"] = 1.
+        d.loc[negative, "academic_target"] = 0.
+    d["enrollment_target"] = [float((pid, target) not in presence) if target in observed_terms else np.nan
+                              for pid in d.student_key]
+    return d
+
+
+def datasets(frames):
+    """No requiere matrícula ni resultado futuro para entrar a la población base."""
+    base = snapshots(frames)
     rows = []
     for origin, target in TRANSITIONS:
         d = base.loc[base.term.eq(origin)].rename(columns={"term": "source_term"}).copy()
         d["outcome_term"] = target
-        f = future.loc[future.term.eq(target)].drop(columns="term")
-        d = d.merge(f, on="student_key", how="left", validate="one_to_one")
-        d["academic_target"] = np.nan
-        positive = d.minimum.lt(4)
-        negative = d.observed.gt(0) & d.observed.eq(d.numeric) & d.minimum.ge(4)
-        if target in academic_terms:
-            d.loc[positive, "academic_target"] = 1.
-            d.loc[negative, "academic_target"] = 0.
-        d["enrollment_target"] = [float((pid, target) not in presence) if target in observed_terms else np.nan
-                                  for pid in d.student_key]
+        d = label(d, frames, target)
         # Keep outcome observability for auditing, never for model features.
         rows.append(d)
     all_rows = pd.concat(rows, ignore_index=True)
