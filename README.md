@@ -184,6 +184,17 @@ Nada de esto es obligatorio de una vez: cada script detecta lo que falta y se
 salta lo que no está. Con solo dos años de matrícula el benchmark funciona
 igual, con una transición y sin titulación por cohorte.
 
+**Informe de posición de la FAN.** Compara el área de Administración y
+Comercio con sus cinco pares más cercanos y con el resto del sistema. Muestra
+los tres niveles de continuidad, la serie de cinco cohortes con los mismos pares
+y la sensibilidad al número de pares. También compara el perfil institucional y
+destaca los indicadores que quedan fuera del rango de los pares. Usa solo los
+agregados públicos de `deploy/data/`, así que puede circular sin restricciones.
+
+```bash
+python scripts/informe_pares_fan.py   # -> documentacion/informe_pares_fan.html
+```
+
 ### Recursos institucionales (CNED)
 
 `scripts/download_cned.py` baja la base **INDICES Institucional 2005–2025** del

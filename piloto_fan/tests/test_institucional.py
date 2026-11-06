@@ -6,7 +6,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from piloto_fan.institucional import (
-    HOME, MAPPING_H, MAPPING_M, export_aggregate, grouped_results, load,
+    HOME, MAPPING_H, MAPPING_M, course_campus_map, export_aggregate, grouped_results, load,
     prepare, read_config, select_data, summary,
 )
 
@@ -92,6 +92,36 @@ def test_invalid_grain_and_out_of_range_grade():
         prepare(pd.concat([h, h]), m, read_config(), b"test-secret")
     with pytest.raises(ValueError, match="Clave ausente"):
         prepare(pd.DataFrame([history(None, 1, "4,0")]), m, read_config(), b"test-secret")
+
+
+def notes(campus, people, below, code="MAT:101", start=0):
+    """`people` personas con una nota cada una en `campus`; las primeras `below` bajo 4."""
+    return [{"student_key": f"k{start+i}", "campus_code": campus, "campus": "Sede " + campus,
+             "course_campus_code": campus, "course_code": code, "course_name": "Matemática",
+             "grade_numeric": 3.0 if i < below else 5.5, "numeric_below4": float(i < below)}
+            for i in range(people)]
+
+
+def test_course_map_compares_each_campus_with_the_published_rest_only():
+    h = pd.DataFrame(notes("TA", 60, 36) + notes("PR", 60, 12, start=100)
+                     + notes("SM", 9, 9, start=200)  # Bajo el mínimo: no se publica ni entra al resto.
+                     + notes("TE", 40, 0, code="AUD:200", start=300))
+    table = course_campus_map(h, minimum=10).set_index(["Código de asignatura", "Sede de la asignatura"])
+    assert ("MAT:101", "Sede SM") not in table.index
+    talca, prov = table.loc[("MAT:101", "Sede TA")], table.loc[("MAT:101", "Sede PR")]
+    assert talca["Resto de sedes bajo 4 (%)"] == pytest.approx(prov["Notas numéricas bajo 4 (%)"])
+    assert talca["Diferencia con el resto (pp)"] == pytest.approx(40)
+    assert (talca["Lectura"], prov["Lectura"]) == ("Sobre el resto", "Bajo el resto")
+    assert talca["IC 95% inferior (%)"] < 60 < talca["IC 95% superior (%)"]
+    assert table.loc[("AUD:200", "Sede TE"), "Lectura"] == "Única sede publicable"
+    assert table.reset_index()["Código de asignatura"].iloc[0] == "MAT:101"  # Más notas bajo 4 primero.
+    export_aggregate(table.reset_index(), {})  # Columnas aprobadas para descargar.
+
+
+def test_course_map_does_not_flag_differences_within_noise():
+    h = pd.DataFrame(notes("TA", 20, 7) + notes("PR", 20, 5, start=100))
+    assert course_campus_map(h, minimum=10)["Lectura"].eq("Sin diferencia clara").all()
+    assert course_campus_map(h, minimum=21).empty
 
 
 def test_export_allowlist_and_spreadsheet_formula_protection(prepared):

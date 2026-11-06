@@ -186,7 +186,12 @@ def test_los_ingresantes_reales_son_coherentes():
     # Los tres niveles están anidados, igual que en el resto del proyecto.
     a, b, c = (pd.to_numeric(d[x], errors="coerce")
                for x in ("sigue_carrera", "sigue_universidad", "sigue_sistema"))
-    assert (b >= a).all() and (c >= b).all()
+    observado = a.notna()
+    assert (b[observado] >= a[observado]).all() and (c[observado] >= b[observado]).all()
+    # La cohorte sin año siguiente queda sin resultado en los tres niveles, nunca en cero.
+    assert observado.eq(b.notna()).all() and observado.eq(c.notna()).all()
+    sin_resultado = d.loc[~observado, "cohorte"]
+    assert sin_resultado.empty or sin_resultado.eq(d.cohorte.max()).all()
     # El percentil existe donde existe el puntaje, y solo ahí.
     if "percentil_nem" in d.columns:
         assert d.percentil_nem.notna().equals(d.puntaje_nem.notna())

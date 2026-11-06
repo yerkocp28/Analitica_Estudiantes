@@ -16,8 +16,8 @@ para eso hace falta el comportamiento semanal dentro del curso.
 
 COBERTURA DESIGUAL, DECLARADA
 
-    matrícula        2007-2025   las 19 cohortes
-    admisión         2021-2025   PAES/PDT; la PSU no es dato abierto
+    matrícula        2007-2026   20 cohortes; 2026 sin resultado hasta la matrícula 2027
+    admisión         2021-2026   PAES/PDT; la PSU no es dato abierto
     socioeconómico   2023-2024   becas, SEP, asistencia de enseñanza media
 
 Las features que no existen para una cohorte quedan en NaN, no en cero. El
@@ -135,11 +135,16 @@ def _sep(anio: int) -> pd.DataFrame | None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--desde", type=int, default=2007)
-    ap.add_argument("--hasta", type=int, default=2025)
+    ap.add_argument("--hasta", type=int,
+                    help="última cohorte (default: el último año de matrícula descargado)")
     args = ap.parse_args()
+    # La cohorte más reciente entra aunque su resultado aún no exista: es la que
+    # llega, y su seguimiento queda vacío, no en cero (ver `_continuidad`).
+    hasta = args.hasta or max((int(p.stem.split("_")[-1]) for p in SLIM.glob("matricula_*.parquet")),
+                              default=args.desde)
 
     piezas = []
-    for anio in range(args.desde, args.hasta + 1):
+    for anio in range(args.desde, hasta + 1):
         c = _cohorte(anio)
         if c is None:
             continue

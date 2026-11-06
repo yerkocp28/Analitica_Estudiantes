@@ -217,9 +217,61 @@ def grouped_results(h, groups, minimum=10):
     return pd.DataFrame(rows, columns=[GROUP_LABELS[c] for c in groups] + MEASURES)
 
 
+MAP_COLUMNS = ["Código de asignatura", "Asignatura", "Sede de la asignatura",
+               "Personas con nota numérica", "Notas numéricas", "Notas bajo 4",
+               "Notas numéricas bajo 4 (%)", "IC 95% inferior (%)", "IC 95% superior (%)",
+               "Resto de sedes bajo 4 (%)", "Diferencia con el resto (pp)", "Lectura"]
+
+
+def wilson(k, n, z=1.96):
+    """Intervalo de Wilson para una proporción; estable con pocos casos o tasas extremas."""
+    k, n = np.asarray(k, float), np.asarray(n, float)
+    p = k / n
+    centre = (p + z*z/(2*n)) / (1 + z*z/n)
+    margin = z * np.sqrt(p*(1-p)/n + z*z/(4*n*n)) / (1 + z*z/n)
+    return centre - margin, centre + margin
+
+
+def course_campus_map(h, minimum=10):
+    """La misma asignatura en cada sede donde se dictó, comparada con el resto de sus sedes.
+
+    La sede es la de la asignatura, no la del plan: lo que se compara es dónde se dictó.
+    Solo entran celdas con `minimum` personas con nota numérica, y el resto de cada
+    asignatura se suma únicamente con esas celdas, de modo que ninguna celda suprimida
+    pueda despejarse por diferencia. Una diferencia es clara cuando los intervalos de
+    95% de la sede y del resto no se tocan.
+    """
+    names = dict(h[["campus_code", "campus"]].drop_duplicates().itertuples(index=False))
+    n = h.loc[h.grade_numeric.notna() & h.course_campus_code.notna()]
+    g = n.groupby(["course_code", "course_campus_code"]).agg(
+        name=("course_name", "first"), people=("student_key", "nunique"),
+        grades=("grade_numeric", "size"), below=("numeric_below4", "sum")).reset_index()
+    g = g.loc[g.people >= minimum].copy()
+    if g.empty:
+        return pd.DataFrame(columns=MAP_COLUMNS)
+    totals = g.groupby("course_code")[["grades", "below"]].transform("sum")
+    rest_n, rest_k = totals.grades - g.grades, totals.below - g.below
+    lo, hi = wilson(g.below, g.grades)
+    has_rest = rest_n.gt(0)
+    rest_lo, rest_hi = wilson(rest_k.where(has_rest), rest_n.where(has_rest))
+    g["reading"] = np.select(
+        [~has_rest, lo > rest_hi, hi < rest_lo],
+        ["Única sede publicable", "Sobre el resto", "Bajo el resto"], "Sin diferencia clara")
+    rate, rest_rate = g.below / g.grades, rest_k / rest_n.where(has_rest)
+    g["volume"] = g.groupby("course_code").below.transform("sum")
+    g = g.assign(campus_name=g.course_campus_code.map(lambda c: names.get(c, c)),
+                 rate=100*rate, lo=100*lo, hi=100*hi, rest=100*rest_rate,
+                 gap=100*(rate - rest_rate))
+    g = g.sort_values(["volume", "course_code", "campus_name"], ascending=[False, True, True])
+    out = g[["course_code", "name", "campus_name", "people", "grades", "below",
+             "rate", "lo", "hi", "rest", "gap", "reading"]]
+    out.columns = MAP_COLUMNS
+    return out.astype({"Notas bajo 4": int}).reset_index(drop=True)
+
+
 def export_aggregate(table, context):
     from .dashboard import export_csv
-    if set(table) - (set(GROUP_LABELS.values()) | set(MEASURES)):
+    if set(table) - (set(GROUP_LABELS.values()) | set(MEASURES) | set(MAP_COLUMNS)):
         raise ValueError("Solo se exportan columnas agregadas aprobadas.")
     return export_csv(table, {}, context)
 

@@ -10,7 +10,8 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from piloto_fan.dashboard import DIMENSIONS, display_name, export_csv, filtered, filtered_case, number, percent, profiles, series
+from piloto_fan import cohorte_nueva
+from piloto_fan.dashboard import DIMENSIONS, display_name, export_csv, filtered, filtered_case, number, percent, profiles, series, site_mix
 from piloto_fan.data import digest
 from piloto_fan.reporting import executive_html
 
@@ -262,11 +263,23 @@ elif section == "Perfiles de ingreso":
         st.warning(s["reason"])
         st.stop()
     data = frames["continuidad_dataset.parquet"].merge(frames["segmentacion_assignments.parquet"], on=["mrun", "cohorte"], validate="one_to_one")
+    try:
+        later = cohorte_nueva.load(run_id)
+    except (OSError, KeyError, ValueError) as exc:
+        st.warning(f"No se incluyen las cohortes posteriores a la corrida: {exc}")
+        later = None
+    later_years = sorted(later.cohorte.unique().astype(int).tolist()) if later is not None else []
+    if later is not None:
+        data = pd.concat([data, later], ignore_index=True)
     data = filtered(data, selection)
+    all_years = data
     year = year_choice(data)
     data = data[data.cohorte.eq(year)]
     st.caption(f"Aprendizaje: {', '.join(map(str, s['fit_cohorts']))}; asignación sin reajuste: "
-               f"{', '.join(map(str, s['holdout_cohorts']))}. {s['winner']}; silueta {number(s['silhouette'], 3)}.")
+               f"{', '.join(map(str, s['holdout_cohorts'] + later_years))}. {s['winner']}; silueta {number(s['silhouette'], 3)}.")
+    if year in later_years:
+        st.info(f"La cohorte {year} llegó después de la corrida y se ubicó con el mismo modelo, sin reentrenarlo. "
+                "Su continuidad se conocerá con la matrícula del año siguiente.")
     table = profiles(data, minimum)
     omitted = len(data) - (int(table.Estudiantes.sum()) if not table.empty else 0)
     if omitted:
@@ -280,6 +293,16 @@ elif section == "Perfiles de ingreso":
         st.info("No hay perfiles con tamaño suficiente para publicar en esta selección.")
     st.caption("No son niveles de riesgo. Carrera, sede y continuidad no definen los grupos. NEM/ranking usan percentiles "
                "dentro de la cohorte UA; admisión usa su referencia nacional. Ausente no equivale a cero.")
+    reference = [y for y in sorted(all_years.cohorte.unique().astype(int)) if y < year][-2:]
+    if reference:
+        st.subheader(f"Qué perfil recibe cada sede · {year} frente a {'–'.join(map(str, reference))}")
+        mix = site_mix(all_years, year, reference, minimum)
+        show_table(mix)
+        download(mix, "Descargar composición por sede", "perfiles_por_sede_fan.csv",
+                 **{"Cohorte de ingreso": year, "Referencia": "–".join(map(str, reference))})
+        st.caption("Participación dentro de cada sede. La continuidad histórica es la de ese perfil en esa sede en las "
+                   "cohortes con resultado observado: describe lo ocurrido, no predice a la cohorte nueva. "
+                   f"Se omiten celdas con menos de {minimum} estudiantes.")
     with st.expander("Comparación general de alternativas de segmentación"):
         candidates = pd.DataFrame(s["candidates"]).rename(columns={"algorithm": "Algoritmo", "k": "Grupos", "silhouette": "Silueta", "smallest_segment": "Mínimo de estudiantes", "largest_share": "Concentración (%)", "admissible": "Admisible"})
         candidates["Concentración (%)"] *= 100

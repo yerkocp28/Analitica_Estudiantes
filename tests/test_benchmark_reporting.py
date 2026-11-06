@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from student_analytics.modeling.benchmark_reporting import continuity_breakdown, sensitivity, executive_html
+from student_analytics.modeling.benchmark_reporting import (continuity_breakdown, executive_html, report_html,
+                                                            sensitivity)
 from student_analytics.modeling.benchmark import build_profiles
 
 
@@ -37,6 +38,31 @@ def test_informe_escapa_nombres_y_preserva_filtros():
     assert "<script>" not in html
     assert "Salud &amp; Educación" in html
     assert "80.0%" in html
+
+
+def test_informe_generico_escapa_hallazgos_secciones_y_celdas():
+    tabla = pd.DataFrame({"Universidad": ["<script>x</script>"], "Valor": [None]})
+    html = report_html("Título & más", "Sub", ["<b>hallazgo</b>"], [("Tabla", tabla), ("Nota", "a < b")],
+                       ["fuente <i>"], "06/11/2026")
+    assert "<script" not in html and "<b>" not in html and "<i>" not in html
+    assert "Título &amp; más" in html and "a &lt; b" in html and "Sin datos" in html
+
+
+def test_informe_fan_se_genera_con_los_datos_versionados(tmp_path, monkeypatch):
+    import importlib.util
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    if not (root / "deploy/data/retention_universities.parquet").exists():
+        pytest.skip("Faltan los agregados versionados.")
+    spec = importlib.util.spec_from_file_location("informe_pares_fan", root / "scripts/informe_pares_fan.py")
+    informe = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(informe)
+    monkeypatch.setattr(informe, "SALIDA", tmp_path / "informe.html")
+    assert informe.main() == 0
+    html = (tmp_path / "informe.html").read_text(encoding="utf-8")
+    assert "<script" not in html and "Lectura ejecutiva" in html
+    assert "Universidad Autonoma de Chile" in html  # La UA aparece, pero nunca como su propio par.
+    assert html.count("Universidad Autonoma de Chile") == 1
 
 
 def test_ingreso_desconocido_no_equivale_a_no_regular():

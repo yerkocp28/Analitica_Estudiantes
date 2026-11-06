@@ -3,13 +3,19 @@ from datetime import datetime
 import json
 from pathlib import Path
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
 from .dashboard import number, percent
 from .institucional import (
-    FILES, export_aggregate, grouped_results, load, select_data, summary,
+    FILES, course_campus_map, export_aggregate, grouped_results, load, select_data, summary,
 )
+
+# Rampa secuencial de un solo azul (100 → 650): la intensidad es la magnitud.
+RAMP = ["#cde2fb", "#86b6ef", "#2a78d6", "#104281"]
+MARKS = {"Sobre el resto": " ▲", "Bajo el resto": " ▼"}
+ROMAN = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII"}
 
 FILTERS = {
     "year": "Año observado", "regime": "Régimen", "term": "Período",
@@ -35,11 +41,49 @@ def table_download(table, name, context):
         return
     formats = {}
     for col in table.select_dtypes(include="number"):
-        digits = 2 if col == "Promedio numérico" else 1 if "(%)" in col else 0
+        digits = 2 if col == "Promedio numérico" else 1 if "(%)" in col or "(pp)" in col else 0
         formats[col] = lambda value, digits=digits: number(value, digits)
     st.dataframe(table.style.format(formats, na_rep="—"), hide_index=True, width="stretch")
     st.download_button("Descargar tabla filtrada", export_aggregate(table, context),
                        name + ".csv", "text/csv", key="inst_download_" + name)
+
+
+def course_label(name):
+    """«CÁLCULO II» → «Cálculo II»: tipo oración sin perder los números romanos."""
+    words = str(name).capitalize().split(" ")
+    return " ".join(w.upper() if w.upper() in ROMAN else w for w in words)
+
+
+def course_heatmap(table, top):
+    """Filas: asignaturas con más notas bajo 4; columnas: sede donde se dictaron."""
+    volume = table.groupby("Código de asignatura")["Notas bajo 4"].sum().nlargest(top)
+    d = table.loc[table["Código de asignatura"].isin(volume.index)].copy()
+    d["Fila"] = d["Asignatura"].map(course_label) + " · " + d["Código de asignatura"]
+    d["Texto"] = (d["Notas numéricas bajo 4 (%)"].round().astype(int).astype(str) + "%"
+                  + d["Lectura"].map(MARKS).fillna(""))
+    rows = (d.drop_duplicates("Código de asignatura").set_index("Código de asignatura")
+            .loc[volume.index, "Fila"].tolist())
+    top_value = max(50.0, float(d["Notas numéricas bajo 4 (%)"].max()))
+    y = alt.Y("Fila:N", sort=rows, title=None, axis=alt.Axis(labelLimit=320))
+    x = alt.X("Sede de la asignatura:N", title=None, sort="ascending",
+              axis=alt.Axis(orient="top", labelAngle=0))
+    tooltip = [alt.Tooltip("Asignatura:N"), alt.Tooltip("Código de asignatura:N"),
+               alt.Tooltip("Sede de la asignatura:N", title="Sede"),
+               alt.Tooltip("Personas con nota numérica:Q", format=","),
+               alt.Tooltip("Notas numéricas bajo 4 (%):Q", title="Notas bajo 4 (%)", format=".1f"),
+               alt.Tooltip("IC 95% inferior (%):Q", format=".1f"),
+               alt.Tooltip("IC 95% superior (%):Q", format=".1f"),
+               alt.Tooltip("Resto de sedes bajo 4 (%):Q", format=".1f"),
+               alt.Tooltip("Lectura:N")]
+    cells = alt.Chart(d).mark_rect(stroke="white", strokeWidth=2, cornerRadius=4).encode(
+        x=x, y=y, tooltip=tooltip,
+        color=alt.Color("Notas numéricas bajo 4 (%):Q", title="Notas bajo 4 (%)",
+                        scale=alt.Scale(domain=[0, top_value], range=RAMP, clamp=True)))
+    text = alt.Chart(d).mark_text(fontSize=12).encode(
+        x=x, y=y, text="Texto:N", tooltip=tooltip,
+        color=alt.condition(alt.datum["Notas numéricas bajo 4 (%)"] > .45*top_value,
+                            alt.value("white"), alt.value("#0b0b0b")))
+    return (cells + text).properties(height=26*len(rows))
 
 
 def render(home):
@@ -103,7 +147,8 @@ def render(home):
     st.caption("Fecha de corte no informada · Procesado " +
                datetime.fromisoformat(manifest["created_utc"]).strftime("%d/%m/%Y") +
                " · Los filtros institucionales son independientes de los del piloto con datos públicos.")
-    tabs = st.tabs(["Panorama", "Asignaturas", "Códigos de resultado", "Calidad y preguntas"])
+    tabs = st.tabs(["Panorama", "Asignaturas", "Mapa de asignaturas por sede",
+                    "Códigos de resultado", "Calidad y preguntas"])
     with tabs[0]:
         if m.empty:
             st.info("Sin registros para esta selección. No se sustituye por el total de la facultad.")
@@ -143,12 +188,39 @@ def render(home):
         table_download(grouped_results(h, ["course_code", "course_name"], minimum),
                        "institucional_asignaturas", context)
     with tabs[2]:
+        # Comparar sedes exige verlas todas: el filtro de campus del plan no aplica aquí.
+        _, hm, _ = select_data(frames, scope, {k: v for k, v in selection.items() if k != "campus"})
+        course_map = course_campus_map(hm, minimum)
+        st.write("**Dónde se concentran las notas bajo 4 y si la misma asignatura rinde distinto según la "
+                 "sede donde se dicta.** Cada celda es una asignatura en una sede, con al menos "
+                 f"{minimum} personas con nota numérica. El filtro de campus del plan no se aplica en esta pestaña.")
+        comparable = course_map.loc[course_map["Lectura"].ne("Única sede publicable")]
+        if course_map.empty:
+            st.info(f"No hay asignaturas con al menos {minimum} personas con nota numérica para esta selección.")
+        else:
+            a, b, c = st.columns(3)
+            a.metric("Asignaturas comparables entre sedes", number(comparable["Código de asignatura"].nunique()))
+            b.metric("Celdas sobre el resto de sus sedes", number(comparable["Lectura"].eq("Sobre el resto").sum()))
+            c.metric("Notas bajo 4 en el mapa", number(course_map["Notas bajo 4"].sum()))
+            top = st.slider("Asignaturas con más notas bajo 4", 5, 40, 15, step=5, key="inst_map_top")
+            st.altair_chart(course_heatmap(course_map, top), width="stretch")
+            st.caption("Filas ordenadas por cantidad de notas bajo 4, que es dónde el refuerzo alcanza a más "
+                       "estudiantes. ▲ / ▼: la sede está por sobre o por debajo del resto de las sedes en la "
+                       "misma asignatura y sus intervalos de 95% no se tocan; sin marca, la diferencia no es "
+                       "clara. Celda vacía: la asignatura no se dictó en esa sede o tuvo menos de "
+                       f"{minimum} personas.")
+            st.warning("Una diferencia entre sedes no distingue docencia, criterios de evaluación ni perfil de "
+                       "ingreso de los estudiantes. Sirve para decidir dónde mirar, no para atribuir la causa. "
+                       "Las notas bajo 4 no son la tasa oficial de reprobación.")
+            map_context = {**context, "Campus del plan": "Todos · el mapa compara sedes de la asignatura"}
+            table_download(course_map, "institucional_mapa_asignaturas", map_context)
+    with tabs[3]:
         st.write("Se conservan los códigos originales sin interpretarlos como nota cero ni como un mismo tipo de reprobación.")
         table_download(grouped_results(h.loc[h.result_code.notna()], ["result_code"], minimum),
                        "institucional_codigos", context)
         st.caption("Solo se muestran códigos con al menos 10 personas en la selección. Los códigos y notas ausentes "
                    "no participan en promedios ni en el porcentaje de notas numéricas bajo 4.")
-    with tabs[3]:
+    with tabs[4]:
         st.subheader("Preguntas pendientes y cómo seguimos trabajando")
         st.write("Estas preguntas no detienen el análisis descriptivo. Cada respuesta habilitará los indicadores "
                  "o modelos que hoy requieren esa definición.")

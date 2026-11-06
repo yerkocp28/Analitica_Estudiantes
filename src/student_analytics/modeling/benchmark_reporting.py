@@ -40,6 +40,31 @@ def continuity_breakdown(shown):
     return pd.DataFrame(rows)
 
 
+def report_html(title, subtitle, findings, sections, notes, generated):
+    """Informe imprimible sin scripts. `sections` son pares (título, tabla o párrafo);
+    todo texto y toda celda se escapan."""
+    def block(content):
+        if isinstance(content, pd.DataFrame):
+            # `na_rep` no cubre None en columnas de texto: se reemplaza antes.
+            shown = content.astype(object).where(content.notna(), "Sin datos")
+            return shown.to_html(index=False, escape=True, border=0)
+        return f"<p>{escape(str(content))}</p>"
+    body = "".join(f"<h2>{escape(name)}</h2>{block(content)}" for name, content in sections)
+    items = "".join(f"<li>{escape(f)}</li>" for f in findings)
+    extra = "".join(f"<p class='nota'>{escape(n)}</p>" for n in notes)
+    return f"""<!doctype html><html lang="es"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{escape(title)}</title>
+<style>body{{font:16px/1.6 system-ui,sans-serif;color:#3d3935;max-width:1100px;margin:40px auto;padding:0 24px}}
+h1{{border-top:6px solid #e2211c;padding-top:16px;margin-bottom:4px}}table{{border-collapse:collapse;width:100%;font-size:13px}}
+th,td{{padding:8px;border-bottom:1px solid #ddd;text-align:left}}th{{background:#f4f4f4}}
+.lectura{{background:#f8f7f5;border-left:4px solid #e2211c;padding:12px 24px}}.nota{{font-size:13px;color:#6b6560}}
+@media print{{body{{margin:0;font-size:12px}}table{{font-size:10px}}}}</style>
+<h1>{escape(title)}</h1><p>{escape(subtitle)}</p>
+<div class="lectura"><h2>Lectura ejecutiva</h2><ul>{items}</ul></div>{body}
+<h2>Alcance</h2>{extra}<p class="nota">Generado: {escape(generated)}</p></html>"""
+
+
 def executive_html(year, area, indicator, mode, stats, table, scenarios, generated):
     """HTML imprimible sin dependencias ni scripts; etiquetas siempre escapadas."""
     def pct(x):

@@ -60,6 +60,33 @@ def profiles(data: pd.DataFrame, minimum=10) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def site_mix(data: pd.DataFrame, cohort: int, reference: list[int], minimum=10) -> pd.DataFrame:
+    """Qué perfiles recibe cada sede en `cohort`, frente a las cohortes de referencia.
+
+    La continuidad es la que tuvo ese perfil en esa sede en las cohortes con
+    resultado observado: describe lo que pasó antes, no predice a la cohorte nueva.
+    """
+    rows = []
+    for site, g in data.groupby("nomb_sede", sort=True):
+        new, ref = g[g.cohorte.eq(cohort)], g[g.cohorte.isin(reference)]
+        if len(new) < minimum or len(ref) < minimum:
+            continue
+        for label in sorted(g.segment.dropna().unique()):
+            n_new, n_ref = int(new.segment.eq(label).sum()), int(ref.segment.eq(label).sum())
+            if max(n_new, n_ref) < minimum:
+                continue
+            known = g.loc[g.segment.eq(label), "target"].dropna()
+            share_new = 100 * n_new / len(new) if n_new >= minimum else np.nan
+            share_ref = 100 * n_ref / len(ref) if n_ref >= minimum else np.nan
+            rows.append({"Sede": display_name(site), "Perfil": f"Perfil {int(label)}",
+                         "Estudiantes": n_new if n_new >= minimum else np.nan,
+                         "Participación (%)": share_new, "Participación referencia (%)": share_ref,
+                         "Cambio (pp)": share_new - share_ref,
+                         "Continuidad histórica del perfil (%)": 100 * (1 - known.mean())
+                         if len(known) >= minimum else np.nan})
+    return pd.DataFrame(rows)
+
+
 def series(data: pd.DataFrame, minimum=10) -> pd.DataFrame:
     rows = []
     for year, group in data.groupby("cohorte"):

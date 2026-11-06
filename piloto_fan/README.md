@@ -104,6 +104,23 @@ partición: se informa la cobertura por grupo. La variación total entre tamaño
 de grupos mide cambio de composición, no estabilidad individual ni validación
 de acciones de apoyo.
 
+**Cohortes posteriores a la corrida.** Cuando llega una cohorte nueva a
+`data/results/ua_ingresantes.parquet`, se ubica en los perfiles ya aprendidos
+sin reentrenar ni renumerar:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/build_ua_cohorts.py   # incluye la última matrícula descargada
+.\.venv\Scripts\python.exe -m piloto_fan.cohorte_nueva
+```
+
+Usa el modelo de segmentación de la corrida vigente después de verificar su
+huella. Escribe en `artifacts/cohortes_nuevas/<corrida>/`, con su propio
+manifiesto. La vista **Perfiles de ingreso** la incluye en el selector de cohorte
+y muestra qué perfil recibe cada sede frente a las dos cohortes anteriores. Su
+continuidad queda vacía hasta que exista la matrícula del año siguiente. Un test
+comprueba que la asignación reproduce exactamente la de la corrida en sus
+cohortes de validación.
+
 ### Caso 1: continuidad
 
 Población de ingreso desde 2021. Resultado: no observar matrícula UA en el año
@@ -324,6 +341,31 @@ semánticos automáticamente.
   suficientes personas con nota. Los CSV contienen los mismos agregados de la vista.
 - La auditoría general y las preguntas están identificadas como no filtradas.
 
+### Mapa de asignaturas por sede
+
+La pestaña **Mapa de asignaturas por sede** compara una misma asignatura entre
+las sedes donde se dictó. Los códigos se comparten entre sedes, de modo que la
+comparación es por código y no por nombre.
+
+- **Sede:** la de la asignatura, no la del plan. Por eso el filtro de campus del
+  plan no se aplica en esa pestaña; los demás filtros sí.
+- **Celdas publicables:** asignatura y sede con al menos 10 personas con nota
+  numérica.
+- **Totales y restos:** el resto de las sedes se suma solo con celdas
+  publicables, de modo que ninguna celda suprimida pueda despejarse por
+  diferencia.
+- **Diferencia clara:** cada porcentaje lleva su intervalo de Wilson al 95%. La
+  diferencia con el resto cuenta como clara (▲ o ▼) solo si ambos intervalos no
+  se tocan.
+- **Orden:** el mapa ordena por cantidad de notas bajo 4, que es donde un
+  refuerzo alcanza a más estudiantes.
+
+Una diferencia entre sedes no separa docencia, criterios de evaluación ni perfil
+de ingreso. Además, muchas celdas corresponden a una o dos secciones, lo que
+acerca el dato a un docente identificable. Por eso el mapa vive solo en esta
+vista local y **no** forma parte de los agregados publicables de
+`deploy/data/institucional_agregado/`.
+
 ### Próximos entregables
 
 1. Ratificar reglas y alcance con las respuestas, manteniendo los diagnósticos utilizables.
@@ -413,6 +455,34 @@ duplicadas en la documentación. La primera evaluación muestra señal útil en
 resultado académico y un caso de matrícula con muy pocos eventos y problemas
 de calibración. Ambos permanecen **experimentales**. Los pendientes institucionales
 siguen abiertos y no se genera scoring de alumnos actuales.
+
+### Radar de inicio de semestre (prototipo)
+
+Está en *Modelos institucionales → Radar de inicio de semestre (prototipo)* y
+muestra lo que habría recibido cada dirección (carrera en una sede) al inicio de
+2025-2, junto con lo que pasó después. Lo calcula `radar.py` con el modelo
+académico guardado, sin reentrenarlo. Un test comprueba que reproduce
+exactamente las predicciones de prueba.
+
+- **Orden y corte:** cada dirección recibe a sus estudiantes de mayor a menor
+  riesgo, cortados en su propia capacidad de revisión (10%, 20% o 30%).
+- **Población:** entran todos los estudiantes del semestre de origen, también
+  quienes no tienen resultado conocido en el siguiente. La columna «Qué pasó»
+  distingue entre nota bajo 4, sin notas bajo 4, sin matrícula y resultado
+  incompleto.
+- **Señales de cada caso:** cuánto bajaría su riesgo si cada señal tuviera el
+  valor típico del entrenamiento, con todo lo demás igual. Se muestran hasta
+  tres señales con efecto de al menos 2 puntos.
+- **Sin probabilidades:** el modelo está descalibrado y recalibrarlo no cambia
+  el orden.
+- **Resultado retrospectivo:** se cuenta solo sobre quienes tienen resultado
+  conocido y se compara con la regla simple y con el azar, usando los mismos
+  cupos.
+- **Privacidad:** los estudiantes aparecen con seudónimo de 8 caracteres y la
+  lista no se descarga. Solo se descarga el resultado agregado por dirección.
+
+Solo cubre el caso académico. El de matrícula tiene 16 eventos en su prueba,
+porque 2025-1 → 2025-2 no cruza de año, y con eso no se puede demostrar nada.
 
 ## Preregistro 2025-2 → 2026-1
 

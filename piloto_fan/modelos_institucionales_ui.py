@@ -1,11 +1,17 @@
-"""Resultados agregados de los modelos institucionales; nunca publica predicciones individuales."""
+"""Resultados agregados de los modelos institucionales; nunca publica predicciones individuales.
+
+La única vista con filas por estudiante es el prototipo del radar: es retrospectiva,
+usa seudónimos, no muestra probabilidades y no se descarga.
+"""
 import json
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
 
+from . import radar
 from .dashboard import export_csv, number, percent
 from .models import capture, metrics
 from .modelos_institucionales import load_run
@@ -25,6 +31,56 @@ VARIABLES = {
 @st.cache_data
 def cached(folder, fingerprint):
     return load_run(folder)
+
+
+@st.cache_data
+def cached_radar(folder, fingerprint):
+    _, frames = load_run(folder)  # Verifica las huellas, incluido el modelo, antes de cargarlo.
+    bundle = joblib.load(Path(folder)/"academico_model.joblib")
+    return radar.radar(frames["academico_dataset"], bundle, frames["matricula_dataset"])
+
+
+def render_radar(folder, fingerprint, run_id):
+    st.subheader("Radar de inicio de semestre · prototipo retrospectivo")
+    st.warning("Muestra lo que habría recibido cada dirección al inicio de 2025-2 y qué pasó después. Ese semestre "
+               "ya terminó: no sirve para contactar a nadie. Los estudiantes aparecen con seudónimo y la lista no se "
+               "descarga.")
+    st.write("Cada dirección (carrera en una sede) recibe a sus estudiantes ordenados de mayor a menor riesgo de "
+             "terminar el semestre con al menos una nota bajo 4. La lista se corta en su capacidad de revisión. Cada caso trae "
+             "las señales que más suben su prioridad, comparadas con su valor típico.")
+    d = cached_radar(folder, fingerprint)
+    capacity = st.select_slider("Capacidad de revisión de cada dirección (% de sus estudiantes)", [10, 20, 30],
+                                value=20, key="im_radar_capacity")
+    d, selected = filters(radar.prioritize(d, capacity/100))
+    table = radar.retrospective(d, capacity/100)
+    if table.empty:
+        st.info("Menos de 10 estudiantes con resultado conocido en esta selección.")
+        return
+    slots, hits = table["Cupos"].sum(), table["Aciertos del radar"].sum()
+    a, b, c, e = st.columns(4)
+    a.metric("Cupos con resultado conocido", number(slots))
+    b.metric("Aciertos del radar", number(hits), f"{number(100*hits/slots, 0)}% de la lista", delta_color="off")
+    c.metric("Con la regla simple", number(table["Aciertos de la regla simple"].sum()))
+    e.metric("Al azar", number(table["Aciertos al azar"].sum()))
+    st.caption("Acierto: el estudiante terminó 2025-2 con al menos una nota numérica bajo 4. El corte se aplica dentro "
+               "de cada dirección. La regla simple ordena por la fracción de notas bajo 4 del semestre anterior. "
+               "No mide si acompañar a esos estudiantes cambia el resultado.")
+    display_table(table)
+    st.download_button("Descargar resultado por dirección", export_csv(table, {}, {
+        "Ejecución": run_id, "Origen": radar.ORIGIN, "Resultado": radar.OUTCOME,
+        "Capacidad (%)": capacity, **selected}), "radar_retrospectivo_direcciones.csv", "text/csv")
+    groups = d.loc[d.listed, radar.GROUP].drop_duplicates()
+    if len(groups) != 1:
+        st.info("Elija carrera y campus en la barra lateral para ver la lista de una dirección.")
+        return
+    listed = d.loc[d.listed].sort_values("priority")
+    st.markdown(f"**Lista de {listed.career.iloc[0]} · {listed.campus.iloc[0]}**: {number(len(listed))} estudiantes")
+    st.dataframe(pd.DataFrame({
+        "Prioridad": listed.priority, "Estudiante (seudónimo)": listed.student_key.str[:8],
+        "Jornada": listed.schedule, "Señales": listed.signals, "Qué pasó en 2025-2": listed.outcome,
+    }), hide_index=True, width="stretch")
+    st.caption("Sin probabilidades: el modelo está descalibrado y recalibrarlo no cambia el orden. Las señales "
+               "describen datos observados del semestre anterior, no causas.")
 
 
 def display_table(table):
@@ -81,12 +137,15 @@ def render(home):
     if latest_data.exists() and json.loads(latest_data.read_text())["run_id"] != report["source_run_id"]:
         st.warning("La integración de datos cambió después de este entrenamiento. Se muestran los resultados "
                    "de la fuente anterior identificada en la trazabilidad.")
-    choices = {"academico": "Resultado académico", "matricula": "Presencia en matrícula", "segmentos": "Perfiles académicos"}
+    choices = {"academico": "Resultado académico", "matricula": "Presencia en matrícula", "segmentos": "Perfiles académicos",
+               "radar": "Radar de inicio de semestre (prototipo)"}
     case = st.selectbox("Análisis institucional", list(choices), format_func=choices.get, key="im_case")
     st.sidebar.subheader("Explorar modelos institucionales")
     st.sidebar.button("Restablecer filtros de modelos", on_click=reset)
     st.sidebar.caption("Filtros independientes del tablero descriptivo y de los modelos con datos públicos.")
-    if case == "segmentos":
+    if case == "radar":
+        render_radar(str(folder), fingerprint, run_id)
+    elif case == "segmentos":
         s = report["segments"]
         if "winner" not in s:
             st.info(s.get("reason", "Ninguna segmentación cumple las condiciones de tamaño y concentración."))

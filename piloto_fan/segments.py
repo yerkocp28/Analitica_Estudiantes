@@ -16,6 +16,25 @@ NUMERIC = ["percentil_admision", "percentil_nem", "percentil_ranking", "duracion
 CATEGORICAL = ["jornada"]
 
 
+def features(data: pd.DataFrame) -> pd.DataFrame:
+    x = data[NUMERIC + CATEGORICAL].copy()
+    for col in NUMERIC:
+        x[col] = pd.to_numeric(x[col], errors="coerce").astype(float)
+    for col in CATEGORICAL:
+        x[col] = x[col].astype("string").fillna("Sin información").astype(str)
+    return x
+
+
+def assign(data: pd.DataFrame, bundle: dict) -> pd.Series:
+    """Ubica una cohorte nueva en los perfiles ya aprendidos, sin reajustar nada.
+
+    Usa el preprocesamiento y la numeración congelados: «Perfil 2» significa lo
+    mismo para la cohorte nueva que para las cohortes con las que se aprendió.
+    """
+    labels = bundle["model"].predict(bundle["preprocessor"].transform(features(data)))
+    return pd.Series([bundle["mapping"][int(k)] for k in labels], index=data.index, name="segment")
+
+
 def segment(data: pd.DataFrame, cfg: dict):
     # Carrera y sede se describen después. No queremos descubrir su organigrama.
     d = data.copy()
@@ -24,11 +43,7 @@ def segment(data: pd.DataFrame, cfg: dict):
         return {"status": "insuficiente", "reason": "Se requieren al menos tres cohortes."}, None, None
     fit_years = years[:-2]
     train = d[d.cohorte.isin(fit_years)]
-    x = d[NUMERIC + CATEGORICAL].copy()
-    for col in NUMERIC:
-        x[col] = pd.to_numeric(x[col], errors="coerce").astype(float)
-    for col in CATEGORICAL:
-        x[col] = x[col].astype("string").fillna("Sin información").astype(str)
+    x = features(d)
     prep = ColumnTransformer([
         ("academic", Pipeline([("missing", SimpleImputer(strategy="median", keep_empty_features=True)),
                                 ("scale", StandardScaler())]), NUMERIC),
