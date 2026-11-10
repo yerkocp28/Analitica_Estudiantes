@@ -97,8 +97,7 @@ def radar(dataset: pd.DataFrame, bundle: dict, enrollment: pd.DataFrame | None =
         absent = d.student_key.map(e)
     d["outcome"] = np.select(
         [d.target.eq(1), d.target.eq(0), absent.eq(1)],
-        ["Al menos una nota bajo 4", "Sin notas bajo 4", "No se matriculó en 2025-2"],
-        "Resultado incompleto o solo con códigos")
+        ["Nota bajo 4", "Sin notas bajo 4", "No se matriculó"], "Incompleto o con códigos")
     return d
 
 
@@ -134,9 +133,10 @@ def retrospective(d: pd.DataFrame, capacity: float, minimum: int = 10) -> pd.Dat
         y = g.target.to_numpy(float)
         k = int(np.ceil(capacity * len(g)))
         model, rule = ranked_hits(y, g.risk.to_numpy(), k), ranked_hits(y, g.below4_fraction.to_numpy(), k)
-        rows.append({"Carrera": career, "Sede": campus, "Estudiantes con resultado": len(g),
-                     "Cupos": k, "Aciertos del radar": model, "Aciertos de la regla simple": rule,
-                     "Aciertos al azar": k * y.mean(), "Precisión del radar (%)": 100 * model / k,
-                     "Frecuencia en la dirección (%)": 100 * y.mean(),
-                     "Captura del radar (%)": 100 * model / y.sum() if y.sum() else np.nan})
+        # Lo que una dirección mira primero va a la izquierda: cupos, aciertos y precisión.
+        rows.append({"Carrera": career, "Sede": campus, "Cupos": k, "Aciertos del radar": model,
+                     "Precisión del radar (%)": 100 * model / k, "Aciertos de la regla simple": rule,
+                     "Aciertos al azar": k * y.mean(), "Frecuencia en la dirección (%)": 100 * y.mean(),
+                     "Captura del radar (%)": 100 * model / y.sum() if y.sum() else np.nan,
+                     "Estudiantes con resultado": len(g)})
     return pd.DataFrame(rows)

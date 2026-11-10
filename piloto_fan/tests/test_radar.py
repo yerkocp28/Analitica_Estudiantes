@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from piloto_fan import radar
+from piloto_fan import presentacion, radar
 from piloto_fan.institucional import HOME
 from piloto_fan.modelos_institucionales import CATEGORICAL, NUMERIC, SPEC, load_run
 from piloto_fan.models import design, estimator
@@ -39,7 +39,7 @@ def test_signals_name_what_raises_risk_and_stay_silent_at_typical_values():
     near_typical = d.loc[(d.numeric_mean - radar.typical(data).numeric_mean).abs().idxmin()]
     assert near_typical.signals == radar.NO_SIGNAL
     assert set(d.source_term) == {radar.ORIGIN}
-    assert d.outcome.isin(["Al menos una nota bajo 4", "Sin notas bajo 4"]).all()
+    assert d.outcome.isin(["Nota bajo 4", "Sin notas bajo 4"]).all()
 
 
 def test_each_direction_is_cut_at_its_own_capacity():
@@ -82,8 +82,7 @@ def test_radar_reuses_the_saved_model_without_refitting():
 def test_radar_view_shows_no_probabilities_and_no_individual_download():
     latest_models()
     app = AppTest.from_file(str(HOME / "app.py"), default_timeout=60).run()
-    app.sidebar.radio[0].set_value("Modelos institucionales").run()
-    app.selectbox(key="im_case").set_value("radar").run()
+    app.sidebar.radio[0].set_value(presentacion.RADAR).run()
     assert not app.exception, [e.message for e in app.exception]
     app.selectbox(key="im_campus").set_value("Talca").run()
     app.selectbox(key="im_career").set_value("Ingeniería Comercial").run()
@@ -92,5 +91,4 @@ def test_radar_view_shows_no_probabilities_and_no_individual_download():
     listing = next(f for f in frames if "Señales" in f.columns)
     assert not any("riesgo" in c.lower() or "probab" in c.lower() for c in listing.columns)
     assert listing["Estudiante (seudónimo)"].str.len().eq(8).all()
-    assert [b.label for b in app.get("download_button")] == ["Descargar resultado por dirección",
-                                                             "Descargar informe general de modelos"]
+    assert [b.label for b in app.get("download_button")] == ["Descargar resultado por dirección"]

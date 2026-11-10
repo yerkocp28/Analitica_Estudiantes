@@ -10,7 +10,7 @@ from .models import CAPACITIES, bootstrap_comparison, capture, metrics
 DIMENSIONS = {"nomb_sede": "Sede / campus al ingreso", "nomb_carrera": "Carrera al ingreso", "jornada": "Jornada al ingreso"}
 DISPLAY_NAMES = {
     "CAMPUS PROVIDENCIA": "Providencia", "CASA CENTRAL (TEMUCO)": "Temuco", "SEDE TALCA": "Talca",
-    "CAMPUS EL LLANO": "San Miguel / El Llano", "SEDE SANTIAGO": "Santiago (denominación histórica)",
+    "CAMPUS EL LLANO": "San Miguel", "SEDE SANTIAGO": "Santiago (denominación histórica)",
     "INGENIERIA COMERCIAL": "Ingeniería Comercial", "INGENIERIA EN ADMINISTRACION": "Ingeniería en Administración",
     "INGENIERIA EN CONTROL DE GESTION": "Ingeniería en Control de Gestión",
     "AUDITORIA E INGENIERIA EN CONTROL DE GESTION": "Auditoría e Ing. en Control de Gestión (histórica)",

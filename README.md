@@ -167,7 +167,10 @@ definir.
 Desde la barra lateral. Los pares se
 identifican por perfil de ingreso **sin utilizar la retención como variable de
 clustering**. Se puede comparar con los cinco vecinos más cercanos, con el mismo
-cluster o con un conjunto manual; la UA permanece como referencia.
+cluster o con un conjunto manual; la UA permanece como referencia. La pestaña
+**Clusters por variables** muestra los grupos en las variables que elijas y
+dónde queda la UA frente al resto. **Modelos de agrupamiento** compara K-means,
+Ward y mezcla gaussiana, y muestra si el grupo de la UA depende del algoritmo.
 
 ```bash
 python scripts/download_matricula.py   # matrícula 2007-2026 (18 GB crudo, 367 MB slim)

@@ -9,7 +9,7 @@ import streamlit as st
 
 from .dashboard import number, percent
 from .institucional import (
-    FILES, course_campus_map, export_aggregate, grouped_results, load, select_data, summary,
+    CONFIG, FILES, course_campus_map, export_aggregate, grouped_results, load, read_config, select_data, summary,
 )
 
 # Rampa secuencial de un solo azul (100 → 650): la intensidad es la magnitud.
@@ -86,27 +86,60 @@ def course_heatmap(table, top):
     return (cells + text).properties(height=26*len(rows))
 
 
-def render(home):
-    st.title("Datos institucionales · Administración y Negocios")
-    st.caption("Uso interno · Extracto universitario 2024–2025 · Análisis descriptivo por período")
+def latest(home):
+    """Integración institucional vigente, verificada; None si todavía no se generó."""
     base = Path(home) / "artifacts/institucional"
     pointer = base / "latest.json"
     if not pointer.exists():
-        st.info("La fuente institucional está documentada. Falta generar sus tablas analíticas locales.")
-        st.code("python -m piloto_fan.institucional", language="bash")
+        return None
+    run_id = json.loads(pointer.read_text(encoding="utf-8"))["run_id"]
+    if Path(run_id).name != run_id or "/" in run_id or "\\" in run_id:
+        raise ValueError("Identificador de ejecución inválido.")
+    folder = base / run_id
+    fingerprint = tuple((name, (folder/name).stat().st_mtime_ns, (folder/name).stat().st_size)
+                        for name in [*FILES.values(), "quality.json", "pendientes.json", "manifest.json"])
+    frames, quality, manifest = load_cached(str(folder), fingerprint)
+    cfg = json.loads((folder/"pendientes.json").read_text(encoding="utf-8"))
+    return run_id, frames, quality, manifest, cfg
+
+
+def render_course_map(h, minimum, context, top_default=15):
+    """Cuerpo del mapa de asignaturas por sede sobre los resultados `h` ya filtrados."""
+    course_map = course_campus_map(h, minimum)
+    if course_map.empty:
+        st.info(f"No hay asignaturas con al menos {minimum} personas con nota numérica para esta selección.")
         return
+    comparable = course_map.loc[course_map["Lectura"].ne("Única sede publicable")]
+    a, b, c = st.columns(3)
+    a.metric("Asignaturas comparables entre sedes", number(comparable["Código de asignatura"].nunique()))
+    b.metric("Celdas claramente sobre el resto", number(comparable["Lectura"].eq("Sobre el resto").sum()))
+    c.metric("Notas bajo 4 en el mapa", number(course_map["Notas bajo 4"].sum()))
+    top = st.slider("Asignaturas con más notas bajo 4", 5, 40, top_default, step=5, key="inst_map_top")
+    st.altair_chart(course_heatmap(course_map, top), width="stretch")
+    st.caption("Filas ordenadas por cantidad de notas bajo 4, que es dónde el refuerzo alcanza a más "
+               "estudiantes. ▲ / ▼: la sede está por sobre o por debajo del resto de las sedes en la "
+               "misma asignatura y sus intervalos de 95% no se tocan; sin marca, la diferencia no es "
+               "clara. Celda vacía: la asignatura no se dictó en esa sede o tuvo menos de "
+               f"{minimum} personas.")
+    st.warning("Una diferencia entre sedes no distingue docencia, criterios de evaluación ni perfil de "
+               "ingreso de los estudiantes. Sirve para decidir dónde mirar, no para atribuir la causa. "
+               "Las notas bajo 4 no son la tasa oficial de reprobación.")
+    table_download(course_map, "institucional_mapa_asignaturas", context)
+
+
+def render(home):
+    st.title("Datos institucionales · Administración y Negocios")
+    st.caption("Uso interno · Extracto universitario 2024–2025 · Análisis descriptivo por período")
     try:
-        run_id = json.loads(pointer.read_text(encoding="utf-8"))["run_id"]
-        if Path(run_id).name != run_id or "/" in run_id or "\\" in run_id:
-            raise ValueError("Identificador de ejecución inválido.")
-        folder = base / run_id
-        fingerprint = tuple((name, (folder/name).stat().st_mtime_ns, (folder/name).stat().st_size)
-                            for name in [*FILES.values(), "quality.json", "pendientes.json", "manifest.json"])
-        frames, quality, manifest = load_cached(str(folder), fingerprint)
-        cfg = json.loads((folder/"pendientes.json").read_text(encoding="utf-8"))
+        loaded = latest(home)
     except (OSError, KeyError, ValueError) as exc:
         st.error(f"No se pudieron verificar los resultados institucionales: {exc}")
         return
+    if loaded is None:
+        st.info("La fuente institucional está documentada. Falta generar sus tablas analíticas locales.")
+        st.code("python -m piloto_fan.institucional", language="bash")
+        return
+    run_id, frames, quality, manifest, cfg = loaded
     scopes = {"fan_proposed": "FAN propuesto · cuatro campus",
               "fan_label": "Todo lo etiquetado FAN · incluye Online e intercambio"}
     st.sidebar.subheader("Explorar datos institucionales")
@@ -147,8 +180,7 @@ def render(home):
     st.caption("Fecha de corte no informada · Procesado " +
                datetime.fromisoformat(manifest["created_utc"]).strftime("%d/%m/%Y") +
                " · Los filtros institucionales son independientes de los del piloto con datos públicos.")
-    tabs = st.tabs(["Panorama", "Asignaturas", "Mapa de asignaturas por sede",
-                    "Códigos de resultado", "Calidad y preguntas"])
+    tabs = st.tabs(["Panorama", "Asignaturas", "Códigos de resultado", "Calidad y preguntas"])
     with tabs[0]:
         if m.empty:
             st.info("Sin registros para esta selección. No se sustituye por el total de la facultad.")
@@ -188,54 +220,46 @@ def render(home):
         table_download(grouped_results(h, ["course_code", "course_name"], minimum),
                        "institucional_asignaturas", context)
     with tabs[2]:
-        # Comparar sedes exige verlas todas: el filtro de campus del plan no aplica aquí.
-        _, hm, _ = select_data(frames, scope, {k: v for k, v in selection.items() if k != "campus"})
-        course_map = course_campus_map(hm, minimum)
-        st.write("**Dónde se concentran las notas bajo 4 y si la misma asignatura rinde distinto según la "
-                 "sede donde se dicta.** Cada celda es una asignatura en una sede, con al menos "
-                 f"{minimum} personas con nota numérica. El filtro de campus del plan no se aplica en esta pestaña.")
-        comparable = course_map.loc[course_map["Lectura"].ne("Única sede publicable")]
-        if course_map.empty:
-            st.info(f"No hay asignaturas con al menos {minimum} personas con nota numérica para esta selección.")
-        else:
-            a, b, c = st.columns(3)
-            a.metric("Asignaturas comparables entre sedes", number(comparable["Código de asignatura"].nunique()))
-            b.metric("Celdas sobre el resto de sus sedes", number(comparable["Lectura"].eq("Sobre el resto").sum()))
-            c.metric("Notas bajo 4 en el mapa", number(course_map["Notas bajo 4"].sum()))
-            top = st.slider("Asignaturas con más notas bajo 4", 5, 40, 15, step=5, key="inst_map_top")
-            st.altair_chart(course_heatmap(course_map, top), width="stretch")
-            st.caption("Filas ordenadas por cantidad de notas bajo 4, que es dónde el refuerzo alcanza a más "
-                       "estudiantes. ▲ / ▼: la sede está por sobre o por debajo del resto de las sedes en la "
-                       "misma asignatura y sus intervalos de 95% no se tocan; sin marca, la diferencia no es "
-                       "clara. Celda vacía: la asignatura no se dictó en esa sede o tuvo menos de "
-                       f"{minimum} personas.")
-            st.warning("Una diferencia entre sedes no distingue docencia, criterios de evaluación ni perfil de "
-                       "ingreso de los estudiantes. Sirve para decidir dónde mirar, no para atribuir la causa. "
-                       "Las notas bajo 4 no son la tasa oficial de reprobación.")
-            map_context = {**context, "Campus del plan": "Todos · el mapa compara sedes de la asignatura"}
-            table_download(course_map, "institucional_mapa_asignaturas", map_context)
-    with tabs[3]:
         st.write("Se conservan los códigos originales sin interpretarlos como nota cero ni como un mismo tipo de reprobación.")
         table_download(grouped_results(h.loc[h.result_code.notna()], ["result_code"], minimum),
                        "institucional_codigos", context)
         st.caption("Solo se muestran códigos con al menos 10 personas en la selección. Los códigos y notas ausentes "
                    "no participan en promedios ni en el porcentaje de notas numéricas bajo 4.")
-    with tabs[4]:
+    with tabs[3]:
         st.subheader("Preguntas pendientes y cómo seguimos trabajando")
         st.write("Estas preguntas no detienen el análisis descriptivo. Cada respuesta habilitará los indicadores "
                  "o modelos que hoy requieren esa definición.")
-        for question in cfg["preguntas"]:
+        # Las respuestas llegan sin que cambien los datos: el estado se lee del registro vigente, no de la
+        # copia guardada con la corrida, que conserva lo pendiente al momento de integrar el extracto.
+        questions = read_config() if CONFIG.exists() else cfg
+        st.caption(f"Estado al {datetime.fromisoformat(questions['fecha']).strftime('%d/%m/%Y')}.")
+        for question in questions["preguntas"]:
             with st.expander(f"{question['id']} · {question['pregunta']}"):
                 st.write("**Estado:** " + question["estado"] + " · **Prioridad:** " + question["prioridad"])
                 st.write("**Contraparte sugerida:** " + question["responsable_sugerido"])
                 st.write("**Mientras tanto:** " + question["avanzamos_con"])
                 st.write("**La respuesta habilita:** " + question["habilita"])
                 st.write("**Límite actual:** " + question["restriccion_actual"])
-                if question.get("respuesta"):
-                    st.write("**Respuesta registrada:** " + question["respuesta"])
+                if question.get("detalle"):
+                    st.markdown("**Detalle de la pregunta:**\n" + "\n".join("- " + d for d in question["detalle"]))
+                answer = question.get("respuesta")
+                if isinstance(answer, dict):
+                    # Respuesta por tema: cada clave es un punto de la pregunta.
+                    st.markdown(f"**Respuesta registrada** ({answer.get('via', 'vía no indicada')}, "
+                                f"{answer.get('fecha', 'sin fecha')}):\n" + "\n".join(
+                                    f"- **{key.replace('_', ' ').capitalize()}:** {value}"
+                                    for key, value in answer.items() if key not in ("fecha", "via")))
+                elif answer:
+                    st.write("**Respuesta registrada:** " + answer)
+                if question.get("verificado_contra_los_datos"):
+                    st.write("**Verificado contra los datos:** " + question["verificado_contra_los_datos"])
+                if question.get("pendiente_aun"):
+                    st.markdown("**Sigue pendiente:**\n" + "\n".join("- " + p for p in question["pendiente_aun"]))
         question_text = "\n\n".join(
             f"{q['id']}. {q['pregunta']}\nResponsable sugerido: {q['responsable_sugerido']}\n"
-            f"Estado: {q['estado']}\nMientras tanto: {q['avanzamos_con']}" for q in cfg["preguntas"])
+            f"Estado: {q['estado']}\nMientras tanto: {q['avanzamos_con']}"
+            + ("\nSigue pendiente: " + "; ".join(q["pendiente_aun"]) if q.get("pendiente_aun") else "")
+            for q in questions["preguntas"])
         st.download_button("Descargar preguntas para la universidad", question_text.encode("utf-8-sig"),
                            "preguntas_fuente_institucional.txt", "text/plain")
         st.subheader("Auditoría de todo el extracto · sin filtros")

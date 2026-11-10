@@ -90,6 +90,42 @@ def test_pesos_invalidos_no_producen_distancias_arbitrarias(profiles, config):
         profile_matrix(profiles, config["block_weights"])
 
 
+def test_clusters_se_explican_sin_cambiar_los_grupos(profiles, config):
+    from student_analytics.modeling.benchmark_clusters import (
+        cluster_profile, cluster_variables, partition_agreement, positions, ua_summary,
+    )
+    model = fit_peers(profiles, config)
+    code = target_code(profiles, config["target_name"])
+    # Se guardan las etiquetas de todo lo probado, admisible o no.
+    assert set(model.partitions) == set(zip(model.diagnostics.algoritmo, model.diagnostics.k))
+    variables = cluster_variables(model, code)
+    assert {v["bloque"] for v in variables} <= set(model.groups)
+    profile = cluster_profile(model, variables, code)
+    assert set(profile.columna) == {"Universidad Autónoma", *model.universities.grupo}
+    u = model.universities
+    own = u.loc[u.cod_inst.eq(code), "grupo"].iloc[0]
+    cell = profile.loc[profile.columna.eq(own) & profile.variable.eq("area::A"), "valor"].iloc[0]
+    assert cell == pytest.approx(u.loc[u.grupo.eq(own), "area::A"].median())
+    pos = positions(model, variables, code)
+    assert len(pos) == len(u) * len(variables)
+    assert pos.groupby("variable").es_ua.sum().eq(1).all()
+    assert pos.percentil.between(0, 100).all()
+    assert len(ua_summary(model, variables, code)) == len(variables)
+    table, core = partition_agreement(model, code)
+    assert len(table) == 3
+    chosen = table.loc[table.Algoritmo.str.endswith("elegido")].iloc[0]
+    assert chosen["También están en el grupo elegido"] == chosen["Universidades en el grupo de la UA"]
+    assert set(core) <= set(u.loc[u.grupo.eq(own) & u.cod_inst.ne(code), "nomb_inst"])
+
+
+def test_percentil_va_de_la_menor_a_la_mayor_y_reparte_empates():
+    from student_analytics.modeling.benchmark_clusters import percentile
+    s = pd.Series([1, 2, 3, 4, 5])
+    assert (percentile(s, 1), percentile(s, 3), percentile(s, 5)) == (0, 50, 100)
+    assert percentile(pd.Series([0, 0, 0, 1]), 0) == pytest.approx(100 / 3)
+    assert np.isnan(percentile(pd.Series([1.0]), 1))
+
+
 def outcome_data():
     # UA concentra 90% en A; pares solo 10% en A. Tasas por área iguales:
     # la brecha cruda existe por composición, la ajustada debe desaparecer.
@@ -133,8 +169,12 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
     app.sidebar.radio[0].set_value("Benchmark UA").run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert "Benchmark" in app.title[0].value
-    assert len(app.tabs) >= 4
-    assert len(app.metric) == 4
+    labels = [t.label for t in app.tabs]
+    assert "Clusters por variables" in labels and "Modelos de agrupamiento" in labels
+    assert [m.label for m in app.metric[:4]] == [
+        "Continuidad UA", "Pares · promedio ponderado", "Resto del sistema universitario",
+        "Pares · misma mezcla de áreas UA"]
+    assert "Grupo de la UA" in [m.label for m in app.metric]
 
     def peer_table(a):
         """La tabla de pares, buscada por sus columnas.
@@ -158,6 +198,13 @@ def test_benchmark_ua_cargado_y_filtros_independientes():
         app.selectbox(key="bench_x").set_value(axis).run()
         assert not app.exception, [str(e.value) for e in app.exception]
     app.selectbox(key="bench_metric").set_value("sistema").run()
+    assert not app.exception, [str(e.value) for e in app.exception]
+    assert peer_table(app) == original_peers
+    # Mirar los grupos por otras variables tampoco cambia los pares.
+    for key, value in (("bench_cluster_x", "mapa_x"), ("bench_cluster_y", "retencion")):
+        app.selectbox(key=key).set_value(value).run()
+        assert not app.exception, [str(e.value) for e in app.exception]
+    app.toggle(key="bench_cluster_extra").set_value(True).run()
     assert not app.exception, [str(e.value) for e in app.exception]
     assert peer_table(app) == original_peers
     app.selectbox(key="bench_area").set_value("Administración y Comercio").run()

@@ -22,6 +22,36 @@ Si los resultados ya están generados, basta el segundo comando o ejecutar
 `piloto_fan/abrir.ps1`. La aplicación estará en http://localhost:8502.
 El puerto diferente permite abrirla junto a la aplicación original.
 
+### Recorrido para presentar a la FAN
+
+La app abre en **Resultados para la FAN**, una portada con cuatro bloques en el
+orden en que conviene contar la historia, de afuera hacia adentro. Cada bloque
+trae su cifra principal, calculada con los mismos datos y funciones que su vista
+de detalle (`presentacion.py`), y un botón que lleva a esa vista.
+
+| Paso | Vista | Pregunta que responde | Fuente | Circulación |
+|---|---|---|---|---|
+| 1 | Posición frente a pares | ¿Cómo está la FAN frente a universidades parecidas? | Datos públicos | Libre; descarga el informe HTML |
+| 2 | Mapa de asignaturas | ¿Dónde se concentra el problema académico? | Extracto | Solo uso interno |
+| 3 | Perfiles de ingreso | ¿Quién llega a cada sede? | Datos públicos | Agregados |
+| 4 | Radar (prototipo) | ¿Cómo se priorizaría el acompañamiento? | Extracto | Solo uso interno, con seudónimos |
+
+Las demás vistas del menú son el detalle técnico. La primera es **Benchmark
+completo**, la misma herramienta interactiva de la app pública: otras cohortes,
+áreas e indicadores, pares por cercanía, por cluster o a mano, mapa de
+posicionamiento, por qué las universidades son comparables, evolución y método.
+La pestaña **Clusters por variables** muestra en qué grupo queda la UA, los
+grupos en dos variables a elección, el percentil de la UA en cada variable y qué
+distingue a cada grupo. **Modelos de agrupamiento** compara los tres algoritmos,
+explica cuál se eligió y si otro dejaría a la UA con las mismas universidades.
+Lee los datos públicos del repo (`deploy/data`), así que no depende de que la app
+pública esté en línea, y abre en el área de Administración y Comercio para que
+sus cifras coincidan con la vista 1, desde donde también se llega con un botón.
+
+El guion para presentar tiene
+cifras del extracto, así que no se versiona: vive en
+`artifacts/presentacion/guion_fan.md`.
+
 Para instalar en otro entorno: `python -m pip install -r piloto_fan/requirements.txt`.
 Se requieren las fuentes locales descritas abajo para regenerar los modelos.
 No se descargan nuevas fuentes durante la generación.
@@ -71,9 +101,10 @@ no incluye sus antiguos programas técnicos, posgrados ni Administración Públi
 Las variantes de nombres no documentadas se excluyen y quedan en la auditoría.
 La ratificación institucional de carreras y períodos de pertenencia sigue pendiente.
 No se equipara `SEDE SANTIAGO` con San Miguel automáticamente.
-El rótulo `CAMPUS EL LLANO` se muestra como **San Miguel / El Llano**, según
-la página oficial de ese campus, enlazada en Calidad y método. Es un cambio
-de presentación; las claves originales y la sede histórica Santiago se conservan.
+El rótulo `CAMPUS EL LLANO` se muestra como **San Miguel**, la denominación del
+extracto institucional, para que la sede se llame igual en todas las vistas. La
+página oficial del campus está enlazada en Calidad y método. Es un cambio de
+presentación: las claves originales y la sede histórica Santiago se conservan.
 
 El grano es una persona en su primer ingreso observado a UA dentro de la ventana
 2007–2025. Se excluyen MRUN ausentes, ingresos posteriores y primeras entradas
@@ -115,7 +146,7 @@ sin reentrenar ni renumerar:
 
 Usa el modelo de segmentación de la corrida vigente después de verificar su
 huella. Escribe en `artifacts/cohortes_nuevas/<corrida>/`, con su propio
-manifiesto. La vista **Perfiles de ingreso** la incluye en el selector de cohorte
+manifiesto. La vista **3 · Perfiles de ingreso** la incluye en el selector de cohorte
 y muestra qué perfil recibe cada sede frente a las dos cohortes anteriores. Su
 continuidad queda vacía hasta que exista la matrícula del año siguiente. Un test
 comprueba que la asignación reproduce exactamente la de la corrida en sus
@@ -241,7 +272,7 @@ Prioridades de las próximas sesiones:
 4. Registrar responsables, frecuencia de actualización y aceptación o ajustes.
 5. Adjuntar el informe agregado a la rendición y documentar el acceso VRA pendiente.
 
-El benchmark publicado se enlaza como complemento. OULAD y el cockpit semanal
+El benchmark completo se incluye como vista de detalle. OULAD y el cockpit semanal
 siguen disponibles en la aplicación existente. El acceso a Banner/Canvas,
 contactos individuales, acciones preventivas y medición causal del impacto no
 se declaran implementados por este piloto.
@@ -343,12 +374,12 @@ semánticos automáticamente.
 
 ### Mapa de asignaturas por sede
 
-La pestaña **Mapa de asignaturas por sede** compara una misma asignatura entre
+La vista **2 · Mapa de asignaturas** compara una misma asignatura entre
 las sedes donde se dictó. Los códigos se comparten entre sedes, de modo que la
 comparación es por código y no por nombre.
 
-- **Sede:** la de la asignatura, no la del plan. Por eso el filtro de campus del
-  plan no se aplica en esa pestaña; los demás filtros sí.
+- **Sede:** la de la asignatura, no la del plan. La vista filtra por año y por
+  jornada del plan, nunca por campus, porque compara sedes.
 - **Celdas publicables:** asignatura y sede con al menos 10 personas con nota
   numérica.
 - **Totales y restos:** el resto de las sedes se suma solo con celdas
@@ -458,8 +489,7 @@ siguen abiertos y no se genera scoring de alumnos actuales.
 
 ### Radar de inicio de semestre (prototipo)
 
-Está en *Modelos institucionales → Radar de inicio de semestre (prototipo)* y
-muestra lo que habría recibido cada dirección (carrera en una sede) al inicio de
+Está en la vista **4 · Radar (prototipo)** y muestra lo que habría recibido cada dirección (carrera en una sede) al inicio de
 2025-2, junto con lo que pasó después. Lo calcula `radar.py` con el modelo
 académico guardado, sin reentrenarlo. Un test comprueba que reproduce
 exactamente las predicciones de prueba.

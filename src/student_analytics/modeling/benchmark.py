@@ -1,7 +1,7 @@
 """Comparadores institucionales basados exclusivamente en perfiles de ingreso."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import unicodedata
 
 import numpy as np
@@ -216,6 +216,9 @@ class PeerModel:
     k: int
     silhouette: float
     explained_variance: float
+    # Etiquetas de cada (algoritmo, k) probado, admisible o no, en el orden de
+    # `universities`. Sirven para mostrar si otro modelo agruparía distinto.
+    partitions: dict = field(default_factory=dict)
 
 
 def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
@@ -232,7 +235,7 @@ def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
     x, groups = profile_matrix(p, config["block_weights"])
     if np.linalg.norm(x) < 1e-10:
         raise ValueError("Los perfiles no presentan variación suficiente para formar grupos.")
-    diagnostics, candidates = [], {}
+    diagnostics, candidates, partitions = [], {}, {}
     for k in config["k_values"]:
         if k >= len(p):
             continue
@@ -244,6 +247,7 @@ def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
         }
         for name, model in models.items():
             labels = model.fit_predict(x)
+            partitions[(name, k)] = labels
             counts = np.bincount(labels)
             distinct = len(np.unique(labels))
             score = silhouette_score(x, labels) if 1 < distinct < len(p) else float("nan")
@@ -272,7 +276,8 @@ def fit_peers(profiles: pd.DataFrame, config: dict) -> PeerModel:
     pca = PCA(n_components=2)
     projection = pca.fit_transform(x)
     p["mapa_x"], p["mapa_y"] = projection[:, 0], projection[:, 1]
-    return PeerModel(p, table, x, groups, name, k, score, float(pca.explained_variance_ratio_.sum()))
+    return PeerModel(p, table, x, groups, name, k, score, float(pca.explained_variance_ratio_.sum()),
+                     partitions)
 
 
 def neighbors(model: PeerModel, target: str) -> pd.DataFrame:

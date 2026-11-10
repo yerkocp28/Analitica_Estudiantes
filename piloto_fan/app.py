@@ -10,7 +10,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from piloto_fan import cohorte_nueva
+from piloto_fan import presentacion
 from piloto_fan.dashboard import DIMENSIONS, display_name, export_csv, filtered, filtered_case, number, percent, profiles, series, site_mix
 from piloto_fan.data import digest
 from piloto_fan.reporting import executive_html
@@ -45,8 +45,23 @@ def load_run(run_id, fingerprint):
     return report, {name: pd.read_parquet(folder/name) for name in names if name.endswith(".parquet")}
 
 
-section = st.sidebar.radio("Vista", ["Resumen", "Datos institucionales FAN", "Modelos institucionales", "Perfiles de ingreso",
-                                     "Continuidad", "Titulación", "Calidad y método", "Demostración", "Benchmark"])
+PANORAMA = "Panorama de cohortes"
+section = st.sidebar.radio("Vista", presentacion.STORY + [
+    presentacion.BENCHMARK, PANORAMA, "Datos institucionales FAN", "Modelos institucionales", "Continuidad",
+    "Titulación", "Calidad y método", "Demostración"], key="section")
+st.sidebar.caption("Las cinco primeras vistas son el recorrido para presentar a la FAN; las demás, el detalle técnico.")
+if section == presentacion.POSITION:
+    presentacion.render_position()
+    st.stop()
+if section == presentacion.BENCHMARK:
+    presentacion.render_benchmark_full()
+    st.stop()
+if section == presentacion.MAP:
+    presentacion.render_map()
+    st.stop()
+if section == presentacion.RADAR:
+    presentacion.render_radar_view()
+    st.stop()
 if section == "Datos institucionales FAN":
     from piloto_fan.institucional_ui import render
     render(HOME)
@@ -75,6 +90,14 @@ cfg = report["config"]
 minimum = cfg["minimum_display_cell"]
 population = frames["poblacion_dataset.parquet"]
 
+if section == presentacion.LANDING:
+    try:
+        entry_profiles = presentacion.profile_data(frames, run_id)[0] if "winner" in report["segments"] else None
+    except (OSError, KeyError, ValueError):
+        entry_profiles = None
+    presentacion.render_landing(entry_profiles, minimum)
+    st.stop()
+
 
 def clear_filters():
     for key in DIMENSIONS:
@@ -82,7 +105,7 @@ def clear_filters():
 
 
 selection = {}
-if section in ["Resumen", "Perfiles de ingreso", "Continuidad", "Titulación", "Calidad y método"]:
+if section in [PANORAMA, presentacion.PROFILES, "Continuidad", "Titulación", "Calidad y método"]:
     st.sidebar.subheader("Explorar la facultad")
     st.sidebar.button("Restablecer filtros", on_click=clear_filters)
     available = population
@@ -115,12 +138,18 @@ def show_table(table):
     formats = {}
     for col in table.select_dtypes(include="number"):
         if "Cohorte" in col or "Año" in col:
-            formats[col] = "{:.0f}"
+            formats[col] = lambda v: "—" if pd.isna(v) else f"{v:.0f}"
         elif any(word in col for word in ["Estudiantes", "Cupos", "Casos", "Seguimientos", "Grupos", "Mínimo"]):
-            formats[col] = "{:,.0f}"
+            formats[col] = lambda v: number(v, 0)
         else:
-            formats[col] = "{:,.3f}" if col in ["AUC", "Brier", "Silueta", "Pérdida de AUC", "Desviación"] else "{:,.1f}"
-    st.dataframe(table.style.format(formats, na_rep="—", decimal=",", thousands="."), hide_index=True, width="stretch")
+            digits = 3 if col in ["AUC", "Brier", "Silueta", "Pérdida de AUC", "Desviación"] else 1
+            formats[col] = lambda v, digits=digits: number(v, digits)
+    # Streamlit pinta «None» en toda celda nula, diga lo que diga el estilo: las columnas con vacíos
+    # se entregan ya como texto, con «—».
+    table = table.copy()
+    for col in [c for c in formats if table[c].isna().any()]:
+        table[col] = table[col].map(formats.pop(col))
+    st.dataframe(table.style.format(formats), hide_index=True, width="stretch")
 
 
 def download(table, label, name, **context):
@@ -223,8 +252,8 @@ def case_view(key, title):
         st.caption("Importancia global por permutación en validación; no identifica causas individuales.")
 
 
-if section == "Resumen":
-    st.title("Facultad de Administración y Negocios")
+if section == PANORAMA:
+    st.title("Panorama de cohortes · Administración y Negocios")
     st.write("Comprender a quienes ingresan, revisar continuidad y explorar trayectorias de titulación.")
     context_line()
     year = year_choice(population_view)
@@ -251,26 +280,25 @@ if section == "Resumen":
             st.write(f"**{key.title()}: {case['status']}** · captura al 20% {percent(case['test']['capture_20'])} "
                      f"frente a {percent(case['historical_rule']['capture_20'])} de la regla. Evaluación {case['test_year']}.")
     st.caption("Referencias generales de sus propias cohortes de evaluación. Abra Continuidad o Titulación para evaluar el grupo filtrado.")
-    st.info("Recorrido sugerido: elija sede y carrera → revise una cohorte → explore Perfiles de ingreso → "
-            "compare la capacidad de revisión en Continuidad → consulte Calidad y método antes de usar el resultado.")
+    st.info("Para presentar a la FAN, use el recorrido de «Resultados para la FAN». Esta vista es detalle técnico: "
+            "elija sede y carrera → revise una cohorte → compare la capacidad de revisión en Continuidad → consulte "
+            "Calidad y método antes de usar el resultado.")
     st.caption("Catálogo documentado, pendiente de ratificación institucional. Sin Canvas/Banner ni alertas individuales activadas.")
 
-elif section == "Perfiles de ingreso":
+elif section == presentacion.PROFILES:
     st.title("Perfiles de ingreso de la facultad")
     context_line()
     s = report["segments"]
     if "winner" not in s:
         st.warning(s["reason"])
         st.stop()
-    data = frames["continuidad_dataset.parquet"].merge(frames["segmentacion_assignments.parquet"], on=["mrun", "cohorte"], validate="one_to_one")
     try:
-        later = cohorte_nueva.load(run_id)
+        data, later_years = presentacion.profile_data(frames, run_id)
     except (OSError, KeyError, ValueError) as exc:
         st.warning(f"No se incluyen las cohortes posteriores a la corrida: {exc}")
-        later = None
-    later_years = sorted(later.cohorte.unique().astype(int).tolist()) if later is not None else []
-    if later is not None:
-        data = pd.concat([data, later], ignore_index=True)
+        data = frames["continuidad_dataset.parquet"].merge(frames["segmentacion_assignments.parquet"],
+                                                           on=["mrun", "cohorte"], validate="one_to_one")
+        later_years = []
     data = filtered(data, selection)
     all_years = data
     year = year_choice(data)
@@ -325,7 +353,7 @@ elif section == "Calidad y método":
     st.caption("Catálogo general. Las carreras históricas se conservan separadas; la documentación no reemplaza la ratificación del alcance por FAN.")
     for i, source in enumerate(cfg["faculty_sources"]):
         st.link_button("Fuente institucional " + str(i+1), source)
-    st.caption("El Llano se muestra como San Miguel / El Llano según su ubicación institucional. “SEDE SANTIAGO” histórica sigue separada.")
+    st.caption("El campus El Llano se muestra como San Miguel, la denominación del extracto institucional. “SEDE SANTIAGO” histórica sigue separada.")
     st.link_button("Ubicación oficial de El Llano", cfg["campus_label_source"])
     excluded = report["quality"].get("careers_excluded_pending_confirmation", {})
     with st.expander("Carreras del área excluidas mientras se confirma su pertenencia histórica"):
@@ -364,10 +392,3 @@ elif section == "Demostración":
     st.checkbox("Revisión de antecedentes realizada", key="review_"+chosen)
     st.text_area("Observación del evaluador (sin datos personales)", key="note_"+chosen)
     st.caption("Solo durante la sesión del navegador. No registra contactos ni intervenciones.")
-
-elif section == "Benchmark":
-    st.title("Benchmark como complemento de la facultad")
-    st.write("La herramienta institucional permite comparar la UA con universidades similares. Para contextualizar FAN, "
-             "seleccione Administración y Comercio en esa aplicación; ese agregado no equivale necesariamente a una facultad.")
-    st.link_button("Abrir benchmark institucional", "https://esv4ahpqwzywqytgyavzym.streamlit.app/")
-    st.caption("Aplicación independiente: los filtros no se transfieren. Las comparaciones son descriptivas.")

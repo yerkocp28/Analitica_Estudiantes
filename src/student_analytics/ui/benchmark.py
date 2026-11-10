@@ -12,12 +12,27 @@ import sklearn
 from sklearn.metrics import adjusted_rand_score
 
 from student_analytics.modeling.benchmark import compare_outcomes, fit_peers, neighbors, target_code
+from student_analytics.modeling.benchmark_clusters import (
+    BLOCKS, cluster_profile, cluster_variables, group_order, partition_agreement, percentile, positions, ua_summary,
+)
 from student_analytics.modeling.benchmark_reporting import sensitivity, continuity_breakdown, executive_html
 
 UA_RED = "#E2211C"
 BLUE = "#2a78d6"
 GREY = "#b0b0b0"
 INK = "#6B6560"
+# Colores de los grupos: validados entre todos los pares, aunque con
+# deuteranopia algunos quedan en la banda 6-8, así que cada grupo lleva
+# además su propia forma. No hay rojo: el rojo es la UA, que va como estrella.
+CLUSTER_COLORS = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#52514e"]
+CLUSTER_SHAPES = ["circle", "square", "triangle-up", "diamond", "triangle-down", "cross"]
+STAR = ("M0,-1L0.225,-0.309L0.951,-0.309L0.363,0.118L0.588,0.809L0,0.382L-0.588,0.809"
+        "L-0.363,0.118L-0.951,-0.309L-0.225,-0.309Z")
+# Van de cien a decenas de miles: en escala lineal todo queda apretado a la izquierda.
+LOG_AXES = {"cohorte_total", "estudiantes_total", "titulados_total", "tamano_por_sede"}
+# Lo que se puede sumar al perfil de los grupos sin que forme parte de ellos.
+EXTRA = ["retencion", "arancel_mediano", "acreditacion_anios", "docentes_por_100_alumnos", "share_doctorado",
+         "paes_percentil_promedio", "titulacion_oportuna", "titulacion_cohorte_universidad"]
 LABELS = {"misma_carrera": "Misma carrera y universidad", "misma_universidad": "Misma universidad",
           "sistema": "Cualquier institución del sistema"}
 
@@ -183,6 +198,7 @@ def scatter(frame: pd.DataFrame, x: str, y: str, quadrants: bool = True):
                             scale=alt.Scale(domain=orden, range=[1, .95, .5])),
         tooltip=[alt.Tooltip("nomb_inst:N", title="Universidad"),
                  alt.Tooltip("rol:N", title="Rol"),
+                 alt.Tooltip("grupo:N", title="Grupo"),
                  alt.Tooltip(f"{x}:Q", title=x_title, format=x_fmt),
                  alt.Tooltip(f"{y}:Q", title=y_title, format=y_fmt),
                  alt.Tooltip("cohorte_total:Q", title="Inscripciones", format=",")])
@@ -220,6 +236,351 @@ def scatter(frame: pd.DataFrame, x: str, y: str, quadrants: bool = True):
 
 def gap(a: float, b: float) -> str | None:
     return f"UA {(a - b) * 100:+.1f} pp" if np.isfinite(a) and np.isfinite(b) else None
+
+
+def as_text(value: float, fmt: str) -> str:
+    """El valor con el mismo formato que su eje, para rotular celdas y tooltips."""
+    if not np.isfinite(value):
+        return "—"
+    if fmt == "%":
+        return f"{value:.0%}"
+    if fmt == "~s":
+        return f"{value / 1e6:.1f} M" if abs(value) >= 1e6 else f"{value:,.0f}"
+    if fmt in (".1f", ".2f"):
+        return f"{value:{fmt}}"
+    return f"{value:,.0f}"
+
+
+def group_encoding(frame: pd.DataFrame, shown: list[str], ua_shown: str, focus: bool):
+    """Color y forma por grupo; con `focus`, solo el grupo de la UA frente al resto."""
+    if focus:
+        rest = "Resto de los grupos"
+        frame = frame.assign(clave=np.where(frame.grupo_vista.eq(ua_shown), ua_shown, rest))
+        domain = [ua_shown, rest]
+        colors = [CLUSTER_COLORS[shown.index(ua_shown)], GREY]
+        shapes = [CLUSTER_SHAPES[shown.index(ua_shown)], "circle"]
+    else:
+        frame = frame.assign(clave=frame.grupo_vista)
+        domain, colors, shapes = shown, CLUSTER_COLORS[:len(shown)], CLUSTER_SHAPES[:len(shown)]
+    # Color y forma con el mismo título se funden en una sola leyenda.
+    color = alt.Color("clave:N", title="Grupo", sort=domain, scale=alt.Scale(domain=domain, range=colors),
+                      legend=alt.Legend(orient="top", symbolSize=110))
+    shape = alt.Shape("clave:N", title="Grupo", sort=domain, scale=alt.Scale(domain=domain, range=shapes))
+    return frame, color, shape
+
+
+def ua_star(data: pd.DataFrame, x, y, tooltip, label: bool = True):
+    """La UA encima de todo, como estrella roja con nombre: es el sujeto de cada gráfico."""
+    layers = [alt.Chart(data).mark_point(shape=STAR, filled=True, size=460, color=UA_RED, opacity=1,
+                                         stroke="#1a1a1a", strokeWidth=1).encode(x=x, y=y, tooltip=tooltip)]
+    if label:
+        layers.append(alt.Chart(data).mark_text(align="left", dx=14, fontSize=11, fontWeight=700, color="#1a1a1a")
+                      .encode(x=x, y=y, text=alt.value("Universidad Autónoma")))
+    return layers
+
+
+def cluster_scatter(frame, x, y, labels, shown, ua_shown, code, focus=False, names=True):
+    """Universidades por dos variables, coloreadas por grupo, con la UA destacada."""
+    usable = frame.loc[frame[x].notna() & frame[y].notna()].copy()
+    if usable.empty:
+        return None, 0
+    usable, color, shape = group_encoding(usable, shown, ua_shown, focus)
+    usable["etiqueta"] = usable.nomb_inst.map(short_name)
+
+    def channel(kind, var):
+        title, fmt = labels[var]
+        log = var in LOG_AXES and usable[var].gt(0).all()
+        spec = dict(title=title + (" · escala logarítmica" if log else ""), axis=alt.Axis(format=fmt),
+                    scale=alt.Scale(type="log") if log else alt.Scale(zero=False, nice=True))
+        return (alt.X if kind == "x" else alt.Y)(f"{var}:Q", **spec)
+
+    ex, ey = channel("x", x), channel("y", y)
+    tooltip = [alt.Tooltip("nomb_inst:N", title="Universidad"), alt.Tooltip("grupo_vista:N", title="Grupo"),
+               alt.Tooltip(f"{x}:Q", title=labels[x][0], format=labels[x][1]),
+               alt.Tooltip(f"{y}:Q", title=labels[y][0], format=labels[y][1]),
+               alt.Tooltip("cohorte_total:Q", title="Inscripciones", format=",")]
+    medians = pd.DataFrame({"vx": [usable[x].median()], "vy": [usable[y].median()]})
+    layers = [alt.Chart(medians).mark_rule(strokeDash=[4, 4], size=1, color=INK).encode(x=alt.X("vx:Q")),
+              alt.Chart(medians).mark_rule(strokeDash=[4, 4], size=1, color=INK).encode(y=alt.Y("vy:Q")),
+              alt.Chart(usable).mark_point(filled=True, size=110, opacity=.85, stroke="#ffffff", strokeWidth=1)
+              .encode(x=ex, y=ey, color=color, shape=shape, tooltip=tooltip)]
+    if names:
+        mates = usable.loc[usable.grupo_vista.eq(ua_shown) & usable.cod_inst.ne(code)]
+        mates = mates.sort_values(y).reset_index(drop=True)
+        for rest, offset in ((0, -10), (1, 12)):
+            part = mates.loc[mates.index % 2 == rest]
+            if not part.empty:
+                layers.append(alt.Chart(part).mark_text(align="left", dx=9, dy=offset, fontSize=10, color=INK)
+                              .encode(x=ex, y=ey, text="etiqueta:N"))
+    ua = usable.loc[usable.cod_inst.eq(code)]
+    if not ua.empty:
+        layers += ua_star(ua, ex, ey, tooltip)
+    return alt.layer(*layers).properties(height=460), len(usable)
+
+
+def percentile_strip(pos, rows, shown, ua_shown, focus):
+    """Una fila por variable: cada universidad en su percentil y la UA como estrella."""
+    pos = pos.assign(texto=[as_text(v, f) for v, f in zip(pos.valor, pos.formato)])
+    pos, color, shape = group_encoding(pos, shown, ua_shown, focus)
+    x = alt.X("percentil:Q", scale=alt.Scale(domain=[0, 100]),
+              title="Percentil entre las universidades · 0 la menor, 100 la mayor")
+    y = alt.Y("etiqueta:N", sort=rows, title=None, axis=alt.Axis(labelLimit=300, grid=True, gridColor="#eeeeee"))
+    tooltip = [alt.Tooltip("nomb_inst:N", title="Universidad"), alt.Tooltip("grupo_vista:N", title="Grupo"),
+               alt.Tooltip("etiqueta:N", title="Variable"), alt.Tooltip("texto:N", title="Valor"),
+               alt.Tooltip("percentil:Q", title="Percentil", format=".0f")]
+    middle = alt.Chart(pd.DataFrame({"m": [50]})).mark_rule(strokeDash=[4, 4], color=INK).encode(x="m:Q")
+    dots = alt.Chart(pos.loc[~pos.es_ua]).mark_point(filled=True, size=55, opacity=.7, stroke="#ffffff",
+                                                     strokeWidth=.6).encode(x=x, y=y, color=color, shape=shape,
+                                                                            tooltip=tooltip)
+    layers = [middle, dots] + ua_star(pos.loc[pos.es_ua], x, y, tooltip, label=False)
+    return alt.layer(*layers).properties(height=30 * len(rows) + 40)
+
+
+def profile_heatmap(profile, rows, columns):
+    """Mediana de cada grupo y valor de la UA; el color dice cuán lejos están del promedio de todas."""
+    p = profile.assign(texto=[as_text(v, f) for v, f in zip(profile.valor, profile.formato)],
+                       bloque_nombre=profile.bloque.map(BLOCKS))
+    base = alt.Chart(p).encode(
+        x=alt.X("columna:N", sort=columns, title=None,
+              axis=alt.Axis(orient="top", labelAngle=0, labelLimit=170, labelOverlap=False)),
+        y=alt.Y("etiqueta:N", sort=rows, title=None, axis=alt.Axis(labelLimit=300)))
+    cells = base.mark_rect(stroke="#ffffff", strokeWidth=2, cornerRadius=3).encode(
+        color=alt.Color("z:Q", title="Desviaciones respecto del promedio",
+                        scale=alt.Scale(scheme="blueorange", domain=[-2, 2], clamp=True),
+                        legend=alt.Legend(orient="bottom", gradientLength=260, titleLimit=320)),
+        tooltip=[alt.Tooltip("columna:N", title="Columna"), alt.Tooltip("bloque_nombre:N", title="Bloque"),
+                 alt.Tooltip("etiqueta:N", title="Variable"), alt.Tooltip("texto:N", title="Mediana o valor"),
+                 alt.Tooltip("z:Q", title="Desviaciones", format="+.2f"),
+                 alt.Tooltip("universidades:Q", title="Universidades con dato")])
+    text = base.mark_text(fontSize=11).encode(
+        text="texto:N", color=alt.condition("abs(datum.z) > 1.3", alt.value("#ffffff"), alt.value("#1a1a1a")))
+    return (cells + text).properties(height=28 * len(rows) + 30)
+
+
+def render_clusters(model, frame, code, year, area_name):
+    st.subheader("¿En qué grupo queda la UA y qué distingue a cada grupo?")
+    if not model.k:
+        st.warning("En esta cohorte ninguna partición cumple los requisitos de tamaño y concentración, así que no "
+                   "hay grupos que mostrar. Los pares por cercanía y la selección manual siguen disponibles.")
+        return
+    groups = group_order(frame.grupo)
+    ua_group = frame.loc[frame.cod_inst.eq(code), "grupo"].iloc[0]
+    names = {g: f"{g} (UA)" if g == ua_group else g for g in groups}
+    shown, ua_shown = [names[g] for g in groups], names[ua_group]
+    frame = frame.assign(grupo_vista=frame.grupo.map(names))
+    sizes = frame.grupo.value_counts()
+
+    a, b, c = st.columns(3)
+    a.metric("Grupo de la UA", ua_group)
+    a.caption(f"Con {sizes[ua_group] - 1} universidades más.")
+    b.metric("Grupos en la cohorte", model.k)
+    b.caption(" · ".join(f"{g}: {sizes[g]}" for g in groups) + f" · {len(frame)} universidades en total.")
+    c.metric("Modelo que forma los grupos", model.algorithm)
+    c.caption(f"Silueta {model.silhouette:.3f}. El detalle está en «Modelos de agrupamiento».")
+    mates = frame.loc[frame.grupo.eq(ua_group) & frame.cod_inst.ne(code)].sort_values("distancia")
+    st.markdown("**Comparten grupo con la UA**, de la más cercana a la más lejana en perfil: "
+                + ", ".join(mates.nomb_inst.map(short_name)) + ".")
+    st.caption(f"Cohorte de ingreso {year}. Los grupos se forman con el perfil de ingreso de la cohorte completa: "
+               "tamaño y sedes, selectividad (si hay PAES), áreas, regiones, jornada y modalidad. La continuidad, "
+               "los costos y los recursos no participan. Los números de grupo son etiquetas, no un ranking.")
+
+    variables = cluster_variables(model, code)
+    left, right = st.columns([3, 2])
+    extra = left.toggle("Sumar variables que no forman los grupos: continuidad, arancel, acreditación, "
+                        "docentes, titulación", key="bench_cluster_extra")
+    focus = right.radio("Colores", ["Todos los grupos", "Grupo de la UA frente al resto"], horizontal=True,
+                        key="bench_cluster_focus") != "Todos los grupos"
+    if extra:
+        variables += [{"variable": k, "etiqueta": AXES[k][0], "formato": AXES[k][1], "bloque": "descriptiva"}
+                      for k in EXTRA if k in frame and frame[k].notna().any()]
+        st.caption(f"La continuidad usa el indicador y el área elegidos arriba ({area_name}); el resto describe "
+                   "a toda la institución.")
+    rows = [v["etiqueta"] for v in variables]
+
+    st.markdown("#### Los grupos en dos variables")
+    labels = {**AXES, **{v["variable"]: (v["etiqueta"], v["formato"]) for v in variables},
+              "mapa_x": ("Componente 1 del perfil (PCA)", ".2f"), "mapa_y": ("Componente 2 del perfil (PCA)", ".2f")}
+    options = list(dict.fromkeys([v["variable"] for v in variables] + ["mapa_x", "mapa_y"]
+                                 + [k for k in AXES if k in frame and frame[k].notna().any()]))
+    default_x = "paes_promedio" if "paes_promedio" in options else "cohorte_total"
+    ex, ey, en = st.columns([2, 2, 1])
+    x_var = ex.selectbox("Eje horizontal", options, index=options.index(default_x),
+                         format_func=lambda k: labels[k][0], key="bench_cluster_x")
+    y_var = ey.selectbox("Eje vertical", options, index=options.index("cohorte_total"),
+                         format_func=lambda k: labels[k][0], key="bench_cluster_y")
+    show_names = en.checkbox("Nombres del grupo UA", value=True, key="bench_cluster_names")
+    chart, count = cluster_scatter(frame, x_var, y_var, labels, shown, ua_shown, code, focus, show_names)
+    if chart is None:
+        st.info("No hay universidades con dato en ambas variables.")
+    else:
+        st.altair_chart(chart, width="stretch")
+        missing = len(frame) - count
+        st.caption("Cada punto es una universidad; color y forma indican su grupo. Las líneas punteadas son las "
+                   "medianas de todas las universidades con dato."
+                   + (f" {missing} universidades quedan fuera por dato ausente." if missing else "")
+                   + " Los grupos se forman con todas las variables a la vez: dos ejes muestran solo una parte "
+                   "de la separación. Los componentes PCA resumen el perfil completo en dos dimensiones.")
+        if frame.loc[frame.cod_inst.eq(code), [x_var, y_var]].isna().any(axis=None):
+            st.warning("La UA no tiene dato en alguno de los ejes; su estrella no aparece.")
+
+    st.markdown("#### ¿Dónde está la UA en cada variable?")
+    pos = positions(model, variables, code, frame).assign(grupo_vista=lambda d: d.grupo.map(names))
+    st.altair_chart(percentile_strip(pos, rows, shown, ua_shown, focus), width="stretch")
+    st.caption("Cada fila es una variable y cada punto una universidad, ubicada en su percentil: qué porcentaje "
+               "de las demás queda por debajo. La estrella roja es la UA; la línea punteada, la mitad. Es posición, "
+               "no puntuación: en tamaño, arancel o una área, estar a la derecha no es mejor ni peor.")
+
+    st.markdown("#### ¿Qué distingue a cada grupo?")
+    profile = cluster_profile(model, variables, code, frame)
+    profile["columna"] = profile.columna.map(lambda c: names.get(c, c))
+    profile["columna"] = profile.columna.replace("Universidad Autónoma", "UA")
+    columns = ["UA", ua_shown] + [s for s in shown if s != ua_shown]
+    st.altair_chart(profile_heatmap(profile, rows, columns), width="stretch")
+    st.caption("Mediana de cada grupo y valor de la UA. Naranjo: sobre el promedio de todas las universidades; "
+               "azul: bajo el promedio; gris: cerca. La primera columna permite leer a la UA contra su grupo y "
+               "contra los demás.")
+
+    st.markdown("#### La UA frente a su grupo y frente a todas")
+    st.dataframe(ua_summary(model, variables, code, frame).round(1), hide_index=True, width="stretch")
+    export = frame[["cohorte", "nomb_inst", "grupo", "distancia"]].copy()
+    export["es_ua"] = frame.cod_inst.eq(code)
+    for v in variables:
+        export[v["etiqueta"] + (" (%)" if v["formato"] == "%" else "")] = (
+            frame[v["variable"]] * (100 if v["formato"] == "%" else 1))
+    export = export.rename(columns={"cohorte": "Cohorte", "nomb_inst": "Universidad", "grupo": "Grupo",
+                                    "distancia": "Distancia al perfil UA", "es_ua": "Es la UA"})
+    export["orden"] = export.Grupo.map({g: i for i, g in enumerate(groups)})
+    export = export.sort_values(["orden", "Distancia al perfil UA"]).drop(columns="orden").round(3)
+    with st.expander(f"Universidades de cada grupo · {len(frame)} en la cohorte {year}"):
+        st.dataframe(export, hide_index=True, width="stretch")
+    st.download_button("Descargar grupos y variables (CSV)", export.to_csv(index=False).encode("utf-8-sig"),
+                       file_name=f"benchmark_clusters_{year}.csv", mime="text/csv")
+
+
+def silhouette_chart(diagnostics: pd.DataFrame, algorithm: str, k: int):
+    """Silueta de cada algoritmo según el número de grupos; la elegida va marcada."""
+    d = diagnostics.copy()
+    d["estado"] = np.where(d.admisible, "Admisible", "Descartada")
+    d["concentracion_pct"] = d.concentracion
+    algorithms = ["K-means", "Jerárquico Ward", "Mezcla gaussiana"]
+    base = alt.Chart(d).encode(
+        x=alt.X("k:O", title="Número de grupos", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("silueta:Q", title="Silueta · mayor es más separado", scale=alt.Scale(zero=False, nice=True)),
+        color=alt.Color("algoritmo:N", title=None, sort=algorithms,
+                        scale=alt.Scale(domain=algorithms, range=["#2a78d6", "#eb6834", "#1baf7a"]),
+                        legend=alt.Legend(orient="top")),
+        tooltip=[alt.Tooltip("algoritmo:N", title="Algoritmo"), alt.Tooltip("k:O", title="Grupos"),
+                 alt.Tooltip("silueta:Q", title="Silueta", format=".3f"), alt.Tooltip("estado:N", title="Estado"),
+                 alt.Tooltip("grupo_minimo:Q", title="Grupo menor"),
+                 alt.Tooltip("concentracion_pct:Q", title="Grupo mayor", format=".0%")])
+    layers = [base.mark_line(strokeWidth=2),
+              base.transform_filter("datum.admisible").mark_point(filled=True, size=90, opacity=1),
+              base.transform_filter("!datum.admisible").mark_point(filled=False, size=90, strokeWidth=1.6,
+                                                                   fill="#ffffff", opacity=1)]
+    chosen = d.loc[d.algoritmo.eq(algorithm) & d.k.eq(k)]
+    if not chosen.empty:
+        layers += [alt.Chart(chosen).mark_point(size=480, filled=False, color="#1a1a1a", strokeWidth=2)
+                   .encode(x="k:O", y="silueta:Q"),
+                   alt.Chart(chosen).mark_text(dy=-22, fontWeight=700, color="#1a1a1a")
+                   .encode(x="k:O", y="silueta:Q", text=alt.value("Elegido"))]
+    return alt.layer(*layers).properties(height=320)
+
+
+def render_models(model, config, code, year, years, profiles, nearest, number):
+    st.subheader("¿Qué modelo forma los grupos y cuán firme es la agrupación?")
+    st.markdown(
+        f"Se prueban tres algoritmos con {', '.join(map(str, config['k_values']))} grupos, sobre el mismo perfil "
+        "de ingreso y la misma distancia:\n"
+        "- **K-means**: forma grupos alrededor de centros; cada universidad va al centro más cercano.\n"
+        "- **Jerárquico Ward**: parte con cada universidad sola y va uniendo las más parecidas, de a pares.\n"
+        "- **Mezcla gaussiana**: supone que cada grupo es una nube con su propia dispersión.\n\n"
+        f"Una solución es **admisible** si ningún grupo tiene menos de {config['minimum_cluster']} universidades "
+        f"y ninguno concentra más del {config['maximum_group_share']:.0%}. Entre las admisibles gana la de mayor "
+        "silueta, que mide cuánto se parece cada universidad a su grupo frente al grupo vecino.")
+    if not model.k:
+        st.warning("Ninguna partición cumple los requisitos de tamaño y concentración. "
+                   "Se mantienen disponibles los vecinos por perfil y la selección manual.")
+    else:
+        grupo_ua = model.universities.loc[model.universities.cod_inst.eq(code), "grupo"].iloc[0]
+        peso_ua = float(model.universities.grupo.eq(grupo_ua).mean())
+        st.write(f"Alternativa seleccionada: **{model.algorithm}, {model.k} grupos**, "
+                 f"silueta **{model.silhouette:.3f}**. El grupo de la UA reúne el "
+                 f"**{peso_ua:.0%}** de las universidades incluidas.")
+        if model.silhouette < .25:
+            st.warning("La separación entre grupos es débil (silueta < 0,25, umbral orientativo). "
+                       "Interpreta el cluster como exploratorio y revisa las distancias de los pares.")
+    st.altair_chart(silhouette_chart(model.diagnostics, model.algorithm, model.k), width="stretch")
+    st.caption("Punto lleno: solución admisible; punto vacío: descartada por tamaño o concentración. "
+               "El círculo negro marca la elegida.")
+    st.dataframe(model.diagnostics.rename(columns={
+        "algoritmo": "Algoritmo", "k": "Grupos", "silueta": "Silueta", "grupo_minimo": "Grupo menor",
+        "grupo_maximo": "Grupo mayor", "concentracion": "Concentración del grupo mayor",
+        "admisible": "Admisible"}).round(3), hide_index=True, width="stretch")
+    st.caption("Por qué el límite de concentración: la silueta premia las particiones que aíslan unas pocas "
+               "instituciones atípicas y dejan al resto en un único grupo. Esa solución separa bien pero no sirve "
+               "para comparar, porque el grupo de la UA terminaría conteniendo casi todas las universidades.")
+    if model.k:
+        groups = group_order(model.universities.grupo)
+        sizes = model.universities.grupo.value_counts().reindex(groups).rename_axis("grupo").reset_index(name="n")
+        sizes["vista"] = [f"{g} (UA)" if g == grupo_ua else g for g in sizes.grupo]
+        bars = alt.Chart(sizes).encode(
+            y=alt.Y("vista:N", sort=list(sizes.vista), title=None, axis=alt.Axis(labelOverlap=False)),
+            x=alt.X("n:Q", title="Universidades"),
+            tooltip=[alt.Tooltip("vista:N", title="Grupo"), alt.Tooltip("n:Q", title="Universidades")])
+        st.markdown("**Tamaño de cada grupo**")
+        st.altair_chart((bars.mark_bar(cornerRadiusEnd=4, height=18).encode(
+            color=alt.Color("vista:N", legend=None, sort=list(sizes.vista),
+                            scale=alt.Scale(domain=list(sizes.vista), range=CLUSTER_COLORS[:len(sizes)])))
+            + bars.mark_text(align="left", dx=4, color="#1a1a1a").encode(text="n:Q"))
+            .properties(height=34 * len(sizes)), width="stretch")
+
+        st.markdown("**¿Otro algoritmo dejaría a la UA con las mismas universidades?**")
+        agreement, core = partition_agreement(model, code)
+        st.dataframe(agreement.round(3), hide_index=True, width="stretch")
+        st.caption(f"Los tres algoritmos con {model.k} grupos. «También están en el grupo elegido» cuenta cuántas "
+                   "de las universidades que acompañan a la UA en ese algoritmo la acompañan también en la "
+                   "solución elegida. El índice Rand ajustado compara las particiones completas: 1 es idéntica; "
+                   "0, como al azar.")
+        if core:
+            st.success(f"**Núcleo estable:** {len(core)} "
+                       + ("universidad comparte" if len(core) == 1 else "universidades comparten")
+                       + " grupo con la UA en los tres algoritmos: " + ", ".join(map(short_name, core)) + ".")
+        else:
+            st.info("Ninguna universidad comparte grupo con la UA en los tres algoritmos: el grupo depende del "
+                    "algoritmo. Para elegir pares conviene la cercanía por perfil, que no depende de los grupos.")
+
+    st.markdown("**Estabilidad entre cohortes**")
+    others = [y for y in years if y != year]
+    if others:
+        previous = min(others, key=lambda y: abs(y - year))
+        try:
+            other_model = cached_model(profiles.loc[profiles.cohorte.eq(previous)], config)
+            previous_neighbors = neighbors(other_model, code)
+            now = set(nearest.head(int(number)).cod_inst)
+            then = set(previous_neighbors.head(int(number)).cod_inst)
+            overlap = len(now & then)
+            st.info(f"Estabilidad de vecinos: {overlap} de los {int(number)} pares más cercanos de {year} "
+                    f"también están entre los más cercanos de {previous}. "
+                    "Se recalculan perfiles y escalas en cada cohorte; esta medida no valida causalidad.")
+            # Los bloques activos NO son los mismos en todos los anios: la
+            # selectividad solo existe desde 2021. Una caida de estabilidad
+            # en ese borde puede ser el cambio de bloques y no un cambio
+            # real del sistema, asi que hay que decirlo antes del numero.
+            distintos = set(model.groups) ^ set(other_model.groups)
+            if distintos:
+                st.warning(f"Las dos cohortes no se comparan con los mismos bloques: "
+                           f"{', '.join(sorted(distintos))} solo está disponible en una de "
+                           "ellas. Parte de la diferencia de estabilidad es ese cambio de "
+                           "variables, no un cambio en el sistema universitario.")
+            common = model.universities[["cod_inst", "grupo"]].merge(
+                other_model.universities[["cod_inst", "grupo"]], on="cod_inst", suffixes=("_actual", "_otra"))
+            if model.k and other_model.k and len(common) > 1:
+                ari = adjusted_rand_score(common.grupo_actual, common.grupo_otra)
+                st.caption(f"Estabilidad de la partición completa: índice Rand ajustado {ari:.3f} "
+                           f"sobre {len(common)} universidades comunes. 1 indica agrupamientos idénticos; "
+                           "0, concordancia similar al azar. Los algoritmos y k se eligen por separado en cada cohorte.")
+        except ValueError as exc:
+            st.caption(f"Estabilidad temporal no disponible: {exc}")
 
 
 def render_benchmark(results_dir: Path) -> None:
@@ -324,9 +685,10 @@ def render_benchmark(results_dir: Path) -> None:
         st.warning("Comparaciones de tamaño reducido (menos de 30 inscripciones): " + "; ".join(small)
                    + ". Interpreta sus porcentajes con el denominador a la vista.")
     scenarios = sensitivity(data, int(year), code, nearest.cod_inst.tolist(), metric, area)
-    position, mapa, similar, evolution, methodology = st.tabs(
-        ["Posición de la UA", "Mapa de posicionamiento", "Por qué son comparables",
-         "Evolución y áreas", "Método y cobertura"])
+    frame = positioning_frame(model, nearest, data, int(year), metric, area, code, peer_ids)
+    position, clusters, mapa, similar, models, evolution, methodology = st.tabs(
+        ["Posición de la UA", "Clusters por variables", "Mapa de posicionamiento", "Por qué son comparables",
+         "Modelos de agrupamiento", "Evolución y áreas", "Método y cobertura"])
     with position:
         st.subheader("La UA frente a sus pares")
         finite = shown.loc[shown.retencion.notna()].copy()
@@ -383,13 +745,16 @@ def render_benchmark(results_dir: Path) -> None:
         st.dataframe(scenarios.round(2), hide_index=True, width="stretch")
         st.caption("Escenarios con los 3, 5, 8 y 10 vecinos más cercanos; conservan la cohorte, el área y el indicador. "
                    "Reemplazan la selección manual o de cluster solo en esta tabla. No son intervalos de confianza.")
+    with clusters:
+        render_clusters(model, frame, code, int(year), area_name)
+    with models:
+        render_models(model, config, code, year, years, profiles, nearest, number)
     with mapa:
         st.subheader("¿Dónde se sitúa la UA entre las universidades chilenas?")
         st.caption("Cada punto es una universidad. Las líneas punteadas marcan la mediana de las universidades con dato en ambos ejes "
                    "y dividen el gráfico en cuadrantes. Sólo la UA y sus pares llevan nombre.")
         st.caption("El filtro de área afecta la continuidad; los costos, recursos y distribuciones describen el perfil completo "
                    "o toda la institución. No son recursos exclusivos del área seleccionada.")
-        frame = positioning_frame(model, nearest, data, int(year), metric, area, code, peer_ids)
         disponibles = [k for k in AXES if k in frame.columns and frame[k].notna().any()]
         ex, ey = st.columns(2)
         x_var = ex.selectbox("Eje horizontal", disponibles, index=disponibles.index("arancel_mediano")
@@ -454,12 +819,13 @@ def render_benchmark(results_dir: Path) -> None:
             multiplier = 100 if AXES[clave][1] == "%" else 1
             filas.append({"Variable": AXES[clave][0] + (" (%)" if multiplier == 100 else ""), "UA": multiplier * v,
                           "Mediana de universidades con dato": multiplier * float(serie.median()),
-                          "Percentil UA": round(100 * float((serie < v).mean()), 0),
+                          "Percentil UA": round(percentile(serie, v), 0),
                           "Universidades con dato": int(serie.size)})
         if filas:
             st.dataframe(pd.DataFrame(filas).round(2), hide_index=True, width="stretch")
-            st.caption("El percentil indica qué porcentaje de universidades queda por debajo de la UA en cada "
-                       "variable. No es una puntuación: en arancel o duración, estar arriba no es mejor.")
+            st.caption("El percentil indica qué porcentaje de las demás universidades queda por debajo de la UA en "
+                       "cada variable; los empates cuentan la mitad. No es una puntuación: en arancel o duración, "
+                       "estar arriba no es mejor.")
 
     with similar:
         st.subheader("Similitud institucional explicada")
@@ -552,58 +918,8 @@ def render_benchmark(results_dir: Path) -> None:
         st.caption("Desglose de todas las áreas UA de la cohorte, independientemente del filtro superior. "
                    "Una celda vacía indica falta de denominador comparable.")
     with methodology:
-        st.subheader("Calidad del agrupamiento")
-        if model.k:
-            grupo_ua = model.universities.loc[model.universities.cod_inst.eq(code), "grupo"].iloc[0]
-            peso_ua = float(model.universities.grupo.eq(grupo_ua).mean())
-            st.write(f"Alternativa seleccionada: **{model.algorithm}, {model.k} grupos**, "
-                     f"silueta **{model.silhouette:.3f}**. El grupo de la UA reúne el "
-                     f"**{peso_ua:.0%}** de las universidades incluidas.")
-            if model.silhouette < .25:
-                st.warning("La separación entre grupos es débil (silueta < 0,25, umbral orientativo). "
-                           "Interpreta el cluster como exploratorio y revisa las distancias de los pares.")
-        else:
-            st.warning("Ninguna partición cumple los requisitos de tamaño y concentración. "
-                       "Se mantienen disponibles los vecinos por perfil y la selección manual.")
-        st.dataframe(model.diagnostics.round(3), hide_index=True, width="stretch")
-        st.caption(f"Se prueban K-means, mezcla gaussiana diagonal y clustering jerárquico Ward con k={config['k_values']}. "
-                   f"Se descartan soluciones con grupos menores que {config['minimum_cluster']} y aquellas donde un solo "
-                   f"grupo concentra más del {config['maximum_group_share']:.0%} de las universidades; entre las admisibles "
-                   "se elige la mayor silueta. Los números de cluster son etiquetas, no posiciones en un ranking.")
-        st.caption("Por qué el límite de concentración: la silueta premia las particiones que aíslan unas pocas "
-                   "instituciones atípicas y dejan al resto en un único grupo. Esa solución separa bien pero no sirve "
-                   "para comparar, porque el grupo de la UA terminaría conteniendo casi todas las universidades.")
-        others = [y for y in years if y != year]
-        if others:
-            previous = min(others, key=lambda y: abs(y - year))
-            try:
-                other_model = cached_model(profiles.loc[profiles.cohorte.eq(previous)], config)
-                previous_neighbors = neighbors(other_model, code)
-                now = set(nearest.head(int(number)).cod_inst)
-                then = set(previous_neighbors.head(int(number)).cod_inst)
-                overlap = len(now & then)
-                st.info(f"Estabilidad de vecinos: {overlap} de los {int(number)} pares más cercanos de {year} "
-                        f"también están entre los más cercanos de {previous}. "
-                        "Se recalculan perfiles y escalas en cada cohorte; esta medida no valida causalidad.")
-                # Los bloques activos NO son los mismos en todos los anios: la
-                # selectividad solo existe desde 2021. Una caida de estabilidad
-                # en ese borde puede ser el cambio de bloques y no un cambio
-                # real del sistema, asi que hay que decirlo antes del numero.
-                distintos = set(model.groups) ^ set(other_model.groups)
-                if distintos:
-                    st.warning(f"Las dos cohortes no se comparan con los mismos bloques: "
-                               f"{', '.join(sorted(distintos))} solo está disponible en una de "
-                               "ellas. Parte de la diferencia de estabilidad es ese cambio de "
-                               "variables, no un cambio en el sistema universitario.")
-                common = model.universities[["cod_inst", "grupo"]].merge(
-                    other_model.universities[["cod_inst", "grupo"]], on="cod_inst", suffixes=("_actual", "_otra"))
-                if model.k and other_model.k and len(common) > 1:
-                    ari = adjusted_rand_score(common.grupo_actual, common.grupo_otra)
-                    st.caption(f"Estabilidad de la partición completa: índice Rand ajustado {ari:.3f} "
-                               f"sobre {len(common)} universidades comunes. 1 indica agrupamientos idénticos; "
-                               "0, concordancia similar al azar. Los algoritmos y k se eligen por separado en cada cohorte.")
-            except ValueError as exc:
-                st.caption(f"Estabilidad temporal no disponible: {exc}")
+        st.caption("La calidad del agrupamiento, la comparación de algoritmos y la estabilidad entre cohortes "
+                   "están en la pestaña «Modelos de agrupamiento».")
         st.subheader("Cobertura y trazabilidad")
         resource_fields = [c for c in ["nomb_inst", "estudiantes_total", "matriculas_sin_mrun", "recursos_anio",
                                        "docentes_por_100_alumnos", "share_doctorado", "m2_construido_por_alumno",

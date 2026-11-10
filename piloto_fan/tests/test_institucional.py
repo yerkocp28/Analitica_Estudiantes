@@ -173,12 +173,15 @@ def test_institutional_navigation_and_independent_filters():
     assert not app.exception, [e.message for e in app.exception]
     assert int(app.metric[0].value.replace(".", "")) < initial
     assert len(app.expander) == 10
+    # El estado de las preguntas es el del registro vigente, no el de la copia guardada con la corrida.
+    current = [f"**Estado:** {q['estado']} · **Prioridad:** {q['prioridad']}" for q in read_config()["preguntas"]]
+    assert [m.value for m in app.markdown if m.value.startswith("**Estado:**")] == current
     app.selectbox(key="inst_scope").set_value("fan_label").run()
     next(b for b in app.button if b.label == "Restablecer filtros institucionales").click().run()
     assert not app.exception
     assert app.selectbox(key="inst_scope").value == "fan_proposed"
     assert int(app.metric[0].value.replace(".", "")) == initial
-    app.sidebar.radio[0].set_value("Resumen").run()
+    app.sidebar.radio[0].set_value("Panorama de cohortes").run()
     assert not app.exception
 
 

@@ -116,7 +116,7 @@ def test_new_views_navigate_filter_and_preserve_public_models():
     assert not app.exception, [e.message for e in app.exception]
     app.selectbox(key="im_profile_term").set_value(202410).run()
     assert not app.exception
-    app.sidebar.radio[0].set_value("Resumen").run()
+    app.sidebar.radio[0].set_value("Panorama de cohortes").run()
     assert not app.exception
 
 

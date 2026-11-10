@@ -106,6 +106,27 @@ orientativo; no se trata de una regla universal. También muestra tamaños de
 grupos, explicaciones por bloque y estabilidad temporal. Referencia técnica:
 [evaluación de clustering de scikit-learn](https://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation).
 
+Dos pestañas de la app explican los grupos sin cambiarlos:
+
+- **Clusters por variables.** Indica en qué grupo queda la UA y con qué
+  universidades. Ofrece un gráfico de los grupos en dos variables a elección,
+  incluidas las del perfil y los componentes PCA. Muestra el percentil de cada
+  universidad en cada variable, con la UA destacada. Un mapa de calor resume la
+  mediana de cada grupo frente al promedio de todas. Las variables se muestran
+  en su escala original, no con las transformaciones de la distancia. De las
+  regiones se muestran la Metropolitana, las regiones donde la UA tiene matrícula
+  y el número de regiones con presencia. Se pueden sumar variables que no forman
+  los grupos, como la continuidad, el arancel o la acreditación, solo para
+  describirlos. El percentil es el porcentaje de las demás universidades que
+  queda por debajo, y los empates cuentan la mitad.
+- **Modelos de agrupamiento.** Muestra la silueta de los 15 candidatos, cuáles
+  son admisibles y cuál se eligió. También muestra el tamaño de cada grupo y la
+  estabilidad entre cohortes. Además compara los tres algoritmos con el mismo k:
+  cuántas universidades acompañan a la UA en cada uno, cuántas coinciden con la
+  solución elegida y el índice Rand ajustado frente a ella. Las universidades
+  que comparten grupo con la UA en los tres algoritmos forman el *núcleo
+  estable*.
+
 Tres modos de selección:
 
 1. **Más cercanas por perfil**: cinco vecinos por defecto, cantidad configurable;

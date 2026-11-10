@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from piloto_fan import presentacion
 from piloto_fan.data import digest
 from piloto_fan.reporting import executive_html
 
@@ -44,7 +45,8 @@ def test_all_sections_and_capacity_interactions():
     latest()
     app = AppTest.from_file(str(HOME / "app.py"), default_timeout=30).run()
     assert not app.exception
-    for section in ["Perfiles de ingreso", "Continuidad", "Titulación", "Calidad y método", "Demostración", "Benchmark"]:
+    for section in presentacion.STORY[1:] + [presentacion.BENCHMARK, "Panorama de cohortes", "Continuidad", "Titulación",
+                                             "Calidad y método", "Demostración"]:
         app.sidebar.radio[0].set_value(section).run()
         assert not app.exception, [e.message for e in app.exception]
         if section in ("Continuidad", "Titulación") and app.select_slider:
@@ -57,6 +59,7 @@ def test_cascading_filters_change_metrics_and_reset():
     population = pd.read_parquet(folder / "poblacion_dataset.parquet")
     predictions = pd.read_parquet(folder / "continuidad_predictions.parquet")
     app = AppTest.from_file(str(HOME / "app.py"), default_timeout=30).run()
+    app.sidebar.radio[0].set_value("Panorama de cohortes").run()
     site = "CAMPUS PROVIDENCIA"
     career = "INGENIERIA COMERCIAL"
     app.selectbox(key="filter_nomb_sede").set_value(site).run()
@@ -79,7 +82,7 @@ def test_profiles_cohort_and_filtered_empty_model_are_explicit():
     path = folder / "titulacion_predictions.parquet"
     predictions = pd.read_parquet(path) if path.exists() else pd.DataFrame(columns=["nomb_carrera"])
     app = AppTest.from_file(str(HOME / "app.py"), default_timeout=30).run()
-    app.sidebar.radio[0].set_value("Perfiles de ingreso").run()
+    app.sidebar.radio[0].set_value(presentacion.PROFILES).run()
     app.selectbox(key="cohort").set_value(2024).run()
     assert not app.exception
     missing = sorted(set(population.nomb_carrera) - set(predictions.nomb_carrera))

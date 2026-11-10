@@ -33,6 +33,21 @@ def cached(folder, fingerprint):
     return load_run(folder)
 
 
+def latest(home):
+    """Corrida vigente de modelos institucionales, verificada; None si no existe."""
+    base = Path(home)/"artifacts/institucional_modelos"
+    pointer = base/"latest.json"
+    if not pointer.exists():
+        return None
+    run_id = json.loads(pointer.read_text())["run_id"]
+    if Path(run_id).name != run_id or "/" in run_id or "\\" in run_id:
+        raise ValueError("Ejecución inválida.")
+    folder = base/run_id
+    fingerprint = tuple((p.name, p.stat().st_size, p.stat().st_mtime_ns) for p in folder.iterdir() if p.is_file())
+    report, frames = cached(str(folder), fingerprint)
+    return str(folder), fingerprint, run_id, report, frames
+
+
 @st.cache_data
 def cached_radar(folder, fingerprint):
     _, frames = load_run(folder)  # Verifica las huellas, incluido el modelo, antes de cargarlo.
@@ -41,7 +56,7 @@ def cached_radar(folder, fingerprint):
 
 
 def render_radar(folder, fingerprint, run_id):
-    st.subheader("Radar de inicio de semestre · prototipo retrospectivo")
+    st.caption("Prototipo retrospectivo · Extracto 2025-1 → 2025-2 · Uso interno")
     st.warning("Muestra lo que habría recibido cada dirección al inicio de 2025-2 y qué pasó después. Ese semestre "
                "ya terminó: no sirve para contactar a nadie. Los estudiantes aparecen con seudónimo y la lista no se "
                "descarga.")
@@ -59,7 +74,8 @@ def render_radar(folder, fingerprint, run_id):
     slots, hits = table["Cupos"].sum(), table["Aciertos del radar"].sum()
     a, b, c, e = st.columns(4)
     a.metric("Cupos con resultado conocido", number(slots))
-    b.metric("Aciertos del radar", number(hits), f"{number(100*hits/slots, 0)}% de la lista", delta_color="off")
+    b.metric("Aciertos del radar", number(hits), f"{number(100*hits/slots, 0)}% de la lista", delta_color="off",
+             delta_arrow="off")
     c.metric("Con la regla simple", number(table["Aciertos de la regla simple"].sum()))
     e.metric("Al azar", number(table["Aciertos al azar"].sum()))
     st.caption("Acierto: el estudiante terminó 2025-2 con al menos una nota numérica bajo 4. El corte se aplica dentro "
@@ -78,7 +94,11 @@ def render_radar(folder, fingerprint, run_id):
     st.dataframe(pd.DataFrame({
         "Prioridad": listed.priority, "Estudiante (seudónimo)": listed.student_key.str[:8],
         "Jornada": listed.schedule, "Señales": listed.signals, "Qué pasó en 2025-2": listed.outcome,
-    }), hide_index=True, width="stretch")
+    }), hide_index=True, width="stretch", column_config={
+        "Prioridad": st.column_config.NumberColumn(width="small"),
+        "Estudiante (seudónimo)": st.column_config.TextColumn(width="small"),
+        "Jornada": st.column_config.TextColumn(width="small"),
+        "Señales": st.column_config.TextColumn(width="large")})
     st.caption("Sin probabilidades: el modelo está descalibrado y recalibrarlo no cambia el orden. Las señales "
                "describen datos observados del semestre anterior, no causas.")
 
@@ -117,35 +137,26 @@ def render(home):
     st.title("Modelos institucionales · FAN")
     st.warning("Prueba retrospectiva experimental. Se supone que las notas estaban disponibles al cierre del semestre "
                "de origen; falta confirmar sus fechas reales. No son alertas para estudiantes actuales.")
-    base = Path(home)/"artifacts/institucional_modelos"
-    pointer = base/"latest.json"
-    if not pointer.exists():
-        st.info("Genera los modelos con las tablas institucionales ya integradas.")
-        st.code("python -m piloto_fan.modelos_institucionales")
-        return
     try:
-        run_id = json.loads(pointer.read_text())["run_id"]
-        if Path(run_id).name != run_id or "/" in run_id or "\\" in run_id:
-            raise ValueError("Ejecución inválida.")
-        folder = base/run_id
-        fingerprint = tuple((p.name, p.stat().st_size, p.stat().st_mtime_ns) for p in folder.iterdir() if p.is_file())
-        report, frames = cached(str(folder), fingerprint)
+        loaded = latest(home)
     except (OSError, ValueError, KeyError) as exc:
         st.error(f"No se pudieron verificar los modelos: {exc}")
         return
+    if loaded is None:
+        st.info("Genera los modelos con las tablas institucionales ya integradas.")
+        st.code("python -m piloto_fan.modelos_institucionales")
+        return
+    folder, fingerprint, run_id, report, frames = loaded
     latest_data = Path(home)/"artifacts/institucional/latest.json"
     if latest_data.exists() and json.loads(latest_data.read_text())["run_id"] != report["source_run_id"]:
         st.warning("La integración de datos cambió después de este entrenamiento. Se muestran los resultados "
                    "de la fuente anterior identificada en la trazabilidad.")
-    choices = {"academico": "Resultado académico", "matricula": "Presencia en matrícula", "segmentos": "Perfiles académicos",
-               "radar": "Radar de inicio de semestre (prototipo)"}
+    choices = {"academico": "Resultado académico", "matricula": "Presencia en matrícula", "segmentos": "Perfiles académicos"}
     case = st.selectbox("Análisis institucional", list(choices), format_func=choices.get, key="im_case")
     st.sidebar.subheader("Explorar modelos institucionales")
     st.sidebar.button("Restablecer filtros de modelos", on_click=reset)
     st.sidebar.caption("Filtros independientes del tablero descriptivo y de los modelos con datos públicos.")
-    if case == "radar":
-        render_radar(str(folder), fingerprint, run_id)
-    elif case == "segmentos":
+    if case == "segmentos":
         s = report["segments"]
         if "winner" not in s:
             st.info(s.get("reason", "Ninguna segmentación cumple las condiciones de tamaño y concentración."))
